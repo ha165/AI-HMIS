@@ -37,7 +37,7 @@ class PostController extends Controller
      */
     public function show(Post $post)
     {
-        //
+        return ["post" => $post];
     }
 
     /**
@@ -45,7 +45,16 @@ class PostController extends Controller
      */
     public function update(Request $request, Post $post)
     {
-        //
+        $fields = $request->validate([
+            "title" => "required|max:255",
+            "body" => "required|max:255",
+        ]);
+        $post->update($fields);
+        return [
+            "status" => "success",
+            "message" => "Post created successfully",
+            $post
+        ];
     }
 
     /**
