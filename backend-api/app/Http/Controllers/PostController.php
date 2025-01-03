@@ -52,7 +52,7 @@ class PostController extends Controller
         $post->update($fields);
         return [
             "status" => "success",
-            "message" => "Post created successfully",
+            "message" => "Post updated successfully",
             $post
         ];
     }
@@ -62,6 +62,7 @@ class PostController extends Controller
      */
     public function destroy(Post $post)
     {
-        //
+        $post->delete();
+        return ["status" => "success", "message" => "Post deleted successfully"];
     }
 }
