@@ -15,5 +15,11 @@ class Medications extends Model
         'dosage',
         'side_effects',
         'manufacturer',
+        'price',
+        'stock_quantity',
+        'expiration_date',
+        'requires_prescription',
+        'category',
+        'batch_number',
     ];
 }
