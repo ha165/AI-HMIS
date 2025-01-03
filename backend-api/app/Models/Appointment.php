@@ -9,4 +9,11 @@ class Appointment extends Model
 {
     /** @use HasFactory<\Database\Factories\AppointmentFactory> */
     use HasFactory;
+protected $fillable = [
+"patient_id",
+"staff_id",
+'appointment_date',
+'status',
+'notes',
+];
 }
