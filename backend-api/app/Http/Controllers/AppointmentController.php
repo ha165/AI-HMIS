@@ -3,8 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Appointment;
-use App\Http\Requests\StoreAppointmentRequest;
-use App\Http\Requests\UpdateAppointmentRequest;
+use Illuminate\Http\Request;
 
 class AppointmentController extends Controller
 {
@@ -13,15 +12,15 @@ class AppointmentController extends Controller
      */
     public function index()
     {
-        //
+        return Appointment::all();
     }
 
     /**
      * Store a newly created resource in storage.
      */
-    public function store(StoreAppointmentRequest $request)
+    public function store(Request $request)
     {
-        //
+
     }
 
     /**
@@ -35,7 +34,7 @@ class AppointmentController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateAppointmentRequest $request, Appointment $appointment)
+    public function update(Request $request, Appointment $appointment)
     {
         //
     }
