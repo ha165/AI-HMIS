@@ -20,7 +20,19 @@ class AppointmentController extends Controller
      */
     public function store(Request $request)
     {
-
+        $fields = $request->validate([
+            "patient_id" => "",
+            "staff_id" => "",
+            "appointment_date" => "required|date",
+            "status" => "required|in:pending,confirmed,cancelled",
+            "notes" => "required|max:255",
+        ]);
+        $appointment = Appointment::create($fields);
+        return [
+            "status" => "success",
+            "message" => "Appointment created successfully",
+            "Appointment" => $appointment
+        ];
     }
 
     /**
