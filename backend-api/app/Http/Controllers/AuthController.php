@@ -13,7 +13,14 @@ class AuthController extends Controller
        'email' => 'required|email|unique:users',
        'password' => 'required|min:8|confirmed'
      ]);
-     User::created($fields);
+     $user = User::create($fields);
+
+     $token = $user->createToken($request->name);
+
+     return [
+       'user' => $user,
+       'token' => $token
+     ];
    }
    public function login(request $request) {
      return "login";
