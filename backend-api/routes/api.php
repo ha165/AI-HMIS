@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\PostController;
+use App\Http\Controllers\AuthController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -10,3 +11,6 @@ use Illuminate\Support\Facades\Route;
 //})->middleware('auth:sanctum');::class)->middleware("auth:sanctum","");
 Route::apiResource("appointments", AppointmentController::class);
 Route::apiResource("posts", PostController::class);
+Route::post("/register", [AuthController::class, "register"]);
+Route::post("/login", [AuthController::class, "login"]);
+Route::post("logout", [AuthController::class, "logout"]);
