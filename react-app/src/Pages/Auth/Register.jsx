@@ -1,10 +1,10 @@
-import { useNavigate} from "react-router-dom";
-import { useState, useContext} from "react";
-import {ToastContainer,toast} from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-import { AppContext } from "../Context/AppContext";
+import { useNavigate } from "react-router-dom";
+import { useState, useContext } from "react";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { AppContext } from "../../Context/AppContext";
 export default function Register() {
-  const {setToken } = useContext(AppContext)
+  const { setToken } = useContext(AppContext);
   const navigate = useNavigate();
   const [formdata, setFormData] = useState({
     name: "",
@@ -18,27 +18,28 @@ export default function Register() {
   async function handleRegister(e) {
     e.preventDefault();
     try {
-        const res = await fetch("api/register", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(formdata),
-        });
-      
-        if (!res.ok) throw new Error("Network response was not ok");
-      
-        const data = await res.json();
-        if (data.errors) {
-          setErrors(data.errors);
-          toast.error("Registration Failed");
-        } else {
-          localStorage.setItem("token", data.token);
-          toast.success("You Can Now Login");
-          navigate("/login");
-        }
-      } catch (error) {
-        toast.error("Something went wrong, please try again!");
-        console.error(error);
+      const res = await fetch("api/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formdata),
+      });
+
+      if (!res.ok) throw new Error("Network response was not ok");
+
+      const data = await res.json();
+      if (data.errors) {
+        setErrors(data.errors);
+        toast.error("Registration Failed");
+      } else {
+        localStorage.setItem("token", data.token);
+        setToken(data.token);
+        toast.success("You Can Now Login");
+        navigate("/login");
       }
+    } catch (error) {
+      toast.error("Something went wrong, please try again!");
+      console.error(error);
+    }
   }
 
   return (
