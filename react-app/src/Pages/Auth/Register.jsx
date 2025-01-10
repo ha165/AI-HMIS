@@ -15,22 +15,28 @@ export default function Register() {
 
   async function handleRegister(e) {
     e.preventDefault();
-    const res = await fetch("api/register", {
-      method: "POST",
-      body: JSON.stringify(formdata),
-    });
-
-    const data = await res.json();
-
-    if (data.errors) {
-      setErrors(data.errors);
-      toast.error("Registration Failed");
-    } else {
-      localStorage.setItem("token", data.token);
-      toast.success("You Can Now Login");  
-      navigate("/login");
-      console.log(data);
-    }
+    try {
+        const res = await fetch("api/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formdata),
+        });
+      
+        if (!res.ok) throw new Error("Network response was not ok");
+      
+        const data = await res.json();
+        if (data.errors) {
+          setErrors(data.errors);
+          toast.error("Registration Failed");
+        } else {
+          localStorage.setItem("token", data.token);
+          toast.success("You Can Now Login");
+          navigate("/login");
+        }
+      } catch (error) {
+        toast.error("Something went wrong, please try again!");
+        console.error(error);
+      }
   }
 
   return (
