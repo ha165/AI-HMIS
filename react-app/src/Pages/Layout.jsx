@@ -25,48 +25,80 @@ export default function Layout() {
         localStorage.removeItem("token");
         setToken(null);
         setUser(null);
-        toast.success("Logout successful!"); 
+        toast.success("Logout successful!");
         navigate("/");
       } else {
         toast.error(data.message || "Logout failed!");
       }
     } catch (error) {
       console.error(error);
-      toast.error("An error occurred during logout."); 
+      toast.error("An error occurred during logout.");
     }
   }
 
   return (
-    <>
-      <header>
-        <nav>
-          <Link to="/" className="nav-link">
-            Home
+    <div className="min-h-screen flex flex-col">
+      {/* Header */}
+      <header className="bg-blue-600 text-white shadow">
+        <nav className="container mx-auto flex justify-between items-center p-4">
+          <Link
+            to="/"
+            className="text-xl font-bold hover:text-blue-200 transition duration-300"
+          >
+            Hospital Management
           </Link>
-          {user ? (
-            <div className="flex items-center space-x-4">
-              <p className="text-slate-400 text-xs">Welcome Back {user.name}</p>
-              <form onSubmit={handleLogout}>
-                <button className="nav-link">Logout</button>
-              </form>
-            </div>
-          ) : (
-            <div className="space-x-4">
-              <Link to="/login" className="nav-link">
-                Login
-              </Link>
-              <Link to="/register" className="nav-link">
-                Register
-              </Link>
-            </div>
-          )}
+          <div className="flex items-center space-x-6">
+            {user ? (
+              <div className="flex items-center space-x-4">
+                <span className="text-sm font-medium">
+                  Welcome Back, {user.name}
+                </span>
+                <form onSubmit={handleLogout}>
+                  <button
+                    type="submit"
+                    className="bg-white text-blue-600 px-3 py-1 rounded-md hover:bg-blue-700 hover:text-white transition duration-300"
+                  >
+                    Logout
+                  </button>
+                </form>
+              </div>
+            ) : (
+              <div className="space-x-4">
+                <Link
+                  to="/login"
+                  className="hover:text-blue-200 transition duration-300"
+                >
+                  Login
+                </Link>
+                <Link
+                  to="/register"
+                  className="hover:text-blue-200 transition duration-300"
+                >
+                  Register
+                </Link>
+              </div>
+            )}
+          </div>
         </nav>
       </header>
-      <main>
-        <Outlet />
+
+      {/* Main Content */}
+      <main className="flex-grow bg-gray-100 py-8">
+        <div className="container mx-auto p-4">
+          <Outlet />
+        </div>
       </main>
-      {/* Add ToastContainer */}
+
+      {/* Footer */}
+      <footer className="bg-blue-600 text-white text-center py-4">
+        <p className="text-sm">
+          © {new Date().getFullYear()} Hospital Management. All rights
+          reserved.
+        </p>
+      </footer>
+
+      {/* Toast Notifications */}
       <ToastContainer />
-    </>
+    </div>
   );
 }
