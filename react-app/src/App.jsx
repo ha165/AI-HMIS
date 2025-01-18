@@ -42,6 +42,18 @@ export default function App() {
                     element={user ? <Home /> : <Register />}
                   />
                   <Route path="/login" element={user ? <Home /> : <Login />} />
+
+                  <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/team" element={<Team />} />
+                  <Route path="/invoices" element={<Invoices />} />
+                  <Route path="/contacts" element={<Contacts />} />
+                  <Route path="/faq" element={<FAQ />} />
+                  <Route path="/bar" element={<Bar />} />
+                  <Route path="/pie" element={<Pie />} />
+                  <Route path="/line" element={<Line />} />
+                  <Route path="/geography" element={<Geography />} />
+                  <Route path="/calendar" element={<Calender />} />
+                  <Route path="/form" element={<Form />} />
                 </Route>
               </Routes>
             </BrowserRouter>
