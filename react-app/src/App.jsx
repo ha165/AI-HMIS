@@ -9,6 +9,19 @@ import Register from "./Pages/Auth/Register";
 import Login from "./Pages/Auth/Login";
 import { useContext } from "react";
 import { AppContext } from "./Context/AppContext";
+import Dashboard from "./Scenes/dashboard/index.jsx";
+import Team from "./Scenes/team/index.jsx";
+import Invoices from "./Scenes/invoices/index.jsx";
+import Contacts from "./Scenes/contacts/index.jsx";
+import FAQ from "./Scenes/faq/index.jsx";
+import Bar from "./Scenes/bar/index.jsx";
+import Pie from "./Scenes/pie/index.jsx";
+import Line from "./Scenes/line/index.jsx";
+import Geography from "./Scenes/geography/index.jsx";
+import Calender from "./Scenes/calendar/calendar.jsx";
+import Form from "./Scenes/form/index.jsx";
+
+
 export default function App() {
   const [theme, colorMode] = useMode();
   const { user } = useContext(AppContext);
