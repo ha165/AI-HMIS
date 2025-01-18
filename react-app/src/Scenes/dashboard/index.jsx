@@ -1,6 +1,12 @@
+import SideBar from "../global/SideBar";
+import TopBar from "../global/TopBar";
 const Dashboard = () => {
     return (
-        <div>Dashboard</div>
+        <>
+        <TopBar />
+        <SideBar />
+        </>
+     
     )
 }
 export default Dashboard;
