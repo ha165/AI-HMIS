@@ -9,6 +9,7 @@ import Login from "./Pages/Auth/Login";
 import { useContext } from "react";
 import { AppContext } from "./Context/AppContext";
 import Dashboard from "./Scenes/dashboard/index.jsx";
+import Patients from "./pages/Patients/Patients.jsx";
 
 export default function App() {
   const [theme, colorMode] = useMode();
@@ -47,6 +48,7 @@ export default function App() {
                 <Route path="/home" element={user ? <Home /> : <Login />} />
                 <Route path="/register" element={!user ? <Register /> : <Dashboard />} />
                 <Route path="/login" element={!user ? <Login /> : <Dashboard />} />
+                <Route path="/patients" element={user ? <Patients /> : <Login />} />
               </Routes>
             </BrowserRouter>
           </main>
