@@ -1,3 +1,4 @@
+import { CircularProgress, Box } from "@mui/material";
 import { ColorModeContext, useMode } from "../themes.js";
 import { CssBaseline, ThemeProvider } from "@mui/material";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
@@ -11,7 +12,25 @@ import Dashboard from "./Scenes/dashboard/index.jsx";
 
 export default function App() {
   const [theme, colorMode] = useMode();
-  const { user } = useContext(AppContext);
+  const { user, loading } = useContext(AppContext);
+
+  if (loading) {
+    // Show a styled loading spinner
+    return (
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100vh",
+          backgroundColor: theme.palette.background.default,
+          color: theme.palette.text.primary,
+        }}
+      >
+        <CircularProgress size={60} thickness={4} />
+      </Box>
+    );
+  }
 
   return (
     <ColorModeContext.Provider value={colorMode}>
@@ -26,8 +45,8 @@ export default function App() {
                 
                 {/* Additional routes */}
                 <Route path="/home" element={user ? <Home /> : <Login />} />
-                <Route path="/register" element={user ? <Register /> : <Register />} />
-                <Route path="/login" element={user ? <Login /> : <Login />} />
+                <Route path="/register" element={!user ? <Register /> : <Dashboard />} />
+                <Route path="/login" element={!user ? <Login /> : <Dashboard />} />
               </Routes>
             </BrowserRouter>
           </main>
