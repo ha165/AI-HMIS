@@ -1,7 +1,10 @@
+// src/components/Loader.jsx
 import React from "react";
-import { CircularProgress, Box } from "@mui/material";
+import { CircularProgress, Box, Typography, useTheme } from "@mui/material";
 
 const Loader = () => {
+  const theme = useTheme(); // Access the theme
+
   return (
     <Box
       sx={{
@@ -9,11 +12,19 @@ const Loader = () => {
         justifyContent: "center",
         alignItems: "center",
         height: "100vh",
-        flexDirection: "column",
+        backgroundColor: theme.palette.background.default,
+        color: theme.palette.text.primary,
       }}
     >
-      <CircularProgress size={60} thickness={4} />
-      <Box mt={2}>Loading...</Box>
+      <CircularProgress
+        size={60}
+        thickness={4}
+        sx={{ color: theme.palette.primary.main }}
+      />{" "}
+      {/* Use primary color for spinner */}
+      <Typography variant="h6" sx={{ marginTop: 2 }}>
+        Loading, please wait...
+      </Typography>
     </Box>
   );
 };
