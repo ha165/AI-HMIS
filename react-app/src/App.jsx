@@ -9,7 +9,7 @@ import Login from "./Pages/Auth/Login";
 import { useContext } from "react";
 import { AppContext } from "./Context/AppContext";
 import Dashboard from "./Scenes/dashboard/index.jsx";
-import Patients from "./pages/Patients/Patients.jsx";
+import Patients from "./Pages/Patients/Patients.jsx";
 import Contacts from "./Pages/Contacts/Contacts.jsx";
 
 export default function App() {
