@@ -14,7 +14,7 @@ import Contacts from "./Pages/Contacts/Contacts.jsx";
 import Forms from "./Pages/Forms/Form.jsx";
 import Calendar from "./Scenes/calendar/calendar.jsx";
 import FAQ from "./Pages/Faq/Faq.jsx";
-
+import Bar from "./Scenes/bar/index.jsx";
 export default function App() {
   const [theme, colorMode] = useMode();
   const { user, loading } = useContext(AppContext);
@@ -57,6 +57,7 @@ export default function App() {
                 <Route path="/form" element={user ? <Forms /> : <Login />} />
                 <Route path="/calendar" element={user ? <Calendar /> : <Login />} />
                 <Route path="/faq" element={user ? <FAQ /> : <Login />} />
+                <Route path="/bar" element={user ? <Bar /> : <Login />} />
               </Routes>
             </BrowserRouter>
           </main>
