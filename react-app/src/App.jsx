@@ -11,6 +11,7 @@ import { AppContext } from "./Context/AppContext";
 import Dashboard from "./Scenes/dashboard/index.jsx";
 import Patients from "./Pages/Patients/Patients.jsx";
 import Contacts from "./Pages/Contacts/Contacts.jsx";
+import Forms from "./Pages/Forms/Form.jsx";
 
 export default function App() {
   const [theme, colorMode] = useMode();
@@ -51,6 +52,7 @@ export default function App() {
                 <Route path="/login" element={!user ? <Login /> : <Dashboard />} />
                 <Route path="/patients" element={user ? <Patients /> : <Login />} />
                 <Route path="/contacts" element={user ? <Contacts /> : <Login />} />
+                <Route path="/form" element={user ? <Forms /> : <Login />} />
               </Routes>
             </BrowserRouter>
           </main>
