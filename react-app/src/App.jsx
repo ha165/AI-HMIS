@@ -4,7 +4,9 @@ import { useContext, Suspense, lazy } from "react";
 
 import { ColorModeContext, useMode } from "../themes.js";
 import { AppContext } from "./Context/AppContext";
-import Loader from "./Components/Loader.jsx";
+import Loader from "./components/Loader";
+import ErrorBoundary from "./components/ErrorBoundary"; // Import ErrorBoundary
+
 import "./App.css";
 
 // Lazy-loaded components
@@ -42,28 +44,30 @@ export default function App() {
         <CssBaseline />
         <div className="app">
           <main className="content">
-            <BrowserRouter>
-              <Suspense fallback={<Loader />}>
-                <Routes>
-                  {/* Public Routes */}
-                  <Route path="/register" element={!user ? <Register /> : <Navigate to="/" replace />} />
-                  <Route path="/login" element={!user ? <Login /> : <Navigate to="/" replace />} />
+            <ErrorBoundary>
+              <BrowserRouter>
+                <Suspense fallback={<Loader />}>
+                  <Routes>
+                    {/* Public Routes */}
+                    <Route path="/register" element={!user ? <Register /> : <Navigate to="/" replace />} />
+                    <Route path="/login" element={!user ? <Login /> : <Navigate to="/" replace />} />
 
-                  {/* Protected Routes */}
-                  <Route path="/" element={<ProtectedRoute element={<Dashboard />} user={user} />} />
-                  <Route path="/home" element={<ProtectedRoute element={<Home />} user={user} />} />
-                  <Route path="/patients" element={<ProtectedRoute element={<Patients />} user={user} />} />
-                  <Route path="/contacts" element={<ProtectedRoute element={<Contacts />} user={user} />} />
-                  <Route path="/form" element={<ProtectedRoute element={<Forms />} user={user} />} />
-                  <Route path="/calendar" element={<ProtectedRoute element={<Calendar />} user={user} />} />
-                  <Route path="/faq" element={<ProtectedRoute element={<FAQ />} user={user} />} />
-                  <Route path="/bar" element={<ProtectedRoute element={<Bar />} user={user} />} />
-                  <Route path="/line" element={<ProtectedRoute element={<Line />} user={user} />} />
-                  <Route path="/pie" element={<ProtectedRoute element={<Pie />} user={user} />} />
-                  <Route path="/geography" element={<ProtectedRoute element={<Geography />} user={user} />} />
-                </Routes>
-              </Suspense>
-            </BrowserRouter>
+                    {/* Protected Routes */}
+                    <Route path="/" element={<ProtectedRoute element={<Dashboard />} user={user} />} />
+                    <Route path="/home" element={<ProtectedRoute element={<Home />} user={user} />} />
+                    <Route path="/patients" element={<ProtectedRoute element={<Patients />} user={user} />} />
+                    <Route path="/contacts" element={<ProtectedRoute element={<Contacts />} user={user} />} />
+                    <Route path="/form" element={<ProtectedRoute element={<Forms />} user={user} />} />
+                    <Route path="/calendar" element={<ProtectedRoute element={<Calendar />} user={user} />} />
+                    <Route path="/faq" element={<ProtectedRoute element={<FAQ />} user={user} />} />
+                    <Route path="/bar" element={<ProtectedRoute element={<Bar />} user={user} />} />
+                    <Route path="/line" element={<ProtectedRoute element={<Line />} user={user} />} />
+                    <Route path="/pie" element={<ProtectedRoute element={<Pie />} user={user} />} />
+                    <Route path="/geography" element={<ProtectedRoute element={<Geography />} user={user} />} />
+                  </Routes>
+                </Suspense>
+              </BrowserRouter>
+            </ErrorBoundary>
           </main>
         </div>
       </ThemeProvider>
