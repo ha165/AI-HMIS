@@ -15,6 +15,7 @@ import Forms from "./Pages/Forms/Form.jsx";
 import Calendar from "./Scenes/calendar/calendar.jsx";
 import FAQ from "./Pages/Faq/Faq.jsx";
 import Bar from "./Scenes/bar/index.jsx";
+import Line from "./Scenes/line/index.jsx";
 export default function App() {
   const [theme, colorMode] = useMode();
   const { user, loading } = useContext(AppContext);
@@ -58,6 +59,7 @@ export default function App() {
                 <Route path="/calendar" element={user ? <Calendar /> : <Login />} />
                 <Route path="/faq" element={user ? <FAQ /> : <Login />} />
                 <Route path="/bar" element={user ? <Bar /> : <Login />} />
+                <Route path="/line" element={user ? <Line /> : <Login />} />
               </Routes>
             </BrowserRouter>
           </main>
