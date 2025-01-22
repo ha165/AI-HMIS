@@ -10,6 +10,7 @@ import { useContext } from "react";
 import { AppContext } from "./Context/AppContext";
 import Dashboard from "./Scenes/dashboard/index.jsx";
 import Patients from "./pages/Patients/Patients.jsx";
+import Contacts from "./Pages/Contacts/Contacts.jsx";
 
 export default function App() {
   const [theme, colorMode] = useMode();
@@ -49,6 +50,7 @@ export default function App() {
                 <Route path="/register" element={!user ? <Register /> : <Dashboard />} />
                 <Route path="/login" element={!user ? <Login /> : <Dashboard />} />
                 <Route path="/patients" element={user ? <Patients /> : <Login />} />
+                <Route path="/contacts" element={user ? <Contacts /> : <Login />} />
               </Routes>
             </BrowserRouter>
           </main>
