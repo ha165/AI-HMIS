@@ -26,12 +26,12 @@ export default function Register() {
   
     const formData = new FormData();
     
-    // Append image field if it exists
+  
     if (formdata.profile_photo) {
       formData.append('profile_photo', formdata.profile_photo);
     }
   
-    // Append other fields as JSON
+  
     formData.append('first_name', formdata.first_name);
     formData.append('last_name', formdata.last_name);
     formData.append('email', formdata.email);
@@ -43,8 +43,7 @@ export default function Register() {
       const res = await fetch("api/register", {
         method: "POST",
         headers: {
-          // Do not set Content-Type here when using FormData
-          // Content-Type: 'application/json',  <-- this should not be included
+          
         },
         body: formData,
       });
@@ -58,8 +57,8 @@ export default function Register() {
       } else {
         localStorage.setItem("token", data.token);
         setToken(data.token);
-        toast.success("You Can Now Login");
-        navigate("/login");
+        toast.success("Registration Successful");
+        navigate("/");
       }
     } catch (error) {
       toast.error("Something went wrong, please try again!");
