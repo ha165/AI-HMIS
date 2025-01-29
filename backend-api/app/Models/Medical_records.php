@@ -10,6 +10,8 @@ class Medical_records extends Model
     /** @use HasFactory<\Database\Factories\MedicalRecordsFactory> */
     use HasFactory;
 
+    protected $table = 'medical_records';
+
     protected $fillable = [
         'patient_id',
         'doctor_id',

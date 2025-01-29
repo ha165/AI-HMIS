@@ -9,4 +9,17 @@ class Notifications extends Model
 {
     /** @use HasFactory<\Database\Factories\NotificationsFactory> */
     use HasFactory;
+
+    protected $table = 'notifications';
+
+    protected $fillable = [
+        'user_id',
+        'message',
+        'read',
+    ];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 }

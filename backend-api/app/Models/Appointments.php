@@ -9,6 +9,8 @@ class Appointments extends Model
 {
     /** @use HasFactory<\Database\Factories\AppointmentsFactory> */
     use HasFactory;
+
+    protected $table = 'appointments';
     
     protected $fillable = [
         'patient_id',

@@ -9,4 +9,13 @@ class Schedules extends Model
 {
     /** @use HasFactory<\Database\Factories\SchedulesFactory> */
     use HasFactory;
+
+    protected $table = 'schedules';
+
+    protected $fillable = [
+        'user_id',
+        'start_time',
+        'end_time',
+        'notes',       
+    ];
 }
