@@ -29,7 +29,7 @@ export default function App() {
             <ErrorBoundary>
               <BrowserRouter>
                 <Suspense fallback={<Loader />}>
-                  <AppRoutes user={user} /> {/* Use the newly organized routes */}
+                  <AppRoutes user={user} /> 
                 </Suspense>
               </BrowserRouter>
             </ErrorBoundary>
