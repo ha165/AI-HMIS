@@ -3,29 +3,54 @@ import { useState, useContext } from "react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { AppContext } from "../../Context/AppContext";
+import { tokens } from "../../../themes";
 
 export default function Register() {
   const { setToken } = useContext(AppContext);
   const navigate = useNavigate();
   const [formdata, setFormData] = useState({
-    name: "",
+    first_name: "",
+    last_name: "",
     email: "",
+    phone: "",
     password: "",
     password_confirmation: "",
+    profile_photo: "",
   });
   const [errors, setErrors] = useState({});
+  const themeMode = "dark";
+  const colors = tokens(themeMode);
 
   async function handleRegister(e) {
     e.preventDefault();
+  
+    const formData = new FormData();
+    
+    // Append image field if it exists
+    if (formdata.profile_photo) {
+      formData.append('profile_photo', formdata.profile_photo);
+    }
+  
+    // Append other fields as JSON
+    formData.append('first_name', formdata.first_name);
+    formData.append('last_name', formdata.last_name);
+    formData.append('email', formdata.email);
+    formData.append('phone', formdata.phone);
+    formData.append('password', formdata.password);
+    formData.append('password_confirmation', formdata.password_confirmation);
+  
     try {
       const res = await fetch("api/register", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formdata),
+        headers: {
+          // Do not set Content-Type here when using FormData
+          // Content-Type: 'application/json',  <-- this should not be included
+        },
+        body: formData,
       });
-
+  
       if (!res.ok) throw new Error("Network response was not ok");
-
+  
       const data = await res.json();
       if (data.errors) {
         setErrors(data.errors);
@@ -42,107 +67,78 @@ export default function Register() {
     }
   }
 
+  function handleInputChange(e) {
+    setFormData({ ...formdata, [e.target.name]: e.target.value });
+  }
+
+  function handleFileChange(e) {
+    setFormData({ ...formdata, profile_photo: e.target.files[0] });
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-r from-blue-100 to-blue-200 flex items-center justify-center">
-      <div className="bg-white shadow-lg rounded-lg p-8 w-full max-w-md">
-        <h1 className="text-3xl font-bold text-center text-blue-600 mb-6">
+      <div
+        className={`bg-${colors.grey[100]} shadow-lg rounded-lg p-8 w-full max-w-md`}
+      >
+        <h1
+          className={`text-3xl font-bold text-center text-${colors.primary[500]} mb-6`}
+        >
           Create Your Account
         </h1>
-        <form onSubmit={handleRegister} className="space-y-6">
-          <div>
-            <label
-              htmlFor="name"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Full Name
-            </label>
-            <input
-              type="text"
-              id="name"
-              placeholder="Enter your full name"
-              value={formdata.name}
-              onChange={(e) =>
-                setFormData({ ...formdata, name: e.target.value })
-              }
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-            />
-            {errors.name && (
-              <p className="mt-2 text-sm text-red-600">{errors.name[0]}</p>
-            )}
-          </div>
-          <div>
-            <label
-              htmlFor="email"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Email Address
-            </label>
-            <input
-              type="text"
-              id="email"
-              placeholder="Enter your email"
-              value={formdata.email}
-              onChange={(e) =>
-                setFormData({ ...formdata, email: e.target.value })
-              }
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-            />
-            {errors.email && (
-              <p className="mt-2 text-sm text-red-600">{errors.email[0]}</p>
-            )}
-          </div>
-          <div>
-            <label
-              htmlFor="password"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Password
-            </label>
-            <input
-              type="password"
-              id="password"
-              placeholder="Enter your password"
-              value={formdata.password}
-              onChange={(e) =>
-                setFormData({ ...formdata, password: e.target.value })
-              }
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-            />
-            {errors.password && (
-              <p className="mt-2 text-sm text-red-600">{errors.password[0]}</p>
-            )}
-          </div>
-          <div>
-            <label
-              htmlFor="password_confirmation"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Confirm Password
-            </label>
-            <input
-              type="password"
-              id="password_confirmation"
-              placeholder="Re-enter your password"
-              value={formdata.password_confirmation}
-              onChange={(e) =>
-                setFormData({
-                  ...formdata,
-                  password_confirmation: e.target.value,
-                })
-              }
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-            />
-          </div>
+        <form onSubmit={handleRegister} className="flex flex-col space-y-4">
+          {[
+            { name: "first_name", type: "text", placeholder: "First Name" },
+            { name: "last_name", type: "text", placeholder: "Last Name" },
+            { name: "email", type: "email", placeholder: "Email" },
+            { name: "phone", type: "text", placeholder: "Phone Number" },
+            { name: "password", type: "password", placeholder: "Password" },
+            {
+              name: "password_confirmation",
+              type: "password",
+              placeholder: "Confirm Password",
+            },
+          ].map((input) => (
+            <div key={input.name} className="flex flex-col">
+              <input
+                type={input.type}
+                name={input.name}
+                placeholder={input.placeholder}
+                value={formdata[input.name]}
+                onChange={handleInputChange}
+                className="input-field w-full p-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-500"
+              />
+              {errors[input.name] && (
+                <p className="error-text text-red-600">
+                  {errors[input.name][0]}
+                </p>
+              )}
+            </div>
+          ))}
+
+          <input
+            type="file"
+            name="profile_photo"
+            accept="image/*"
+            onChange={handleFileChange}
+            className="file-input w-full p-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          {errors.profile_photo && (
+            <p className="error-text text-red-600">{errors.profile_photo[0]}</p>
+          )}
+
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-150"
+            className="btn-primary w-full p-4 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
           >
             Register
           </button>
         </form>
         <p className="mt-6 text-center text-gray-500 text-sm">
           Already have an account?{" "}
-          <a href="/login" className="text-blue-600 hover:underline">
+          <a
+            href="/login"
+            className={`text-${colors.primary[500]} hover:underline`}
+          >
             Login here
           </a>
         </p>

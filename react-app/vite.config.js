@@ -9,11 +9,13 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:8000',
         changeOrigin: true,
-        headers:{
+        headers: {
           Accept: 'application/json',
-          'Content-Type': 'application/json'
-        }
-      }
-    }
-  }
-})
+          // Remove 'Content-Type': 'application/json'
+          // Do not set the Content-Type here for file uploads
+        },
+      },
+    },
+  },
+});
+

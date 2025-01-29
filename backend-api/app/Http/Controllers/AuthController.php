@@ -1,4 +1,4 @@
-<?php 
+<?php
 namespace App\Http\Controllers;
 
 use App\Models\Roles;
@@ -15,7 +15,15 @@ class AuthController extends Controller
       'last_name' => 'required|max:255',
       'email' => 'required|email|unique:users,email',
       'password' => 'required|min:8|confirmed',
+      'phone' => 'required|digits:10',
+      'profile_photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
     ]);
+
+    // Handle Profile Photo Upload
+    if ($request->hasFile('profile_photo')) {
+      $profilePhotoPath = $request->file('profile_photo')->store('profile_photos', 'public');
+      $fields['profile_photo'] = $profilePhotoPath;
+    }
 
     // Hash the password before saving
     $fields['password'] = Hash::make($fields['password']);
@@ -23,19 +31,21 @@ class AuthController extends Controller
     // Create user
     $user = User::create($fields);
 
+    // Assign Role
     $patientRole = Roles::where('name', 'patient')->first();
     if ($patientRole) {
-        $user->roles()->attach($patientRole->id);
+      $user->roles()->attach($patientRole->id);
     }
 
     // Create token
-    $token = $user->createToken('auth_token');
+    $token = $user->createToken('auth_token')->plainTextToken;
 
     return response()->json([
       'user' => $user,
-      'token' => $token->plainTextToken,
+      'token' => $token,
     ], 201);
   }
+
 
   public function login(Request $request)
   {
