@@ -9,11 +9,11 @@ export default function Login() {
   const navigate = useNavigate();
   const [formdata, setFormData] = useState({ email: "", password: "" });
   const [errors, setErrors] = useState({});
-  const [loading, setLoading] = useState(false); // New loading state
+  const [loading, setLoading] = useState(false); 
 
   async function handleLogin(e) {
     e.preventDefault();
-    setLoading(true); // Start loading
+    setLoading(true); 
 
     try {
       const res = await fetch("api/login", {
@@ -32,7 +32,7 @@ export default function Login() {
         localStorage.setItem("token", data.token);
         setToken(data.token);
         toast.success("Login Successful");
-        navigate("/"); // Redirect to the home page (adjust if needed)
+        navigate("/"); 
       }
     } catch (error) {
       if (error.response) {
@@ -44,7 +44,7 @@ export default function Login() {
       }
       console.error(error);
     } finally {
-      setLoading(false); // Stop loading
+      setLoading(false); 
     }
   }
 
@@ -56,7 +56,10 @@ export default function Login() {
         </h1>
         <form onSubmit={handleLogin} className="space-y-6">
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+            <label
+              htmlFor="email"
+              className="block text-sm font-medium text-gray-700"
+            >
               Email Address
             </label>
             <input
@@ -64,14 +67,21 @@ export default function Login() {
               id="email"
               placeholder="Enter your email"
               value={formdata.email}
-              onChange={(e) => setFormData({ ...formdata, email: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formdata, email: e.target.value })
+              }
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
             />
-            {errors.email && <p className="mt-2 text-sm text-red-600">{errors.email[0]}</p>}
+            {errors.email && (
+              <p className="mt-2 text-sm text-red-600">{errors.email[0]}</p>
+            )}
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+            <label
+              htmlFor="password"
+              className="block text-sm font-medium text-gray-700"
+            >
               Password
             </label>
             <input
@@ -79,18 +89,22 @@ export default function Login() {
               id="password"
               placeholder="Enter your password"
               value={formdata.password}
-              onChange={(e) => setFormData({ ...formdata, password: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formdata, password: e.target.value })
+              }
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
             />
-            {errors.password && <p className="mt-2 text-sm text-red-600">{errors.password[0]}</p>}
+            {errors.password && (
+              <p className="mt-2 text-sm text-red-600">{errors.password[0]}</p>
+            )}
           </div>
 
           <button
             type="submit"
             className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-150"
-            disabled={loading} // Disable button while loading
+            disabled={loading}
           >
-            {loading ? 'Logging in...' : 'Login'}
+            {loading ? "Logging in..." : "Login"}
           </button>
         </form>
 
