@@ -1,55 +1,74 @@
-<?php
-
+<?php 
 namespace App\Http\Controllers;
 
+use App\Models\Roles;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
-   public function register(request $request) {
-     $fields = $request->validate([
-       'name' => 'required|max:255',
-       'email' => 'required|email|unique:users',
-       'password' => 'required|min:8|confirmed'
-     ]);
-     $user = User::create($fields);
+  public function register(Request $request)
+  {
+    $fields = $request->validate([
+      'first_name' => 'required|max:255',
+      'last_name' => 'required|max:255',
+      'email' => 'required|email|unique:users,email',
+      'password' => 'required|min:8|confirmed',
+    ]);
 
-     $token = $user->createToken($request->name);
+    // Hash the password before saving
+    $fields['password'] = Hash::make($fields['password']);
 
-     return [
-       'user' => $user,
-       'token' => $token->plainTextToken
-     ];
-   }
-   public function login(request $request) {
-     $request->validate([
-       'email' => 'required|email|exists:users',
-       'password' => 'required'
-     ]);
+    // Create user
+    $user = User::create($fields);
 
-     $user = User::where('email', $request->email)->first();
+    $patientRole = Roles::where('name', 'patient')->first();
+    if ($patientRole) {
+        $user->roles()->attach($patientRole->id);
+    }
 
-     if (!$user || !Hash::check($request->password, $user->password)) {
-      return [
-        'errrors' => [
+    // Create token
+    $token = $user->createToken('auth_token');
+
+    return response()->json([
+      'user' => $user,
+      'token' => $token->plainTextToken,
+    ], 201);
+  }
+
+  public function login(Request $request)
+  {
+    $request->validate([
+      'email' => 'required|email|exists:users,email',
+      'password' => 'required',
+    ]);
+
+    $user = User::where('email', $request->email)->first();
+
+    if (!$user || !Hash::check($request->password, $user->password)) {
+      return response()->json([
+        'errors' => [
           'email' => ['The provided credentials are incorrect'],
         ]
-      ];
-     }
+      ], 401);
+    }
 
-     $token = $user->createToken($user->name);
-     return [
-       'user' => $user,
-       'token' => $token->plainTextToken
-     ];
-   }
-   public function logout(request $request) {
-     $request->user()->tokens()->delete();
-     return [
-       'message' => 'Logged out'
-     ];
-   }
-}  
+    // Create token with a generic name
+    $token = $user->createToken('auth_token');
 
+    return response()->json([
+      'user' => $user,
+      'token' => $token->plainTextToken,
+    ]);
+  }
+
+  public function logout(Request $request)
+  {
+    $request->user()->tokens()->delete();
+
+    return response()->json([
+      'message' => 'Logged out successfully',
+    ]);
+  }
+}
