@@ -26,7 +26,7 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
-// Resource routes for various controllers
+// Resource routes 
 Route::resources([
     'ai_diagnostics' => AiDiagnosticsController::class,
     'appointments' => AppointmentsController::class,

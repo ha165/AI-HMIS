@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ProSidebar, Menu, MenuItem } from "react-pro-sidebar";
 import { Box, IconButton, Typography, useTheme } from "@mui/material";
 import { Link } from "react-router-dom";
@@ -40,6 +40,24 @@ const Sidebar = () => {
   const colors = tokens(theme.palette.mode);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [selected, setSelected] = useState("Dashboard");
+
+  const [user, setUser] = useState({});
+  useEffect(()=>{
+    async function fetchUser() {
+      try {
+        const res = await fetch("api/user",{
+          headers:{
+            Authorization: `Bearer ${localStorage.getItem("token")}`
+          },
+        });
+        const data = await res.json();
+        setUser(data);
+      } catch (error) {
+        console.error("Failed to fetch user:", error);
+      }
+    }
+    fetchUser();
+  },[]);
 
   return (
     <Box
