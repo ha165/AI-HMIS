@@ -42,12 +42,12 @@ const Sidebar = () => {
   const [selected, setSelected] = useState("Dashboard");
 
   const [user, setUser] = useState({});
-  useEffect(()=>{
+  useEffect(() => {
     async function fetchUser() {
       try {
-        const res = await fetch("api/user",{
-          headers:{
-            Authorization: `Bearer ${localStorage.getItem("token")}`
+        const res = await fetch("api/user", {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
         });
         const data = await res.json();
@@ -57,7 +57,7 @@ const Sidebar = () => {
       }
     }
     fetchUser();
-  },[]);
+  }, []);
 
   return (
     <Box
@@ -109,30 +109,29 @@ const Sidebar = () => {
 
           {!isCollapsed && (
             <Box mb="25px">
-            <Box display="flex" justifyContent="center" alignItems="center">
-              <img
-                alt="profile-user"
-                width="100px"
-                height="100px"
-                src={user?.profile_photo_url || "../../assets/user.png"} // Fallback to default if no image
-                style={{ cursor: "pointer", borderRadius: "50%" }}
-              />
+              <Box display="flex" justifyContent="center" alignItems="center">
+                <img
+                  alt="profile-user"
+                  width="100px"
+                  height="100px"
+                  src={user?.profile_photo_url}
+                  style={{ borderRadius: "50%" }}
+                />
+              </Box>
+              <Box textAlign="center">
+                <Typography
+                  variant="h2"
+                  color={colors.grey[100]}
+                  fontWeight="bold"
+                  sx={{ m: "10px 0 0 0" }}
+                >
+                  {user?.first_name}
+                </Typography>
+                <Typography variant="h5" color={colors.greenAccent[500]}>
+                  {user?.role}
+                </Typography>
+              </Box>
             </Box>
-            <Box textAlign="center">
-              <Typography
-                variant="h2"
-                color={colors.grey[100]}
-                fontWeight="bold"
-                sx={{ m: "10px 0 0 0" }}
-              >
-                {user?.first_name || "Guest"} {/* Fallback to "Guest" if no name */}
-              </Typography>
-              <Typography variant="h5" color={colors.greenAccent[500]}>
-                {user?.role || "User Role"} {/* Modify this if you have role data */}
-              </Typography>
-            </Box>
-          </Box>
-          
           )}
 
           <Box paddingLeft={isCollapsed ? undefined : "10%"}>
