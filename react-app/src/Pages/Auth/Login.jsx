@@ -70,7 +70,7 @@ export default function Login() {
               onChange={(e) =>
                 setFormData({ ...formdata, email: e.target.value })
               }
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-gray-500"
             />
             {errors.email && (
               <p className="mt-2 text-sm text-red-600">{errors.email[0]}</p>
@@ -92,7 +92,7 @@ export default function Login() {
               onChange={(e) =>
                 setFormData({ ...formdata, password: e.target.value })
               }
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm  text-gray-500"
             />
             {errors.password && (
               <p className="mt-2 text-sm text-red-600">{errors.password[0]}</p>
