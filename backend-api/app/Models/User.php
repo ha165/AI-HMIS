@@ -54,19 +54,24 @@ class User extends Authenticatable
     {
         return $this->belongsToMany(Roles::class);
     }
+    public function getRoleAttribute()
+    {
+        return $this->roles()->first()->name ?? 'patient';
+    }
     public function appointments()
     {
         return $this->hasMany(Appointments::class);
     }
 
     public function shedules()
-/*************  ✨ Codeium Command ⭐  *************/
+    /*************  ✨ Codeium Command ⭐  *************/
     /**
      * Get the URL to the user's profile photo.
      *
      * @return string
      */
-/******  0306081e-8a05-4b41-abf4-1bcbffdb24a8  *******/    {
+    /******  0306081e-8a05-4b41-abf4-1bcbffdb24a8  *******/
+    {
         return $this->hasMany(Schedules::class);
     }
 
