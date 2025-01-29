@@ -11,7 +11,7 @@ use Laravel\Sanctum\HasApiTokens;
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use  HasApiTokens , HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, Notifiable;
 
     /**
      * The attributes that are mass assignable.
@@ -26,6 +26,7 @@ class User extends Authenticatable
         'phone',
         'profile_photo',
     ];
+    protected $appends = ['profile_photo_url'];
 
     /**
      * The attributes that should be hidden for serialization.
@@ -49,15 +50,30 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
-   public function roles(){
-    return $this->belongsToMany(Roles::class);
-   }
-   Public function appointments(){
-    return $this->hasMany(Appointments::class);
-   }
+    public function roles()
+    {
+        return $this->belongsToMany(Roles::class);
+    }
+    public function appointments()
+    {
+        return $this->hasMany(Appointments::class);
+    }
 
-   public function shedules(){
-    return $this->hasMany(Schedules::class);
-   }
+    public function shedules()
+/*************  ✨ Codeium Command ⭐  *************/
+    /**
+     * Get the URL to the user's profile photo.
+     *
+     * @return string
+     */
+/******  0306081e-8a05-4b41-abf4-1bcbffdb24a8  *******/    {
+        return $this->hasMany(Schedules::class);
+    }
 
+    public function getProfilePhotoUrlAttribute()
+    {
+        return $this->profile_photo
+            ? asset('storage/' . $this->profile_photo)
+            : asset('default-avatat.png');
+    }
 }
