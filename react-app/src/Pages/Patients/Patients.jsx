@@ -2,26 +2,24 @@ import { useState, useEffect } from "react";
 import { Box, Typography, CircularProgress, Button, TextField, Modal, useTheme } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import { tokens } from "../../../themes";
-import AdminPanelSettingsOutlinedIcon from "@mui/icons-material/AdminPanelSettingsOutlined";
-import LockOpenOutlinedIcon from "@mui/icons-material/LockOpenOutlined";
-import SecurityOutlinedIcon from "@mui/icons-material/SecurityOutlined";
-import Header from "../../Components/Header";
 import Sidebar from "../../Scenes/global/SideBar";
 import Topbar from "../../Scenes/global/TopBar";
+import Header from "../../Components/Header";
 
 const Patients = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   const [patients, setPatients] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [openEditModal, setOpenEditModal] = useState(false); // Modal state for editing
-  const [selectedPatient, setSelectedPatient] = useState(null); // Store selected patient for editing
-  const [updatedPatient, setUpdatedPatient] = useState({}); // Store updated patient details
+  const [openEditModal, setOpenEditModal] = useState(false);
+  const [selectedPatient, setSelectedPatient] = useState(null);
+  const [updatedPatient, setUpdatedPatient] = useState({});
+  const [userRole, setUserRole] = useState(null); // Store user role
 
   useEffect(() => {
     async function fetchPatients() {
       try {
-        const res = await fetch("http://localhost:8000/api/patients", {
+        const res = await fetch("api/patients", {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
             Accept: "application/json",
@@ -37,24 +35,27 @@ const Patients = () => {
     }
 
     fetchPatients();
+
+    // Retrieve user role
+    const storedRole = localStorage.getItem("role"); // Assuming role is stored
+    setUserRole(storedRole);
   }, []);
 
   const handleEdit = (patient) => {
-    setSelectedPatient(patient); // Set selected patient to edit
-    setOpenEditModal(true); // Open the edit modal
+    setSelectedPatient(patient);
+    setOpenEditModal(true);
   };
 
   const handleDelete = async (id) => {
     try {
-      const response = await fetch(`http://localhost:8000/api/patients/${id}`, {
+      const response = await fetch(`api/patients/${id}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
-          Accept: "application/json",
         },
       });
       if (response.ok) {
-        setPatients(patients.filter(patient => patient.id !== id)); // Remove deleted patient from state
+        setPatients(patients.filter((patient) => patient.id !== id));
       }
     } catch (error) {
       console.error("Error deleting patient", error);
@@ -63,10 +64,9 @@ const Patients = () => {
 
   const handleUpdate = async () => {
     try {
-      const response = await fetch(`http://localhost:8000/api/patients/${selectedPatient.id}`, {
+      const response = await fetch(`api/patients/${selectedPatient.id}`, {
         method: "PUT",
         headers: {
-          "Content-Type": "application/json",
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
         body: JSON.stringify(updatedPatient),
@@ -78,7 +78,7 @@ const Patients = () => {
             patient.id === updatedData.id ? updatedData : patient
           )
         );
-        setOpenEditModal(false); // Close modal after successful update
+        setOpenEditModal(false);
       }
     } catch (error) {
       console.error("Error updating patient", error);
@@ -100,22 +100,26 @@ const Patients = () => {
       renderCell: (params) => {
         return (
           <Box display="flex" justifyContent="space-around">
-            <Button
-              variant="contained"
-              color="primary"
-              size="small"
-              onClick={() => handleEdit(params.row)}
-            >
-              Edit
-            </Button>
-            <Button
-              variant="contained"
-              color="secondary"
-              size="small"
-              onClick={() => handleDelete(params.row.id)}
-            >
-              Delete
-            </Button>
+            {userRole === "admin" && (
+              <>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  size="small"
+                  onClick={() => handleEdit(params.row)}
+                >
+                  Edit
+                </Button>
+                <Button
+                  variant="contained"
+                  color="secondary"
+                  size="small"
+                  onClick={() => handleDelete(params.row.id)}
+                >
+                  Delete
+                </Button>
+              </>
+            )}
           </Box>
         );
       },
@@ -135,7 +139,6 @@ const Patients = () => {
             sx={{
               "& .MuiDataGrid-root": { border: "none" },
               "& .MuiDataGrid-cell": { borderBottom: "none" },
-              "& .name-column--cell": { color: colors.greenAccent[300] },
               "& .MuiDataGrid-columnHeaders": {
                 backgroundColor: colors.blueAccent[700],
                 borderBottom: "none",
