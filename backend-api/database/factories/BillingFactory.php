@@ -1,23 +1,21 @@
 <?php
-
 namespace Database\Factories;
 
+use App\Models\Billing;
+use App\Models\Patients;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
-/**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Billing>
- */
 class BillingFactory extends Factory
 {
-    /**
-     * Define the model's default state.
-     *
-     * @return array<string, mixed>
-     */
-    public function definition(): array
+    protected $model = Billing::class;
+
+
+    public function definition()
     {
         return [
-            //
+            'patient_id' => Patients::factory(),
+            'amount' => $this->faker->randomFloat(2, 1000, 10000),
+            'status' => $this->faker->randomElement(['unpaid', 'paid', 'pending']),
         ];
     }
 }
