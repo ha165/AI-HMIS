@@ -9,11 +9,11 @@ export default function Login() {
   const navigate = useNavigate();
   const [formdata, setFormData] = useState({ email: "", password: "" });
   const [errors, setErrors] = useState({});
-  const [loading, setLoading] = useState(false); 
+  const [loading, setLoading] = useState(false);
 
   async function handleLogin(e) {
     e.preventDefault();
-    setLoading(true); 
+    setLoading(true);
 
     try {
       const res = await fetch("api/login", {
@@ -30,21 +30,21 @@ export default function Login() {
         toast.error("Login Failed");
       } else {
         localStorage.setItem("token", data.token);
+        localStorage.setItem("role", data.role); // Store role in localStorage
         setToken(data.token);
         toast.success("Login Successful");
-        navigate("/"); 
+
+        if (data.role === "admin") {
+          navigate("/");
+        } else {
+          navigate("/dashboard");
+        }
       }
     } catch (error) {
-      if (error.response) {
-        toast.error(error.response.data.message || "Something went wrong");
-      } else if (error.request) {
-        toast.error("No response from server, please try again");
-      } else {
-        toast.error("An unexpected error occurred");
-      }
+      toast.error("Something went wrong, please try again");
       console.error(error);
     } finally {
-      setLoading(false); 
+      setLoading(false);
     }
   }
 

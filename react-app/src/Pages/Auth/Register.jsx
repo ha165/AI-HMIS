@@ -23,42 +23,43 @@ export default function Register() {
 
   async function handleRegister(e) {
     e.preventDefault();
-  
+
     const formData = new FormData();
-    
-  
+    formData.append("first_name", formdata.first_name);
+    formData.append("last_name", formdata.last_name);
+    formData.append("email", formdata.email);
+    formData.append("phone", formdata.phone);
+    formData.append("password", formdata.password);
+    formData.append("password_confirmation", formdata.password_confirmation);
+    formData.append("role", "patient"); // Set default role or allow selection
+
     if (formdata.profile_photo) {
-      formData.append('profile_photo', formdata.profile_photo);
+      formData.append("profile_photo", formdata.profile_photo);
     }
-  
-  
-    formData.append('first_name', formdata.first_name);
-    formData.append('last_name', formdata.last_name);
-    formData.append('email', formdata.email);
-    formData.append('phone', formdata.phone);
-    formData.append('password', formdata.password);
-    formData.append('password_confirmation', formdata.password_confirmation);
-  
+
     try {
       const res = await fetch("api/register", {
         method: "POST",
-        headers: {
-          
-        },
         body: formData,
       });
-  
+
       if (!res.ok) throw new Error("Network response was not ok");
-  
+
       const data = await res.json();
       if (data.errors) {
         setErrors(data.errors);
         toast.error("Registration Failed");
       } else {
         localStorage.setItem("token", data.token);
+        localStorage.setItem("role", data.role);
         setToken(data.token);
         toast.success("Registration Successful");
-        navigate("/");
+
+        if (data.role === "admin") {
+          navigate("/")
+        } else {
+          navigate("/dashboard"); 
+        }
       }
     } catch (error) {
       toast.error("Something went wrong, please try again!");
