@@ -1,13 +1,13 @@
 <?php
 namespace Database\Factories;
 
-use App\Models\Patient;
+use App\Models\Patients;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class PatientsFactory extends Factory
 {
-    protected $model = Patient::class;
+    protected $model = Patients::class;
 
     public function definition()
     {

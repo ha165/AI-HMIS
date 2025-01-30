@@ -14,7 +14,7 @@ class Billing extends Model
 
     protected $fillable = [
         'patient_id',
-        'total_amount',
+        'amount',
         'status',
         'due_date',
     ];

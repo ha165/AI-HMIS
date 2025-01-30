@@ -15,7 +15,8 @@ class BillingFactory extends Factory
         return [
             'patient_id' => Patients::factory(),
             'amount' => $this->faker->randomFloat(2, 1000, 10000),
-            'status' => $this->faker->randomElement(['unpaid', 'paid', 'pending']),
+            'status' => $this->faker->randomElement(['pending', 'paid', 'canceled']),
+            'due_date' => $this->faker->dateTimeBetween('now', '+1 year'),
         ];
     }
 }

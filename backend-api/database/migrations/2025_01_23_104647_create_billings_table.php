@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('billings', function (Blueprint $table) {
             $table->id();
             $table->foreignId('patient_id')->constrained('patients')->cascadeOnDelete();
-            $table->decimal('total_amount', 10, 2);
+            $table->decimal('amount', 10, 2);
             $table->enum('status', ['pending', 'paid', 'canceled'])->default('pending');
             $table->dateTime('due_date')->nullable();
             $table->timestamps();

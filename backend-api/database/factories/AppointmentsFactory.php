@@ -25,7 +25,7 @@ class AppointmentsFactory extends Factory
             'doctor_id' => User::factory(),
             'appointment_date' => $this->faker->dateTimeBetween('now', '+1 year'),
             'reason' => $this->faker->sentence,
-            'status' => $this->faker->randomElement(['pending', 'confirmed', 'canceled']),
+            'status' => $this->faker->randomElement(['pending', 'approved', 'completed', 'cancelled']),
         ];
     }
 }
