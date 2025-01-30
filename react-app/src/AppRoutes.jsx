@@ -19,9 +19,19 @@ const Geography = lazy(() => import("./Scenes/geography"));
 
 // Custom ProtectedRoute to handle authentication
 const ProtectedRoute = ({ element, user }) => {
-  return user ? element : <Navigate to="/login" replace />;
-};
+  const role = localStorage.getItem("role");
 
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  // Prevent patient from accessing "/"
+  if (role === "patient" && window.location.pathname === "/") {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return element;
+};
 // The main Routes component
 const AppRoutes = ({ user }) => {
   return (
