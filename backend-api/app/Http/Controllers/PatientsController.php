@@ -13,7 +13,21 @@ class PatientsController extends Controller
      */
     public function index()
     {
-        //
+        $patients = Patients::with('user:id,first_name,last_name,email,phone')->get();
+
+        $formatdata = $patients->map(function($patients){
+            return [
+                'id' => $patients->id,
+                'first_name' => $patients->user->first_name, 
+                'last_name' => $patients->user->last_name,
+                'email' => $patients->user->email,
+                'phone' => $patients->user->phone,
+                'gender' => $patients->gender,
+                'emergency_contact' => $patients->emergency_contact
+            ];
+        });
+
+        return response()->json($formatdata);
     }
 
     /**

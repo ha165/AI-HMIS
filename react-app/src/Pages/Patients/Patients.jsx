@@ -1,74 +1,49 @@
-import { Box, Typography, useTheme } from '@mui/material';
-import { DataGrid } from '@mui/x-data-grid';
+import { useState, useEffect } from "react";
+import { Box, Typography, CircularProgress, useTheme } from "@mui/material";
+import { DataGrid } from "@mui/x-data-grid";
 import { tokens } from "../../../themes";
-import { mockDataTeam } from "../../data/mockData";
 import AdminPanelSettingsOutlinedIcon from "@mui/icons-material/AdminPanelSettingsOutlined";
 import LockOpenOutlinedIcon from "@mui/icons-material/LockOpenOutlined";
 import SecurityOutlinedIcon from "@mui/icons-material/SecurityOutlined";
 import Header from "../../Components/Header";
-import Sidebar from '../../Scenes/global/SideBar';
-import Topbar from '../../Scenes/global/TopBar';
+import Sidebar from "../../Scenes/global/SideBar";
+import Topbar from "../../Scenes/global/TopBar";
 
 const Patients = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
+  const [patients, setPatients] = useState([]);
+  const [loading, setLoading] = useState(true); // New state for loading
+
+  useEffect(() => {
+    async function fetchPatients() {
+      try {
+        const res = await fetch("http://localhost:8000/api/patients", {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            Accept: "application/json",
+          },
+        });
+        const data = await res.json();
+        setPatients(data);
+      } catch (error) {
+        console.error("Error fetching patients", error);
+      } finally {
+        setLoading(false); // Set loading to false after fetching data
+      }
+    }
+
+    fetchPatients();
+  }, []);
 
   const columns = [
-    { field: "id", headerName: "ID" },
-    {
-      field: "name",
-      headerName: "Name",
-      flex: 1,
-      cellClassName: "name-column--cell",
-    },
-    {
-      field: "age",
-      headerName: "Age",
-      type: "number",
-      headerAlign: "left",
-      align: "left",
-    },
-    {
-      field: "phone",
-      headerName: "Phone Number",
-      flex: 1,
-    },
-    {
-      field: "email",
-      headerName: "Email",
-      flex: 1,
-    },
-    {
-      field: "accessLevel",
-      headerName: "Access Level",
-      flex: 1,
-      renderCell: ({ row: { access } }) => {
-        return (
-          <Box
-            width="60%"
-            m="0 auto"
-            p="5px"
-            display="flex"
-            justifyContent="center"
-            backgroundColor={
-              access === "admin"
-                ? colors.greenAccent[600]
-                : access === "manager"
-                ? colors.greenAccent[700]
-                : colors.greenAccent[700]
-            }
-            borderRadius="4px"
-          >
-            {access === "admin" && <AdminPanelSettingsOutlinedIcon />}
-            {access === "manager" && <SecurityOutlinedIcon />}
-            {access === "user" && <LockOpenOutlinedIcon />}
-            <Typography color={colors.grey[100]} sx={{ ml: "5px" }}>
-              {access}
-            </Typography>
-          </Box>
-        );
-      },
-    },
+    { field: "id", headerName: "ID", width: 90 },
+    { field: "first_name", headerName: "First Name", flex: 1 },
+    { field: "last_name", headerName: "Last Name", flex: 1 },
+    { field: "email", headerName: "Email", flex: 1 },
+    { field: "phone", headerName: "Phone Number", flex: 1 },
+    { field: "gender", headerName: "Gender", flex: 1 },
+    { field: "emergency_contact", headerName: "Emergency Contact", flex: 1 },
   ];
 
   return (
@@ -82,15 +57,9 @@ const Patients = () => {
             m="40px 0 0 0"
             height="75vh"
             sx={{
-              "& .MuiDataGrid-root": {
-                border: "none",
-              },
-              "& .MuiDataGrid-cell": {
-                borderBottom: "none",
-              },
-              "& .name-column--cell": {
-                color: colors.greenAccent[300],
-              },
+              "& .MuiDataGrid-root": { border: "none" },
+              "& .MuiDataGrid-cell": { borderBottom: "none" },
+              "& .name-column--cell": { color: colors.greenAccent[300] },
               "& .MuiDataGrid-columnHeaders": {
                 backgroundColor: colors.blueAccent[700],
                 borderBottom: "none",
@@ -107,7 +76,18 @@ const Patients = () => {
               },
             }}
           >
-            <DataGrid checkboxSelection rows={mockDataTeam} columns={columns} />
+            {loading ? (
+              <Box
+                display="flex"
+                justifyContent="center"
+                alignItems="center"
+                height="100%"
+              >
+                <CircularProgress color="secondary" />
+              </Box>
+            ) : (
+              <DataGrid checkboxSelection rows={patients} columns={columns} />
+            )}
           </Box>
         </Box>
       </Box>

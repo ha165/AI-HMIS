@@ -40,8 +40,9 @@ const Sidebar = () => {
   const colors = tokens(theme.palette.mode);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [selected, setSelected] = useState("Dashboard");
+  const [user, setUser] = useState(null); // State for user data
+  const [loading, setLoading] = useState(true); // State for loading
 
-  const [user, setUser] = useState({});
   useEffect(() => {
     async function fetchUser() {
       try {
@@ -54,6 +55,8 @@ const Sidebar = () => {
         setUser(data);
       } catch (error) {
         console.error("Failed to fetch user:", error);
+      } finally {
+        setLoading(false); // Stop loading after fetching data
       }
     }
     fetchUser();
@@ -98,7 +101,7 @@ const Sidebar = () => {
                 ml="15px"
               >
                 <Typography variant="h3" color={colors.grey[100]}>
-                  ADMINIS
+                  ADMIN
                 </Typography>
                 <IconButton onClick={() => setIsCollapsed(!isCollapsed)}>
                   <MenuOutlinedIcon />
@@ -107,33 +110,49 @@ const Sidebar = () => {
             )}
           </MenuItem>
 
+          {/* PROFILE PHOTO AND NAME */}
           {!isCollapsed && (
             <Box mb="25px">
               <Box display="flex" justifyContent="center" alignItems="center">
-                <img
-                  alt="profile-user"
-                  width="100px"
-                  height="100px"
-                  src={user?.profile_photo_url}
-                  style={{ borderRadius: "50%" }}
-                />
+                {loading ? (
+                  <Typography variant="h6" color={colors.grey[100]}>
+                    Loading...
+                  </Typography>
+                ) : (
+                  <img
+                    alt="profile-user"
+                    width="100px"
+                    height="100px"
+                    src={user?.profile_photo_url}
+                    style={{ borderRadius: "50%" }}
+                  />
+                )}
               </Box>
               <Box textAlign="center">
-                <Typography
-                  variant="h2"
-                  color={colors.grey[100]}
-                  fontWeight="bold"
-                  sx={{ m: "10px 0 0 0" }}
-                >
-                  {user?.first_name}
-                </Typography>
-                <Typography variant="h5" color={colors.greenAccent[500]}>
-                  {user?.role}
-                </Typography>
+                {loading ? (
+                  <Typography variant="h6" color={colors.grey[100]}>
+                    Loading...
+                  </Typography>
+                ) : (
+                  <>
+                    <Typography
+                      variant="h2"
+                      color={colors.grey[100]}
+                      fontWeight="bold"
+                      sx={{ m: "10px 0 0 0" }}
+                    >
+                      {user?.first_name}
+                    </Typography>
+                    <Typography variant="h5" color={colors.greenAccent[500]}>
+                      {user?.role}
+                    </Typography>
+                  </>
+                )}
               </Box>
             </Box>
           )}
 
+          {/* MENU ITEMS */}
           <Box paddingLeft={isCollapsed ? undefined : "10%"}>
             <Item
               title="Dashboard"
