@@ -24,6 +24,7 @@ class User extends Authenticatable
         'email',
         'password',
         'phone',
+        'role',
         'profile_photo',
     ];
     protected $appends = ['profile_photo_url'];
@@ -50,31 +51,17 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
-    public function patient()
+    public function patients()
     {
         return $this->hasOne(Patients::class);
     }
-    public function roles()
-    {
-        return $this->belongsToMany(Roles::class, 'user_role', 'user_id', 'role_id');
-    }
-    public function getRoleAttribute()
-    {
-        return $this->roles()->first()->name ?? 'patient';
-    }
+    
     public function appointments()
     {
         return $this->hasMany(Appointments::class);
     }
 
     public function shedules()
-    /*************  ✨ Codeium Command ⭐  *************/
-    /**
-     * Get the URL to the user's profile photo.
-     *
-     * @return string
-     */
-    /******  0306081e-8a05-4b41-abf4-1bcbffdb24a8  *******/
     {
         return $this->hasMany(Schedules::class);
     }

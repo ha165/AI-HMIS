@@ -1,7 +1,6 @@
-<?php 
+<?php
 namespace App\Http\Controllers;
 
-use App\Models\Roles;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -9,20 +8,20 @@ use Illuminate\Support\Facades\Hash;
 class AuthController extends Controller
 {
   public function register(Request $request)
-{
+  {
     $fields = $request->validate([
-        'first_name' => 'required|max:255',
-        'last_name' => 'required|max:255',
-        'email' => 'required|email|unique:users,email',
-        'password' => 'required|min:8|confirmed',
-        'phone' => 'required|digits:10',
-        'profile_photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+      'first_name' => 'required|max:255',
+      'last_name' => 'required|max:255',
+      'email' => 'required|email|unique:users,email',
+      'password' => 'required|min:8|confirmed',
+      'phone' => 'required|digits:10',
+      'profile_photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
     ]);
 
     // Handle Profile Photo Upload
     if ($request->hasFile('profile_photo')) {
-        $profilePhotoPath = $request->file('profile_photo')->store('profile_photos', 'public');
-        $fields['profile_photo'] = $profilePhotoPath;
+      $profilePhotoPath = $request->file('profile_photo')->store('profile_photos', 'public');
+      $fields['profile_photo'] = $profilePhotoPath;
     }
 
     // Hash the password before saving
@@ -30,21 +29,14 @@ class AuthController extends Controller
 
     // Create user
     $user = User::create($fields);
-
-    // Assign Role
-    $patientRole = Roles::where('name', 'patient')->first();
-    if ($patientRole) {
-        $user->roles()->attach($patientRole->id);
-    }
-
     // Create token
     $token = $user->createToken('auth_token')->plainTextToken;
 
     return response()->json([
-        'user' => $user,
-        'token' => $token,
+      'user' => $user,
+      'token' => $token,
     ], 201);
-}
+  }
 
 
   public function login(Request $request)

@@ -38,3 +38,7 @@ Route::resources([
     'patients' => PatientsController::class,
     'schedules' => SchedulesController::class,
 ]);
+Route::middleware(['auth:sanctum', 'admin'])->group(function () {
+    Route::put('/users/{user}', [PatientsController::class, 'update']); 
+    Route::delete('/users/{user}', [PatientsController::class, 'destroy']); 
+});
