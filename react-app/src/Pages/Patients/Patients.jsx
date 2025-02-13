@@ -1,5 +1,13 @@
 import { useState, useEffect } from "react";
-import { Box, Typography, CircularProgress, Button, TextField, Modal, useTheme } from "@mui/material";
+import {
+  Box,
+  Typography,
+  CircularProgress,
+  Button,
+  TextField,
+  Modal,
+  useTheme,
+} from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import { tokens } from "../../../themes";
 import Sidebar from "../../Scenes/global/SideBar";
@@ -14,7 +22,9 @@ const Patients = () => {
   const [openEditModal, setOpenEditModal] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [updatedPatient, setUpdatedPatient] = useState({});
-  const [userRole, setUserRole] = useState(null); // Store user role
+  const [userRole, setUserRole] = useState(null);
+  const [openDeleteModal, setOpenDeleteModal] = useState(false);
+  const [deletingPatientId, setDeletingPatientId] = useState(null);
 
   useEffect(() => {
     async function fetchPatients() {
@@ -22,7 +32,6 @@ const Patients = () => {
         const res = await fetch("api/patients", {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
-            Accept: "application/json",
           },
         });
         const data = await res.json();
@@ -37,7 +46,7 @@ const Patients = () => {
     fetchPatients();
 
     // Retrieve user role
-    const storedRole = localStorage.getItem("role"); // Assuming role is stored
+    const storedRole = localStorage.getItem("role");
     setUserRole(storedRole);
   }, []);
 
@@ -46,22 +55,34 @@ const Patients = () => {
     setOpenEditModal(true);
   };
 
-  const handleDelete = async (id) => {
+  const handleDelete = (id) => {
+    setDeletingPatientId(id);
+    setOpenDeleteModal(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deletingPatientId) return;
+
     try {
-      const response = await fetch(`api/patients/${id}`, {
+      const response = await fetch(`api/patients/${deletingPatientId}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
       });
+
       if (response.ok) {
-        setPatients(patients.filter((patient) => patient.id !== id));
+        setPatients(
+          patients.filter((patient) => patient.id !== deletingPatientId)
+        );
       }
     } catch (error) {
       console.error("Error deleting patient", error);
+    } finally {
+      setOpenDeleteModal(false);
+      setDeletingPatientId(null);
     }
   };
-
   const handleUpdate = async () => {
     try {
       const response = await fetch(`api/patients/${selectedPatient.id}`, {
@@ -156,7 +177,12 @@ const Patients = () => {
             }}
           >
             {loading ? (
-              <Box display="flex" justifyContent="center" alignItems="center" height="100%">
+              <Box
+                display="flex"
+                justifyContent="center"
+                alignItems="center"
+                height="100%"
+              >
                 <CircularProgress color="secondary" />
               </Box>
             ) : (
@@ -190,35 +216,99 @@ const Patients = () => {
           </Typography>
           <TextField
             label="First Name"
-            value={updatedPatient.first_name || selectedPatient?.first_name || ""}
-            onChange={(e) => setUpdatedPatient({ ...updatedPatient, first_name: e.target.value })}
+            value={
+              updatedPatient.first_name || selectedPatient?.first_name || ""
+            }
+            onChange={(e) =>
+              setUpdatedPatient({
+                ...updatedPatient,
+                first_name: e.target.value,
+              })
+            }
             fullWidth
             margin="normal"
           />
           <TextField
             label="Last Name"
             value={updatedPatient.last_name || selectedPatient?.last_name || ""}
-            onChange={(e) => setUpdatedPatient({ ...updatedPatient, last_name: e.target.value })}
+            onChange={(e) =>
+              setUpdatedPatient({
+                ...updatedPatient,
+                last_name: e.target.value,
+              })
+            }
             fullWidth
             margin="normal"
           />
           <TextField
             label="Phone Number"
             value={updatedPatient.phone || selectedPatient?.phone || ""}
-            onChange={(e) => setUpdatedPatient({ ...updatedPatient, phone: e.target.value })}
+            onChange={(e) =>
+              setUpdatedPatient({ ...updatedPatient, phone: e.target.value })
+            }
             fullWidth
             margin="normal"
           />
           <TextField
             label="Email"
             value={updatedPatient.email || selectedPatient?.email || ""}
-            onChange={(e) => setUpdatedPatient({ ...updatedPatient, email: e.target.value })}
+            onChange={(e) =>
+              setUpdatedPatient({ ...updatedPatient, email: e.target.value })
+            }
             fullWidth
             margin="normal"
           />
           <Box display="flex" justifyContent="flex-end" mt={2}>
             <Button onClick={handleUpdate} variant="contained" color="primary">
               Update
+            </Button>
+          </Box>
+        </Box>
+      </Modal>
+      {/* Delete Confirmation Modal */}
+      <Modal
+        open={openDeleteModal}
+        onClose={() => {
+          setOpenDeleteModal(false);
+          setDeletingPatientId(null);
+        }}
+        aria-labelledby="delete-confirmation-modal"
+      >
+        <Box
+          sx={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            backgroundColor: colors.primary[500],
+            padding: "20px",
+            borderRadius: "10px",
+            width: "400px",
+          }}
+        >
+          <Typography variant="h6" mb={2}>
+            Confirm Delete
+          </Typography>
+          <Typography variant="body1" mb={3}>
+            Are you sure you want to delete this patient? This action cannot be
+            undone.
+          </Typography>
+          <Box display="flex" justifyContent="flex-end" gap={2}>
+            <Button
+              variant="outlined"
+              onClick={() => {
+                setOpenDeleteModal(false);
+                setDeletingPatientId(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="contained"
+              color="secondary"
+              onClick={handleConfirmDelete}
+            >
+              Confirm Delete
             </Button>
           </Box>
         </Box>

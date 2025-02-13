@@ -33,7 +33,7 @@ class PatientsController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(StorePatientsRequest $request)
+    public function store(Request $request)
     {
         //
     }
@@ -49,7 +49,7 @@ class PatientsController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdatePatientsRequest $request, Patients $patients)
+    public function update(Request $request, Patients $patients)
     {
         //
     }
@@ -59,6 +59,6 @@ class PatientsController extends Controller
      */
     public function destroy(Patients $patients)
     {
-        //
+        
     }
 }
