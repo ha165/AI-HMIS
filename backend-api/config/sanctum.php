@@ -46,10 +46,10 @@ return [
     |
     */
 
-    'expiration' => 15,
+    'expiration' => 60,
 
     'personal_access_tokens' => [
-        'expiration' => 15, 
+        'expiration' => 60, 
     ],
 
     /*
