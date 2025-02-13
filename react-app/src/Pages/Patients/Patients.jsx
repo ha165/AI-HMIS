@@ -45,13 +45,18 @@ const Patients = () => {
 
     fetchPatients();
 
-    // Retrieve user role
     const storedRole = localStorage.getItem("role");
     setUserRole(storedRole);
   }, []);
 
   const handleEdit = (patient) => {
     setSelectedPatient(patient);
+    setUpdatedPatient({
+      first_name: patient.first_name,
+      last_name: patient.last_name,
+      phone: patient.phone,
+      email: patient.email,
+    });
     setOpenEditModal(true);
   };
 
@@ -83,14 +88,19 @@ const Patients = () => {
       setDeletingPatientId(null);
     }
   };
+
   const handleUpdate = async () => {
+    if (!selectedPatient) return;
+
+    const payload = { ...selectedPatient, ...updatedPatient };
     try {
       const response = await fetch(`api/patients/${selectedPatient.id}`, {
         method: "PUT",
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify(updatedPatient),
+        body: JSON.stringify(payload),
       });
       if (response.ok) {
         const updatedData = await response.json();
@@ -216,9 +226,7 @@ const Patients = () => {
           </Typography>
           <TextField
             label="First Name"
-            value={
-              updatedPatient.first_name || selectedPatient?.first_name || ""
-            }
+            value={updatedPatient.first_name || ""}
             onChange={(e) =>
               setUpdatedPatient({
                 ...updatedPatient,
@@ -230,7 +238,7 @@ const Patients = () => {
           />
           <TextField
             label="Last Name"
-            value={updatedPatient.last_name || selectedPatient?.last_name || ""}
+            value={updatedPatient.last_name || ""}
             onChange={(e) =>
               setUpdatedPatient({
                 ...updatedPatient,
@@ -242,7 +250,7 @@ const Patients = () => {
           />
           <TextField
             label="Phone Number"
-            value={updatedPatient.phone || selectedPatient?.phone || ""}
+            value={updatedPatient.phone || ""}
             onChange={(e) =>
               setUpdatedPatient({ ...updatedPatient, phone: e.target.value })
             }
@@ -251,9 +259,30 @@ const Patients = () => {
           />
           <TextField
             label="Email"
-            value={updatedPatient.email || selectedPatient?.email || ""}
+            value={updatedPatient.email || ""}
             onChange={(e) =>
               setUpdatedPatient({ ...updatedPatient, email: e.target.value })
+            }
+            fullWidth
+            margin="normal"
+          />
+          <TextField
+            label="Gender"
+            value={updatedPatient.gender || ""}
+            onchannge={(e) =>
+              setUpdatedPatient({ ...updatedPatient, gender: e.target.value })
+            }
+            fullWidth
+            margin="normal"
+          />
+          <TextField
+            label="Emergency Contact"
+            value={updatedPatient.emergency_contact || ""}
+            onChange={(e) =>
+              setUpdatedPatient({
+                ...updatedPatient,
+                emergency_contact: e.target.value,
+              })
             }
             fullWidth
             margin="normal"
@@ -265,6 +294,7 @@ const Patients = () => {
           </Box>
         </Box>
       </Modal>
+
       {/* Delete Confirmation Modal */}
       <Modal
         open={openDeleteModal}
