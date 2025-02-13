@@ -39,6 +39,6 @@ Route::resources([
     'schedules' => SchedulesController::class,
 ]);
 Route::middleware(['auth:sanctum', 'admin'])->group(function () {
-    Route::put('/users/{user}', [PatientsController::class, 'update']); 
-    Route::delete('/users/{user}', [PatientsController::class, 'destroy']); 
+    Route::put('/users/{user}', [PatientsController::class, 'update']);
+    Route::delete('/users/{user}', [PatientsController::class, 'destroy']);
 });
