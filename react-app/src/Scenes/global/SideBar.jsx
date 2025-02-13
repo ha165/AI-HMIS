@@ -40,8 +40,9 @@ const Sidebar = () => {
   const colors = tokens(theme.palette.mode);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [selected, setSelected] = useState("Dashboard");
-  const [user, setUser] = useState(null); // State for user data
-  const [loading, setLoading] = useState(true); // State for loading
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [menuLoading, setMenuLoading] = useState(true); // State for menu loading
 
   useEffect(() => {
     async function fetchUser() {
@@ -56,10 +57,15 @@ const Sidebar = () => {
       } catch (error) {
         console.error("Failed to fetch user:", error);
       } finally {
-        setLoading(false); // Stop loading after fetching data
+        setLoading(false);
       }
     }
     fetchUser();
+
+    // Simulating menu loading delay
+    setTimeout(() => {
+      setMenuLoading(false);
+    }, 2000); // 2 seconds delay
   }, []);
 
   return (
@@ -83,179 +89,189 @@ const Sidebar = () => {
       }}
     >
       <ProSidebar collapsed={isCollapsed}>
-        <Menu iconShape="square">
-          {/* LOGO AND MENU ICON */}
-          <MenuItem
-            onClick={() => setIsCollapsed(!isCollapsed)}
-            icon={isCollapsed ? <MenuOutlinedIcon /> : undefined}
-            style={{
-              margin: "10px 0 20px 0",
-              color: colors.grey[100],
-            }}
+        {menuLoading ? (
+          // Show Circular Progress before menu items
+          <Box
+            height="100vh"
+            display="flex"
+            justifyContent="center"
+            alignItems="center"
           >
-            {!isCollapsed && (
-              <Box display="flex" justifyContent="space-between" alignItems="center" ml="15px">
-                <Typography variant="h3" color={colors.grey[100]}>
-                  ADMIN
-                </Typography>
-                <IconButton onClick={() => setIsCollapsed(!isCollapsed)}>
-                  <MenuOutlinedIcon />
-                </IconButton>
-              </Box>
-            )}
-          </MenuItem>
-
-          {/* PROFILE PHOTO AND NAME */}
-          {!isCollapsed && (
-            <Box mb="25px" textAlign="center">
-              <Box display="flex" justifyContent="center" alignItems="center">
-                {loading ? (
-                  <CircularProgress color="secondary" />
-                ) : (
-                  <img
-                    alt="profile-user"
-                    width="100px"
-                    height="100px"
-                    src={user?.profile_photo_url}
-                    style={{ borderRadius: "50%" }}
-                  />
-                )}
-              </Box>
-              {loading ? (
-                <CircularProgress color="secondary" />
-              ) : (
-                <>
-                  <Typography
-                    variant="h2"
-                    color={colors.grey[100]}
-                    fontWeight="bold"
-                    sx={{ m: "10px 0 0 0" }}
-                  >
-                    {user?.first_name}
-                  </Typography>
-                  <Typography variant="h5" color={colors.greenAccent[500]}>
-                    {user?.role}
-                  </Typography>
-                </>
-              )}
-            </Box>
-          )}
-
-          {/* MENU ITEMS */}
-          <Box paddingLeft={isCollapsed ? undefined : "10%"}>
-            {loading ? (
-              <Box display="flex" justifyContent="center" alignItems="center" height="100%">
-                <CircularProgress color="secondary" />
-              </Box>
-            ) : (
-              <>
-                <Item
-                  title="Dashboard"
-                  to="/"
-                  icon={<HomeOutlinedIcon />}
-                  selected={selected}
-                  setSelected={setSelected}
-                />
-                <Typography
-                  variant="h6"
-                  color={colors.grey[300]}
-                  sx={{ m: "15px 0 5px 20px" }}
-                >
-                  Data
-                </Typography>
-                {/* Conditionally render Manage Patients */}
-                {user?.role !== "patient" && (
-                  <Item
-                    title="Manage Patients"
-                    to="/patients"
-                    icon={<PeopleOutlinedIcon />}
-                    selected={selected}
-                    setSelected={setSelected}
-                  />
-                )}
-                <Item
-                  title="Contacts Information"
-                  to="/contacts"
-                  icon={<ContactsOutlinedIcon />}
-                  selected={selected}
-                  setSelected={setSelected}
-                />
-                <Item
-                  title="Invoices Balances"
-                  to="/invoices"
-                  icon={<ReceiptOutlinedIcon />}
-                  selected={selected}
-                  setSelected={setSelected}
-                />
-
-                <Typography
-                  variant="h6"
-                  color={colors.grey[300]}
-                  sx={{ m: "15px 0 5px 20px" }}
-                >
-                  Pages
-                </Typography>
-                <Item
-                  title="Profile Form"
-                  to="/form"
-                  icon={<PersonOutlinedIcon />}
-                  selected={selected}
-                  setSelected={setSelected}
-                />
-                <Item
-                  title="Calendar"
-                  to="/calendar"
-                  icon={<CalendarTodayOutlinedIcon />}
-                  selected={selected}
-                  setSelected={setSelected}
-                />
-                <Item
-                  title="FAQ Page"
-                  to="/faq"
-                  icon={<HelpOutlineOutlinedIcon />}
-                  selected={selected}
-                  setSelected={setSelected}
-                />
-
-                <Typography
-                  variant="h6"
-                  color={colors.grey[300]}
-                  sx={{ m: "15px 0 5px 20px" }}
-                >
-                  Charts
-                </Typography>
-                <Item
-                  title="Bar Chart"
-                  to="/bar"
-                  icon={<BarChartOutlinedIcon />}
-                  selected={selected}
-                  setSelected={setSelected}
-                />
-                <Item
-                  title="Pie Chart"
-                  to="/pie"
-                  icon={<PieChartOutlineOutlinedIcon />}
-                  selected={selected}
-                  setSelected={setSelected}
-                />
-                <Item
-                  title="Line Chart"
-                  to="/line"
-                  icon={<TimelineOutlinedIcon />}
-                  selected={selected}
-                  setSelected={setSelected}
-                />
-                <Item
-                  title="Geography Chart"
-                  to="/geography"
-                  icon={<MapOutlinedIcon />}
-                  selected={selected}
-                  setSelected={setSelected}
-                />
-              </>
-            )}
+            <CircularProgress size={50} />
           </Box>
-        </Menu>
+        ) : (
+          <Menu iconShape="square">
+            {/* LOGO AND MENU ICON */}
+            <MenuItem
+              onClick={() => setIsCollapsed(!isCollapsed)}
+              icon={isCollapsed ? <MenuOutlinedIcon /> : undefined}
+              style={{
+                margin: "10px 0 20px 0",
+                color: colors.grey[100],
+              }}
+            >
+              {!isCollapsed && (
+                <Box display="flex" justifyContent="space-between" alignItems="center" ml="15px">
+                  <Typography variant="h3" color={colors.grey[100]}>
+                    ADMIN
+                  </Typography>
+                  <IconButton onClick={() => setIsCollapsed(!isCollapsed)}>
+                    <MenuOutlinedIcon />
+                  </IconButton>
+                </Box>
+              )}
+            </MenuItem>
+
+            {/* PROFILE PHOTO AND NAME */}
+            {!isCollapsed && (
+              <Box mb="25px">
+                <Box display="flex" justifyContent="center" alignItems="center">
+                  {loading ? (
+                    <Typography variant="h6" color={colors.grey[100]}>
+                      Loading...
+                    </Typography>
+                  ) : (
+                    <img
+                      alt="profile-user"
+                      width="100px"
+                      height="100px"
+                      src={user?.profile_photo_url}
+                      style={{ borderRadius: "50%" }}
+                    />
+                  )}
+                </Box>
+                <Box textAlign="center">
+                  {loading ? (
+                    <Typography variant="h6" color={colors.grey[100]}>
+                      Loading...
+                    </Typography>
+                  ) : (
+                    <>
+                      <Typography
+                        variant="h2"
+                        color={colors.grey[100]}
+                        fontWeight="bold"
+                        sx={{ m: "10px 0 0 0" }}
+                      >
+                        {user?.first_name}
+                      </Typography>
+                      <Typography variant="h5" color={colors.greenAccent[500]}>
+                        {user?.role}
+                      </Typography>
+                    </>
+                  )}
+                </Box>
+              </Box>
+            )}
+
+            {/* MENU ITEMS */}
+            <Box paddingLeft={isCollapsed ? undefined : "10%"}>
+              <Item
+                title="Dashboard"
+                to="/"
+                icon={<HomeOutlinedIcon />}
+                selected={selected}
+                setSelected={setSelected}
+              />
+
+              <Typography
+                variant="h6"
+                color={colors.grey[300]}
+                sx={{ m: "15px 0 5px 20px" }}
+              >
+                Data
+              </Typography>
+              {user?.role !== "patient" && (
+                <Item
+                  title="Manage Patients"
+                  to="/patients"
+                  icon={<PeopleOutlinedIcon />}
+                  selected={selected}
+                  setSelected={setSelected}
+                />
+              )}
+              <Item
+                title="Contacts Information"
+                to="/contacts"
+                icon={<ContactsOutlinedIcon />}
+                selected={selected}
+                setSelected={setSelected}
+              />
+              <Item
+                title="Invoices Balances"
+                to="/invoices"
+                icon={<ReceiptOutlinedIcon />}
+                selected={selected}
+                setSelected={setSelected}
+              />
+
+              <Typography
+                variant="h6"
+                color={colors.grey[300]}
+                sx={{ m: "15px 0 5px 20px" }}
+              >
+                Pages
+              </Typography>
+              <Item
+                title="Profile Form"
+                to="/form"
+                icon={<PersonOutlinedIcon />}
+                selected={selected}
+                setSelected={setSelected}
+              />
+              <Item
+                title="Calendar"
+                to="/calendar"
+                icon={<CalendarTodayOutlinedIcon />}
+                selected={selected}
+                setSelected={setSelected}
+              />
+              <Item
+                title="FAQ Page"
+                to="/faq"
+                icon={<HelpOutlineOutlinedIcon />}
+                selected={selected}
+                setSelected={setSelected}
+              />
+
+              <Typography
+                variant="h6"
+                color={colors.grey[300]}
+                sx={{ m: "15px 0 5px 20px" }}
+              >
+                Charts
+              </Typography>
+              <Item
+                title="Bar Chart"
+                to="/bar"
+                icon={<BarChartOutlinedIcon />}
+                selected={selected}
+                setSelected={setSelected}
+              />
+              <Item
+                title="Pie Chart"
+                to="/pie"
+                icon={<PieChartOutlineOutlinedIcon />}
+                selected={selected}
+                setSelected={setSelected}
+              />
+              <Item
+                title="Line Chart"
+                to="/line"
+                icon={<TimelineOutlinedIcon />}
+                selected={selected}
+                setSelected={setSelected}
+              />
+              <Item
+                title="Geography Chart"
+                to="/geography"
+                icon={<MapOutlinedIcon />}
+                selected={selected}
+                setSelected={setSelected}
+              />
+            </Box>
+          </Menu>
+        )}
       </ProSidebar>
     </Box>
   );
