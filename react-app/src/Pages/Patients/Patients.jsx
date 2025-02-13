@@ -56,6 +56,8 @@ const Patients = () => {
       last_name: patient.last_name,
       phone: patient.phone,
       email: patient.email,
+      gender: patient.gender,
+      emergency_contact: patient.emergency_contact,
     });
     setOpenEditModal(true);
   };
@@ -269,7 +271,9 @@ const Patients = () => {
           <TextField
             label="Gender"
             value={updatedPatient.gender || ""}
-            onchannge={(e) =>
+            onChange={(
+              e // Corrected the typo from "onchannge" to "onChange"
+            ) =>
               setUpdatedPatient({ ...updatedPatient, gender: e.target.value })
             }
             fullWidth
