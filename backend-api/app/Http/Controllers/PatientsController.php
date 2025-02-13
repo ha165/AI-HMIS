@@ -3,8 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Patients;
-use App\Http\Requests\StorePatientsRequest;
-use App\Http\Requests\UpdatePatientsRequest;
+use Illuminate\Http\Request;
 
 class PatientsController extends Controller
 {
