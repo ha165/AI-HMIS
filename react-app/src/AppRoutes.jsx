@@ -1,6 +1,7 @@
 // src/AppRoutes.jsx
 import { Routes, Route, Navigate } from "react-router-dom";
 import { lazy } from "react";
+import UserDashboard from "./Scenes/dashboard/UserDashboard";
 
 // Lazy-loaded components
 const Home = lazy(() => import("./Pages/Home"));
@@ -54,6 +55,10 @@ const AppRoutes = ({ user }) => {
       <Route
         path="/home"
         element={<ProtectedRoute element={<Home />} user={user} />}
+      />
+      <Route
+        path="/dashboard"
+        element={<ProtectedRoute element={<UserDashboard />} user={user} />}
       />
       <Route
         path="/patients"
