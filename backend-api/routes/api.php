@@ -12,6 +12,9 @@ use App\Http\Controllers\PatientsController;
 use App\Http\Controllers\SchedulesController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Http\JsonResponse;
+
 
 // User authentication route
 Route::middleware('auth:sanctum')->group(function () {
@@ -41,4 +44,30 @@ Route::resources([
 Route::middleware(['auth:sanctum', 'admin'])->group(function () {
     Route::put('/users/{user}', [PatientsController::class, 'update']);
     Route::delete('/users/{user}', [PatientsController::class, 'destroy']);
+});
+Route::post('/diagnosis-chat', function (Request $request): JsonResponse {
+    $userMessage = $request->input('message');
+    $apiKey = env('OPENAI_API_KEY');
+
+    $response = Http::withHeaders([
+        'Authorization' => 'Bearer ' . $apiKey,
+        'Content-Type' => 'application/json',
+    ])->post('https://api.openai.com/v1/chat/completions', [
+                'model' => 'gpt-3.5-turbo',
+                'messages' => [['role' => 'user', 'content' => $userMessage]],
+                'max_tokens' => 100,
+            ]);
+
+    if ($response->successful()) {
+        return response()->json([
+            'response' => $response['choices'][0]['message']['content']
+        ]);
+    } else {
+        $errorResponse = $response->json();
+        $errorMessage = $errorResponse['error']['message'] ?? 'Failed to retrieve response from OpenAI API';
+
+        return response()->json([
+            'error' => $errorMessage
+        ], $response->status());
+    }
 });
