@@ -117,7 +117,7 @@ const Sidebar = () => {
                   ml="15px"
                 >
                   <Typography variant="h3" color={colors.grey[100]}>
-                    ADMIN
+                    {user?.role}
                   </Typography>
                   <IconButton onClick={() => setIsCollapsed(!isCollapsed)}>
                     <MenuOutlinedIcon />
@@ -200,6 +200,7 @@ const Sidebar = () => {
                 setSelected={setSelected}
               />
               {user?.role !== "patient" && (
+                <>
                 <Item
                   title="Contacts Information"
                   to="/contacts"
@@ -207,7 +208,6 @@ const Sidebar = () => {
                   selected={selected}
                   setSelected={setSelected}
                 />
-              )}
               <Item
                 title="Invoices Balances"
                 to="/invoices"
@@ -215,7 +215,8 @@ const Sidebar = () => {
                 selected={selected}
                 setSelected={setSelected}
               />
-
+              </>
+              )}
               <Typography
                 variant="h6"
                 color={colors.grey[300]}
@@ -229,6 +230,9 @@ const Sidebar = () => {
                 icon={<PersonOutlinedIcon />}
                 selected={selected}
                 setSelected={setSelected}
+              />
+              <Item 
+              title = ""
               />
               <Item
                 title="Calendar"
