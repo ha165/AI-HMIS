@@ -10,11 +10,13 @@ import {
 import SendIcon from "@mui/icons-material/Send";
 import Sidebar from "../../Scenes/global/SideBar";
 import Topbar from "../../Scenes/global/TopBar";
-import { tokens } from "../../../themes"; 
+import { tokens } from "../../../themes";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const DiagnosisChat = () => {
   const theme = useTheme();
-  const colors = tokens(theme.palette.mode); 
+  const colors = tokens(theme.palette.mode);
 
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
@@ -27,17 +29,23 @@ const DiagnosisChat = () => {
     setInput("");
 
     try {
-      const response = await fetch("api/diagnosis-chat", {
+      const response = await fetch("/api/diagnosis-chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: input }),
       });
+
       const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Something went wrong!");
+      }
 
       const botReply = { sender: "bot", text: data.response };
       setMessages([...messages, newMessage, botReply]);
     } catch (error) {
       console.error("Error fetching AI response:", error);
+      toast.error(error.message); // Show error in Toastify
     }
   };
 

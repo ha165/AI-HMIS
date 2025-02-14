@@ -1,7 +1,8 @@
-// src/App.jsx
 import { CssBaseline, ThemeProvider } from "@mui/material";
 import { BrowserRouter } from "react-router-dom";
 import { useContext, Suspense } from "react";
+import { ToastContainer } from "react-toastify"; // Import Toastify
+import "react-toastify/dist/ReactToastify.css"; // Import Toastify CSS
 
 import { ColorModeContext, useMode } from "../themes.js";
 import { AppContext } from "./Context/AppContext";
@@ -35,6 +36,7 @@ export default function App() {
             </ErrorBoundary>
           </main>
         </div>
+        <ToastContainer position="top-right" autoClose={5000} />
       </ThemeProvider>
     </ColorModeContext.Provider>
   );
