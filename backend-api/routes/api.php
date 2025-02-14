@@ -71,3 +71,21 @@ Route::post('/diagnosis-chat', function (Request $request): JsonResponse {
         ], $response->status());
     }
 });
+Route::post('/image-analyzer', function (Request $request) {
+    $image = $request->file('image');
+
+    if (!$image) {
+        return response()->json(['error' => 'No image provided'], 400);
+    }
+
+    $apiKey = env('HUGGINGFACE_API_KEY'); 
+    $endpoint = 'https://api-inference.huggingface.co/models/microsoft/resnet-50';
+
+    $response = Http::withHeaders([
+        'Authorization' => 'Bearer ' . $apiKey,
+        'Content-Type' => 'multipart/form-data',
+    ])->attach('image', file_get_contents($image->path()), $image->getClientOriginalName())
+      ->post($endpoint);
+
+    return response()->json($response->json());
+});
