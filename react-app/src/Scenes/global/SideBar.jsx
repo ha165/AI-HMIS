@@ -1,6 +1,12 @@
 import { useEffect, useState } from "react";
 import { ProSidebar, Menu, MenuItem } from "react-pro-sidebar";
-import { Box, IconButton, Typography, useTheme, CircularProgress } from "@mui/material";
+import {
+  Box,
+  IconButton,
+  Typography,
+  useTheme,
+  CircularProgress,
+} from "@mui/material";
 import { Link } from "react-router-dom";
 import "react-pro-sidebar/dist/css/styles.css";
 import { tokens } from "../../../themes";
@@ -16,7 +22,7 @@ import PieChartOutlineOutlinedIcon from "@mui/icons-material/PieChartOutlineOutl
 import TimelineOutlinedIcon from "@mui/icons-material/TimelineOutlined";
 import MenuOutlinedIcon from "@mui/icons-material/MenuOutlined";
 import MapOutlinedIcon from "@mui/icons-material/MapOutlined";
-import ChatIcon from '@mui/icons-material/Chat';
+import ChatIcon from "@mui/icons-material/Chat";
 
 const Item = ({ title, to, icon, selected, setSelected }) => {
   const theme = useTheme();
@@ -43,7 +49,6 @@ const Sidebar = () => {
   const [selected, setSelected] = useState("Dashboard");
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [menuLoading, setMenuLoading] = useState(true); // State for menu loading
 
   useEffect(() => {
     async function fetchUser() {
@@ -62,11 +67,6 @@ const Sidebar = () => {
       }
     }
     fetchUser();
-
-    // Simulating menu loading delay
-    setTimeout(() => {
-      setMenuLoading(false);
-    }, 2000); // 2 seconds delay
   }, []);
 
   return (
@@ -90,8 +90,7 @@ const Sidebar = () => {
       }}
     >
       <ProSidebar collapsed={isCollapsed}>
-        {menuLoading ? (
-          // Show Circular Progress before menu items
+        {loading ? (
           <Box
             height="100vh"
             display="flex"
@@ -102,7 +101,6 @@ const Sidebar = () => {
           </Box>
         ) : (
           <Menu iconShape="square">
-            {/* LOGO AND MENU ICON */}
             <MenuItem
               onClick={() => setIsCollapsed(!isCollapsed)}
               icon={isCollapsed ? <MenuOutlinedIcon /> : undefined}
@@ -112,7 +110,12 @@ const Sidebar = () => {
               }}
             >
               {!isCollapsed && (
-                <Box display="flex" justifyContent="space-between" alignItems="center" ml="15px">
+                <Box
+                  display="flex"
+                  justifyContent="space-between"
+                  alignItems="center"
+                  ml="15px"
+                >
                   <Typography variant="h3" color={colors.grey[100]}>
                     ADMIN
                   </Typography>
@@ -123,7 +126,6 @@ const Sidebar = () => {
               )}
             </MenuItem>
 
-            {/* PROFILE PHOTO AND NAME */}
             {!isCollapsed && (
               <Box mb="25px">
                 <Box display="flex" justifyContent="center" alignItems="center">
@@ -165,7 +167,6 @@ const Sidebar = () => {
               </Box>
             )}
 
-            {/* MENU ITEMS */}
             <Box paddingLeft={isCollapsed ? undefined : "10%"}>
               <Item
                 title="Dashboard"
@@ -191,20 +192,22 @@ const Sidebar = () => {
                   setSelected={setSelected}
                 />
               )}
-              <Item 
-               title = "Diagnosis"
-               to = "/diagnosis-chat"
-               icon = {<ChatIcon />}
-               selected = {selected}
-               setSelected = {setSelected}
-              />
               <Item
-                title="Contacts Information"
-                to="/contacts"
-                icon={<ContactsOutlinedIcon />}
+                title="Diagnosis"
+                to="/diagnosis-chat"
+                icon={<ChatIcon />}
                 selected={selected}
                 setSelected={setSelected}
               />
+              {user?.role !== "patient" && (
+                <Item
+                  title="Contacts Information"
+                  to="/contacts"
+                  icon={<ContactsOutlinedIcon />}
+                  selected={selected}
+                  setSelected={setSelected}
+                />
+              )}
               <Item
                 title="Invoices Balances"
                 to="/invoices"
@@ -234,49 +237,57 @@ const Sidebar = () => {
                 selected={selected}
                 setSelected={setSelected}
               />
-              <Item
-                title="FAQ Page"
-                to="/faq"
-                icon={<HelpOutlineOutlinedIcon />}
-                selected={selected}
-                setSelected={setSelected}
-              />
+              {user?.role !== "patient" && (
+                <>
+                  <Item
+                    title="FAQ Page"
+                    to="/faq"
+                    icon={<HelpOutlineOutlinedIcon />}
+                    selected={selected}
+                    setSelected={setSelected}
+                  />
 
-              <Typography
-                variant="h6"
-                color={colors.grey[300]}
-                sx={{ m: "15px 0 5px 20px" }}
-              >
-                Charts
-              </Typography>
-              <Item
-                title="Bar Chart"
-                to="/bar"
-                icon={<BarChartOutlinedIcon />}
-                selected={selected}
-                setSelected={setSelected}
-              />
-              <Item
-                title="Pie Chart"
-                to="/pie"
-                icon={<PieChartOutlineOutlinedIcon />}
-                selected={selected}
-                setSelected={setSelected}
-              />
-              <Item
-                title="Line Chart"
-                to="/line"
-                icon={<TimelineOutlinedIcon />}
-                selected={selected}
-                setSelected={setSelected}
-              />
-              <Item
-                title="Geography Chart"
-                to="/geography"
-                icon={<MapOutlinedIcon />}
-                selected={selected}
-                setSelected={setSelected}
-              />
+                  <Typography
+                    variant="h6"
+                    color={colors.grey[300]}
+                    sx={{ m: "15px 0 5px 20px" }}
+                  >
+                    Charts
+                  </Typography>
+
+                  <Item
+                    title="Bar Chart"
+                    to="/bar"
+                    icon={<BarChartOutlinedIcon />}
+                    selected={selected}
+                    setSelected={setSelected}
+                  />
+
+                  <Item
+                    title="Pie Chart"
+                    to="/pie"
+                    icon={<PieChartOutlineOutlinedIcon />}
+                    selected={selected}
+                    setSelected={setSelected}
+                  />
+
+                  <Item
+                    title="Line Chart"
+                    to="/line"
+                    icon={<TimelineOutlinedIcon />}
+                    selected={selected}
+                    setSelected={setSelected}
+                  />
+
+                  <Item
+                    title="Geography Chart"
+                    to="/geography"
+                    icon={<MapOutlinedIcon />}
+                    selected={selected}
+                    setSelected={setSelected}
+                  />
+                </>
+              )}
             </Box>
           </Menu>
         )}
