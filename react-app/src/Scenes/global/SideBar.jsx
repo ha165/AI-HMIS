@@ -199,23 +199,31 @@ const Sidebar = () => {
                 selected={selected}
                 setSelected={setSelected}
               />
-              {user?.role !== "patient" && (
-                <>
-                <Item
-                  title="Contacts Information"
-                  to="/contacts"
-                  icon={<ContactsOutlinedIcon />}
-                  selected={selected}
-                  setSelected={setSelected}
-                />
               <Item
-                title="Invoices Balances"
-                to="/invoices"
-                icon={<ReceiptOutlinedIcon />}
+                title="Image Analyzer"
+                to="/image-analyzer"
+                icon={<ChatIcon />}
                 selected={selected}
                 setSelected={setSelected}
               />
-              </>
+
+              {user?.role !== "patient" && (
+                <>
+                  <Item
+                    title="Contacts Information"
+                    to="/contacts"
+                    icon={<ContactsOutlinedIcon />}
+                    selected={selected}
+                    setSelected={setSelected}
+                  />
+                  <Item
+                    title="Invoices Balances"
+                    to="/invoices"
+                    icon={<ReceiptOutlinedIcon />}
+                    selected={selected}
+                    setSelected={setSelected}
+                  />
+                </>
               )}
               <Typography
                 variant="h6"
@@ -230,9 +238,6 @@ const Sidebar = () => {
                 icon={<PersonOutlinedIcon />}
                 selected={selected}
                 setSelected={setSelected}
-              />
-              <Item 
-              title = ""
               />
               <Item
                 title="Calendar"

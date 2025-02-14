@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { lazy } from "react";
 import UserDashboard from "./Scenes/dashboard/UserDashboard";
 import DiagnosisChat from "./Pages/AI/DiagnosisChat";
+import ImageAnalyzer from "./Pages/AI/ImageAnalyzer";
 
 // Lazy-loaded components
 const Home = lazy(() => import("./Pages/Home"));
@@ -100,6 +101,10 @@ const AppRoutes = ({ user }) => {
       <Route
         path="/diagnosis-chat"
         element={<ProtectedRoute element={<DiagnosisChat />} user={user} />}
+      />
+      <Route
+        path="image-analyzer"
+        element={<ProtectedRoute element={<ImageAnalyzer />} user={user} />}
       />
     </Routes>
   );
