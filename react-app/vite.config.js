@@ -11,8 +11,6 @@ export default defineConfig({
         changeOrigin: true,
         headers: {
           Accept: 'application/json',
-          // Remove 'Content-Type': 'application/json'
-          // Do not set the Content-Type here for file uploads
         },
       },
     },
