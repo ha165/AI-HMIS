@@ -5,6 +5,7 @@ import UserDashboard from "./Scenes/dashboard/UserDashboard";
 import DiagnosisChat from "./Pages/AI/DiagnosisChat";
 import ImageAnalyzer from "./Pages/AI/ImageAnalyzer";
 import Billing from "./Pages/Billing/Billing";
+import CompleteRegistration from "./Pages/Patients/complete-Registration";
 
 // Lazy-loaded components
 const Home = lazy(() => import("./Pages/Home"));
@@ -110,6 +111,10 @@ const AppRoutes = ({ user }) => {
       <Route
         path="/billing"
         element={<ProtectedRoute element={<Billing />} user={user} />}
+      />
+      <Route
+        path="/complete-registration"
+        element={<ProtectedRoute element={<CompleteRegistration />} user={user} />}
       />
     </Routes>
   );

@@ -41,6 +41,9 @@ Route::resources([
     'patients' => PatientsController::class,
     'schedules' => SchedulesController::class,
 ]);
+Route::middleware(['auth:sanctum'])->group(function () {
+    Route::post("/complete-registration", [PatientsController::class, "completeRegistration"]);
+});
 Route::middleware(['auth:sanctum', 'admin'])->group(function () {
     Route::put('/users/{user}', [PatientsController::class, 'update']);
     Route::delete('/users/{user}', [PatientsController::class, 'destroy']);
@@ -85,7 +88,7 @@ Route::post('/image-analyzer', function (Request $request) {
         'Authorization' => 'Bearer ' . $apiKey,
         'Content-Type' => 'multipart/form-data',
     ])->attach('image', file_get_contents($image->path()), $image->getClientOriginalName())
-      ->post($endpoint);
+        ->post($endpoint);
 
     return response()->json(['analysis' => $response->json()]);
 });

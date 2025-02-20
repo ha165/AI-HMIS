@@ -15,7 +15,6 @@ class AuthController extends Controller
       'email' => 'required|email|unique:users,email',
       'password' => 'required|min:8|confirmed',
       'phone' => 'required|digits:10',
-      'role' => 'required|in:admin,patient',
       'profile_photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
     ]);
 
@@ -35,6 +34,7 @@ class AuthController extends Controller
 
     return response()->json([
       'user' => $user,
+      'role'=> $user->role,
       'token' => $token,
     ], 201);
   }

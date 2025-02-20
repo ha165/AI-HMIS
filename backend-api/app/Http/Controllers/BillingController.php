@@ -14,21 +14,37 @@ class BillingController extends Controller
      * Display a listing of the resource.
      */
     public function index()
-    { 
-       $billings = Billing::with("patient:id,first_name,last_name,email,phone")->get();
+    {
+        $user = auth()->user();
 
-       $formatdata = $billings->map(function($billings):array{
-         
-        return [
-            "first_name" => $billings->user->first_name,
-            'last_name' => $billings->user->last_name,
-            'email' => $billings->user->email,
-            'phone' => $billings->user->phone,
-            'gender' => $billings->gender,
-          ];
-       });
-       return response()->json($formatdata);
+        if ($user->role === 'admin') {
+            // Admin sees all billing records
+            $billings = Billing::with("patient.user")->get();
+        } else {
+            // Patients see only their own billing records
+            $billings = Billing::with("patient.user")
+                ->whereHas('patient', function ($query) use ($user) {
+                    $query->where('user_id', $user->id);
+                })->get();
+        }
+
+        $formatdata = $billings->map(function ($billing) {
+            return [
+                "id" => $billing->id,
+                "first_name" => $billing->patient->user->first_name,
+                'last_name' => $billing->patient->user->last_name,
+                'email' => $billing->patient->user->email,
+                'phone' => $billing->patient->user->phone,
+                'gender' => $billing->patient->gender,
+                'amount' => $billing->amount,
+                'status' => $billing->status,
+                'due_date' => $billing->due_date
+            ];
+        });
+
+        return response()->json($formatdata);
     }
+
 
     /**
      * Store a newly created resource in storage.
