@@ -4,6 +4,7 @@ import { lazy } from "react";
 import UserDashboard from "./Scenes/dashboard/UserDashboard";
 import DiagnosisChat from "./Pages/AI/DiagnosisChat";
 import ImageAnalyzer from "./Pages/AI/ImageAnalyzer";
+import Billing from "./Pages/Billing/Billing";
 
 // Lazy-loaded components
 const Home = lazy(() => import("./Pages/Home"));
@@ -105,6 +106,10 @@ const AppRoutes = ({ user }) => {
       <Route
         path="image-analyzer"
         element={<ProtectedRoute element={<ImageAnalyzer />} user={user} />}
+      />
+      <Route
+        path="/billing"
+        element={<ProtectedRoute element={<Billing />} user={user} />}
       />
     </Routes>
   );

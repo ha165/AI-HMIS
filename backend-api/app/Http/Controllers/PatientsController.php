@@ -14,7 +14,7 @@ class PatientsController extends Controller
     {
         $patients = Patients::with('user:id,first_name,last_name,email,phone')->get();
 
-        $formatdata = $patients->map(function ($patients) {
+        $formatdata = $patients->map(function($patients): array {
             return [
                 'id' => $patients->id,
                 'first_name' => $patients->user->first_name,
