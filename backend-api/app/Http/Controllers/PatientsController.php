@@ -14,7 +14,7 @@ class PatientsController extends Controller
     {
         $patients = Patients::with('user:id,first_name,last_name,email,phone')->get();
 
-        $formatdata = $patients->map(function($patients): array {
+        $formatdata = $patients->map(function ($patients): array {
             return [
                 'id' => $patients->id,
                 'first_name' => $patients->user->first_name,
@@ -106,32 +106,24 @@ class PatientsController extends Controller
     }
     public function completeRegistration(Request $request)
     {
-        $validatedData = $request->validate([
-            "dob" => "required|date",
-            "gender" => "required|in:male,female,other",
-            "address" => "required|string|max:255",
-            "emergency_contact" => "required|string|max:20",
-        ]);
-
         $user = auth()->user();
 
-        // Ensure patient record does not already exist
-        if ($user->patient) {
-            return response()->json(["message" => "Patient details already exist"], 400);
-        }
-
-        // Create patient record linked to the user
-        $patient = Patients::create([
-            "user_id" => $user->id,
-            "dob" => $validatedData["dob"],
-            "gender" => $validatedData["gender"],
-            "address" => $validatedData["address"],
-            "emergency_contact" => $validatedData["emergency_contact"],
+        $validatedData = $request->validate([
+            'dob' => 'required|date',
+            'gender' => 'required|string',
+            'address' => 'required|string',
+            'emergency_contact' => 'required|string'
         ]);
 
-        return response()->json([
-            "message" => "Registration completed successfully",
-            "patient" => $patient
-        ], 201);
+        Patients::create([
+            'user_id' => $user->id,
+            'dob' => $validatedData['dob'],
+            'gender' => $validatedData['gender'],
+            'address' => $validatedData['address'],
+            'emergency_contact' => $validatedData['emergency_contact'],
+        ]);
+
+        return response()->json(['message' => 'Profile completed successfully']);
     }
+
 }

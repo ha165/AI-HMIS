@@ -23,18 +23,19 @@ class AuthController extends Controller
       $profilePhotoPath = $request->file('profile_photo')->store('profile_photos', 'public');
       $fields['profile_photo'] = $profilePhotoPath;
     }
-
-    // Hash the password before saving
     $fields['password'] = Hash::make($fields['password']);
 
-    // Create user
+    $fields['role'] = 'patient';
+
     $user = User::create($fields);
-    // Create token
+
+    $user->refresh();
+
     $token = $user->createToken('auth_token')->plainTextToken;
 
     return response()->json([
       'user' => $user,
-      'role'=> $user->role,
+      'role' => $user->role,  // Should now return 'patient'
       'token' => $token,
     ], 201);
   }
@@ -62,7 +63,7 @@ class AuthController extends Controller
 
     return response()->json([
       'user' => $user,
-      'role'=> $user->role,
+      'role' => $user->role,
       'token' => $token->plainTextToken,
     ]);
   }

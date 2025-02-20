@@ -31,13 +31,14 @@ export default function Register() {
     formData.append("phone", formdata.phone);
     formData.append("password", formdata.password);
     formData.append("password_confirmation", formdata.password_confirmation);
+    formData.append("role", "patient"); // Set default role or allow selection
 
     if (formdata.profile_photo) {
       formData.append("profile_photo", formdata.profile_photo);
     }
 
     try {
-      const res = await fetch("/api/register", {
+      const res = await fetch("api/register", {
         method: "POST",
         body: formData,
       });
@@ -45,26 +46,19 @@ export default function Register() {
       if (!res.ok) throw new Error("Network response was not ok");
 
       const data = await res.json();
-      console.log(data); // Log the response to check its structure
-
       if (data.errors) {
         setErrors(data.errors);
         toast.error("Registration Failed");
       } else {
         localStorage.setItem("token", data.token);
-        if (data.user.role) {
-          localStorage.setItem("role", data.user.role); // Store role correctly
-          console.log("User role:", data.user.role); // Log the role
-        } else {
-          console.error("Role is undefined in the response");
-        }
+        localStorage.setItem("role", data.role);
         setToken(data.token);
         toast.success("Registration Successful");
 
-        if (data.user.role === "admin") {
-          navigate("/");
+        if (data.role === "admin") {
+          navigate("/")
         } else {
-          navigate("/complete-registration");
+          navigate("/complete-registration"); 
         }
       }
     } catch (error) {

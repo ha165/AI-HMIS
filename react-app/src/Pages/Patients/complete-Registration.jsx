@@ -1,112 +1,136 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { toast, ToastContainer } from "react-toastify";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function CompleteRegistration() {
-  const { state } = useLocation();
+  const location = useLocation();
   const navigate = useNavigate();
+  const user = location.state?.user || {};
 
-  const [formdata, setFormData] = useState({
-    first_name: state?.first_name || "",
-    last_name: state?.last_name || "",
-    email: state?.email || "",
+  const [formData, setFormData] = useState({
+    first_name: user.first_name || "",
+    last_name: user.last_name || "",
+    email: user.email || "", 
     dob: "",
     gender: "",
     address: "",
     emergency_contact: "",
   });
 
+  function handleInputChange(e) {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  }
+
   async function handleSubmit(e) {
     e.preventDefault();
 
-    const token = localStorage.getItem("token");
-    const res = await fetch("api/complete-registration", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(formdata),
-    });
+    try {
+      const res = await fetch("api/complete-registration", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify(formData),
+      });
 
-    const data = await res.json();
+      if (!res.ok) throw new Error("Failed to complete registration");
 
-    if (!res.ok) {
-      toast.error(data.message || "Failed to complete registration");
-    } else {
       toast.success("Registration Completed!");
       navigate("/dashboard");
+    } catch (error) {
+      toast.error("Something went wrong, please try again!");
+      console.error(error);
     }
-  }
-
-  function handleChange(e) {
-    setFormData({ ...formdata, [e.target.name]: e.target.value });
   }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="bg-white p-8 shadow-lg rounded-lg max-w-md w-full">
-        <h2 className="text-2xl font-bold mb-6">Complete Your Registration</h2>
+      <div className="bg-white p-6 rounded-lg shadow-md w-full max-w-md">
+        <h2 className="text-2xl font-bold text-center mb-4">
+          Complete Your Registration
+        </h2>
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* First Name */}
           <input
             type="text"
             name="first_name"
-            value={formdata.first_name}
-            onChange={handleChange}
-            className="input-field"
+            value={formData.first_name}
+            onChange={handleInputChange}
+            className="w-full p-3 border rounded text-gray-600"
+            placeholder="First Name"
           />
+
+          {/* Last Name */}
           <input
             type="text"
             name="last_name"
-            value={formdata.last_name}
-            onChange={handleChange}
-            className="input-field"
+            value={formData.last_name}
+            onChange={handleInputChange}
+            className="w-full p-3 border rounded  text-gray-600"
+            placeholder="Last Name"
           />
+
+          {/* Email (Readonly) */}
           <input
             type="email"
             name="email"
-            value={formdata.email}
-            disabled
-            className="input-field bg-gray-200"
+            value={formData.email}
+            onChange={handleInputChange}
+            className="w-full p-3 border rounded text-gray-600"
           />
+
+          {/* DOB */}
           <input
             type="date"
             name="dob"
-            onChange={handleChange}
-            className="input-field"
-            required
+            value={formData.dob}
+            onChange={handleInputChange}
+            className="w-full p-3 border rounded text-gray-600"
           />
+
+          {/* Gender */}
           <select
             name="gender"
-            onChange={handleChange}
-            className="input-field"
-            required
+            value={formData.gender}
+            onChange={handleInputChange}
+            className="w-full p-3 border rounded text-gray-600"
           >
             <option value="">Select Gender</option>
             <option value="male">Male</option>
             <option value="female">Female</option>
-            <option value="other">Other</option>
           </select>
+
+          {/* Address */}
           <input
             type="text"
             name="address"
-            onChange={handleChange}
-            className="input-field"
-            required
+            value={formData.address}
+            onChange={handleInputChange}
+            className="w-full p-3 border rounded text-gray-600"
+            placeholder="Address"
           />
+
+          {/* Emergency Contact */}
           <input
             type="text"
             name="emergency_contact"
-            onChange={handleChange}
-            className="input-field"
-            required
+            value={formData.emergency_contact}
+            onChange={handleInputChange}
+            className="w-full p-3 border rounded text-gray-600"
+            placeholder="Emergency Contact"
           />
-          <button type="submit" className="btn-primary">
+
+          <button
+            type="submit"
+            className="w-full bg-blue-500 text-white p-3 rounded"
+          >
             Complete Registration
           </button>
         </form>
+        <ToastContainer />
       </div>
-      <ToastContainer />
     </div>
   );
 }
