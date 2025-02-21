@@ -267,21 +267,26 @@ const Doctors = () => {
             margin="normal"
           />
           <TextField
-            label="Gender"
-            value={updateddoctor.gender || ""}
+            label="specilization"
+            value={updateddoctor.specilization || ""}
             onChange={(
               e // Corrected the typo from "onchannge" to "onChange"
-            ) => setUpdateddoctor({ ...updateddoctor, gender: e.target.value })}
+            ) =>
+              setUpdateddoctor({
+                ...updateddoctor,
+                specilization: e.target.value,
+              })
+            }
             fullWidth
             margin="normal"
           />
           <TextField
-            label="Emergency Contact"
-            value={updateddoctor.emergency_contact || ""}
+            label="License Number"
+            value={updateddoctor.license_number || ""}
             onChange={(e) =>
               setUpdateddoctor({
                 ...updateddoctor,
-                emergency_contact: e.target.value,
+                license_number: e.target.value,
               })
             }
             fullWidth

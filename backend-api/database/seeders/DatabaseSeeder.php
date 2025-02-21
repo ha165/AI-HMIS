@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\Patients;
 use App\Models\Appointments;
 use App\Models\Billing;
+use App\Models\Doctor;
 
 class DatabaseSeeder extends Seeder
 {
@@ -22,5 +23,7 @@ class DatabaseSeeder extends Seeder
 
 
         Billing::factory(200)->create();
+        
+        Doctor::factory(200)->create();
     }
 }
