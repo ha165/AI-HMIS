@@ -6,17 +6,11 @@ use App\Models\User;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
 
-/**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Doctor>
- */
+
 class DoctorFactory extends Factory
 {
     protected $model = Doctor::class;
-    /**
-     * Define the model's default state.
-     *
-     * @return array<string, mixed>
-     */
+   
     public function definition(): array
     {
         $specializations = [
@@ -33,7 +27,7 @@ class DoctorFactory extends Factory
         ];
         return [
             'user_id' => User::factory(),
-            'specilization' => $this->faker->randomElement($specializations),
+            'specialization' => $this->faker->randomElement($specializations),
             'license_number' => $this->generateLicenseNumber(),
         ];
 
