@@ -1,14 +1,15 @@
-// src/AppRoutes.jsx
 import { Routes, Route, Navigate } from "react-router-dom";
 import { lazy } from "react";
-import UserDashboard from "./Scenes/dashboard/UserDashboard";
-import DiagnosisChat from "./Pages/AI/DiagnosisChat";
-import ImageAnalyzer from "./Pages/AI/ImageAnalyzer";
-import Billing from "./Pages/Billing/Billing";
-import CompleteRegistration from "./Pages/Patients/complete-Registration";
 import ProtectedRoute from "./ProtectedRoute";
 
 // Lazy-loaded components
+const UserDashboard = lazy(() => import("./Scenes/dashboard/UserDashboard"));
+const DiagnosisChat = lazy(() => import("./Pages/AI/DiagnosisChat"));
+const ImageAnalyzer = lazy(() => import("./Pages/AI/ImageAnalyzer"));
+const Billing = lazy(() => import("./Pages/Billing/Billing"));
+const CompleteRegistration = lazy(() =>
+  import("./Pages/Patients/complete-Registration")
+);
 const Home = lazy(() => import("./Pages/Home"));
 const Register = lazy(() => import("./Pages/Auth/Register"));
 const Login = lazy(() => import("./Pages/Auth/Login"));
@@ -22,6 +23,7 @@ const Bar = lazy(() => import("./Scenes/bar"));
 const Line = lazy(() => import("./Scenes/line"));
 const Pie = lazy(() => import("./Scenes/pie"));
 const Geography = lazy(() => import("./Scenes/geography"));
+const Doctors = lazy(() => import("./Pages/Doctor/Doctor"));
 
 // The main Routes component
 const AppRoutes = ({ user }) => {
@@ -91,7 +93,7 @@ const AppRoutes = ({ user }) => {
         element={<ProtectedRoute element={<DiagnosisChat />} user={user} />}
       />
       <Route
-        path="image-analyzer"
+        path="/image-analyzer"
         element={<ProtectedRoute element={<ImageAnalyzer />} user={user} />}
       />
       <Route
@@ -103,6 +105,10 @@ const AppRoutes = ({ user }) => {
         element={
           <ProtectedRoute element={<CompleteRegistration />} user={user} />
         }
+      />
+      <Route
+        path="/doctors"
+        element={<ProtectedRoute element={<Doctors />} user={user} />}
       />
     </Routes>
   );

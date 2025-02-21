@@ -122,8 +122,8 @@ const Doctors = () => {
     { field: "last_name", headerName: "Last Name", flex: 1 },
     { field: "email", headerName: "Email", flex: 1 },
     { field: "phone", headerName: "Phone Number", flex: 1 },
-    { field: "gender", headerName: "Gender", flex: 1 },
-    { field: "emergency_contact", headerName: "Emergency Contact", flex: 1 },
+    { field: "specialization", headerName: "Specialization", flex: 1 },
+    { field: "license_number", headerName: "License Number", flex: 1 },
     {
       field: "actions",
       headerName: "Actions",
