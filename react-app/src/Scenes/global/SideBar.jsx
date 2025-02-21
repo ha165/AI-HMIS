@@ -14,13 +14,16 @@ import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
 import PeopleOutlinedIcon from "@mui/icons-material/PeopleOutlined";
 import ContactsOutlinedIcon from "@mui/icons-material/ContactsOutlined";
 import ReceiptOutlinedIcon from "@mui/icons-material/ReceiptOutlined";
+import HealthAndSafetyIcon from "@mui/icons-material/HealthAndSafety";
 import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
+import GroupIcon from "@mui/icons-material/Group";
 import CalendarTodayOutlinedIcon from "@mui/icons-material/CalendarTodayOutlined";
 import HelpOutlineOutlinedIcon from "@mui/icons-material/HelpOutlineOutlined";
 import BarChartOutlinedIcon from "@mui/icons-material/BarChartOutlined";
 import PieChartOutlineOutlinedIcon from "@mui/icons-material/PieChartOutlineOutlined";
 import TimelineOutlinedIcon from "@mui/icons-material/TimelineOutlined";
 import MenuOutlinedIcon from "@mui/icons-material/MenuOutlined";
+import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import MapOutlinedIcon from "@mui/icons-material/MapOutlined";
 import ChatIcon from "@mui/icons-material/Chat";
 
@@ -184,29 +187,23 @@ const Sidebar = () => {
                 Data
               </Typography>
               {user?.role !== "patient" && (
-                <Item
-                  title="Manage Patients"
-                  to="/patients"
-                  icon={<PeopleOutlinedIcon />}
-                  selected={selected}
-                  setSelected={setSelected}
-                />
+                <>
+                  <Item
+                    title="Manage Patients"
+                    to="/patients"
+                    icon={<PeopleOutlinedIcon />}
+                    selected={selected}
+                    setSelected={setSelected}
+                  />
+                  <Item
+                    title="Manage Doctors"
+                    to="/doctors"
+                    icon={<GroupIcon />}
+                    selected={selected}
+                    setSelected={setSelected}
+                  />
+                </>
               )}
-              <Item
-                title="Diagnosis"
-                to="/diagnosis-chat"
-                icon={<ChatIcon />}
-                selected={selected}
-                setSelected={setSelected}
-              />
-              <Item
-                title="Image Analyzer"
-                to="/image-analyzer"
-                icon={<ChatIcon />}
-                selected={selected}
-                setSelected={setSelected}
-              />
-
               {user?.role !== "patient" && (
                 <>
                   <Item
@@ -240,9 +237,16 @@ const Sidebar = () => {
                 setSelected={setSelected}
               />
               <Item
+                title="Medical Records"
+                to="/medical-records"
+                icon={<HealthAndSafetyIcon />}
+                selected={selected}
+                setSelected={setSelected}
+              />
+              <Item
                 title="Billing"
                 to="/billing"
-                icon={<PersonOutlinedIcon />}
+                icon={<AttachMoneyIcon />}
                 selected={selected}
                 setSelected={setSelected}
               />
@@ -262,7 +266,27 @@ const Sidebar = () => {
                     selected={selected}
                     setSelected={setSelected}
                   />
-
+                  <Typography
+                    variant="h6"
+                    color={colors.grey[300]}
+                    sx={{ m: "15px 0 5px 20px" }}
+                  >
+                    AI
+                  </Typography>
+                  <Item
+                    title="Diagnosis"
+                    to="/diagnosis-chat"
+                    icon={<ChatIcon />}
+                    selected={selected}
+                    setSelected={setSelected}
+                  />
+                  <Item
+                    title="Image Analyzer"
+                    to="/image-analyzer"
+                    icon={<ChatIcon />}
+                    selected={selected}
+                    setSelected={setSelected}
+                  />
                   <Typography
                     variant="h6"
                     color={colors.grey[300]}
