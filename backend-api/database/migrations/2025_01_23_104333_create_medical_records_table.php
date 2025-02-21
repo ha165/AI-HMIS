@@ -20,7 +20,6 @@ return new class extends Migration {
             $table->text('medications')->nullable();
             $table->text('allergies')->nullable();
             $table->json('vital_signs')->nullable();
-            $table->text('diagnosis')->nullable();
             $table->text('treatment_plan')->nullable();
             $table->json('lab_results')->nullable();
             $table->text('notes')->nullable();
