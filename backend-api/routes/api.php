@@ -10,6 +10,7 @@ use App\Http\Controllers\NotificationsController;
 use App\Http\Controllers\PaymentsController;
 use App\Http\Controllers\PatientsController;
 use App\Http\Controllers\SchedulesController;
+use App\Http\Controllers\UserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Http;
@@ -48,6 +49,8 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
     Route::put('/users/{user}', [PatientsController::class, 'update']);
     Route::delete('/users/{user}', [PatientsController::class, 'destroy']);
 });
+Route::middleware(['auth:sanctum'])->get('/user/role', [UserController::class, 'getRole']);
+
 Route::post('/diagnosis-chat', function (Request $request): JsonResponse {
     $userMessage = $request->input('message');
     $apiKey = env('OPENAI_API_KEY');

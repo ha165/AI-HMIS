@@ -1,10 +1,12 @@
+// src/AppRoutes.jsx
 import { Routes, Route, Navigate } from "react-router-dom";
-import { lazy, useEffect, useState } from "react";
+import { lazy } from "react";
 import UserDashboard from "./Scenes/dashboard/UserDashboard";
 import DiagnosisChat from "./Pages/AI/DiagnosisChat";
 import ImageAnalyzer from "./Pages/AI/ImageAnalyzer";
 import Billing from "./Pages/Billing/Billing";
 import CompleteRegistration from "./Pages/Patients/complete-Registration";
+import ProtectedRoute from "./ProtectedRoute";
 
 // Lazy-loaded components
 const Home = lazy(() => import("./Pages/Home"));
@@ -20,44 +22,6 @@ const Bar = lazy(() => import("./Scenes/bar"));
 const Line = lazy(() => import("./Scenes/line"));
 const Pie = lazy(() => import("./Scenes/pie"));
 const Geography = lazy(() => import("./Scenes/geography"));
-
-// Custom ProtectedRoute to handle authentication and role fetching
-const ProtectedRoute = ({ element, user }) => {
-  const [role, setRole] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchUserRole = async () => {
-      if (user) {
-        try {
-          const res = await fetch(`/api/user/role/${user.id}`); // Adjust the API endpoint
-          if (!res.ok) throw new Error("Network response was not ok");
-
-          const data = await res.json();
-          setRole(data.role);
-        } catch (error) {
-          console.error('Error fetching user role:', error);
-        } finally {
-          setLoading(false);
-        }
-      } else {
-        setLoading(false);
-      }
-    };
-
-    fetchUserRole();
-  }, [user]);
-  if (!user) {
-    return <Navigate to="/login" replace />;
-  }
-
-  // Prevent patient from accessing "/"
-  if (role === "patient" && window.location.pathname === "/") {
-    return <Navigate to="/dashboard" replace />;
-  }
-
-  return element;
-};
 
 // The main Routes component
 const AppRoutes = ({ user }) => {
@@ -127,7 +91,7 @@ const AppRoutes = ({ user }) => {
         element={<ProtectedRoute element={<DiagnosisChat />} user={user} />}
       />
       <Route
-        path="/image-analyzer"
+        path="image-analyzer"
         element={<ProtectedRoute element={<ImageAnalyzer />} user={user} />}
       />
       <Route
@@ -136,7 +100,9 @@ const AppRoutes = ({ user }) => {
       />
       <Route
         path="/complete-registration"
-        element={<ProtectedRoute element={<CompleteRegistration />} user={user} />}
+        element={
+          <ProtectedRoute element={<CompleteRegistration />} user={user} />
+        }
       />
     </Routes>
   );
