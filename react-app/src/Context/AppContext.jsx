@@ -5,11 +5,11 @@ export const AppContext = createContext({});
 export default function AppProvider({ children }) {
   const [token, setToken] = useState(localStorage.getItem("token"));
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true); // Add loading state
+  const [loading, setLoading] = useState(true);
 
   async function getUser() {
     try {
-      const res = await fetch("api/user", {
+      const res = await fetch("/api/user", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -19,13 +19,13 @@ export default function AppProvider({ children }) {
         const data = await res.json();
         setUser(data);
       } else {
-        setUser(null); // Clear user if API call fails
+        setUser(null);
       }
     } catch (error) {
       console.error("Failed to fetch user:", error);
       setUser(null);
     } finally {
-      setLoading(false); // End loading state
+      setLoading(false);
     }
   }
 
@@ -33,12 +33,14 @@ export default function AppProvider({ children }) {
     if (token) {
       getUser();
     } else {
-      setLoading(false); // If no token, stop loading
+      setLoading(false);
     }
   }, [token]);
 
   return (
-    <AppContext.Provider value={{ token, setToken, user, setUser, loading }}>
+    <AppContext.Provider
+      value={{ token, setToken, user, setUser, loading, userRole: user?.role }}
+    >
       {children}
     </AppContext.Provider>
   );

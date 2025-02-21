@@ -23,7 +23,7 @@ class DoctorsController extends Controller
                 "phone" => $doctors->user->phone,
                 "specialization" => $doctors->specialization,
                 "address" => $doctors->address,
-                "licence_number" => $doctors->license_number
+                "license_number" => $doctors->license_number
             ];
         });
 

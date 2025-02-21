@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect,useContext} from "react";
 import {
   Box,
   Typography,
@@ -13,6 +13,7 @@ import { tokens } from "../../../themes";
 import Sidebar from "../../Scenes/global/SideBar";
 import Topbar from "../../Scenes/global/TopBar";
 import Header from "../../Components/Header";
+import { AppContext } from "../../Context/AppContext";
 
 const Patients = () => {
   const theme = useTheme();
@@ -22,7 +23,7 @@ const Patients = () => {
   const [openEditModal, setOpenEditModal] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [updatedPatient, setUpdatedPatient] = useState({});
-  const [userRole, setUserRole] = useState(null);
+  const {userRole} = useContext(AppContext);
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
   const [deletingPatientId, setDeletingPatientId] = useState(null);
 
@@ -44,9 +45,6 @@ const Patients = () => {
     }
 
     fetchPatients();
-
-    const storedRole = localStorage.getItem("role");
-    setUserRole(storedRole);
   }, []);
 
   const handleEdit = (patient) => {

@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useContext, useState, useEffect } from "react";
+import { AppContext } from "../../Context/AppContext"; 
 import {
   Box,
   Typography,
@@ -17,12 +18,12 @@ import Header from "../../Components/Header";
 const Doctors = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
+  const { userRole } = useContext(AppContext);
   const [doctors, setdoctors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [openEditModal, setOpenEditModal] = useState(false);
   const [selecteddoctor, setSelecteddoctor] = useState(null);
   const [updateddoctor, setUpdateddoctor] = useState({});
-  const [userRole, setUserRole] = useState(null);
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
   const [deletingdoctorId, setDeletingdoctorId] = useState(null);
 
@@ -42,11 +43,7 @@ const Doctors = () => {
         setLoading(false);
       }
     }
-
     fetchdoctors();
-
-    const storedRole = localStorage.getItem("role");
-    setUserRole(storedRole);
   }, []);
 
   const handleEdit = (doctor) => {
@@ -269,9 +266,7 @@ const Doctors = () => {
           <TextField
             label="specilization"
             value={updateddoctor.specilization || ""}
-            onChange={(
-              e // Corrected the typo from "onchannge" to "onChange"
-            ) =>
+            onChange={(e) =>
               setUpdateddoctor({
                 ...updateddoctor,
                 specilization: e.target.value,

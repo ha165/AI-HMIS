@@ -5,6 +5,7 @@ use App\Http\Controllers\AiDiagnosticsController;
 use App\Http\Controllers\AppointmentsController;
 use App\Http\Controllers\BillingController;
 use App\Http\Controllers\DepartmentsController;
+use App\Http\Controllers\DoctorsController;
 use App\Http\Controllers\MedicalRecordsController;
 use App\Http\Controllers\NotificationsController;
 use App\Http\Controllers\PaymentsController;
@@ -41,6 +42,7 @@ Route::resources([
     'payments' => PaymentsController::class,
     'patients' => PatientsController::class,
     'schedules' => SchedulesController::class,
+    'doctors' => DoctorsController::class,
 ]);
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::post("/complete-registration", [PatientsController::class, "completeRegistration"]);
