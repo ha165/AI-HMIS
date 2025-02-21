@@ -12,9 +12,22 @@ class DoctorsController extends Controller
      */
     public function index()
     {
-        $doctors = Doctor::all();
+        $doctors = Doctor::with('user')->get();
 
-        return response()->json($doctors);
+        $formatdata = $doctors->map(function ($doctors) {
+            return [
+                "id" => $doctors->id,
+                "first_name" => $doctors->user->first_name,
+                "last_name" => $doctors->user->last_name,
+                "email" => $doctors->user->email,
+                "phone" => $doctors->user->phone,
+                "specialization" => $doctors->specialization,
+                "address" => $doctors->address,
+                "licence_number" => $doctors->license_number
+            ];
+        });
+
+        return response()->json($formatdata);
     }
 
     /**

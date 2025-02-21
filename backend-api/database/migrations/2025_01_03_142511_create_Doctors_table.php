@@ -10,7 +10,6 @@ class CreateDoctorsTable extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
             $table->string('specialization');
-            $table->string('contact_number');
             $table->text('address')->nullable();
             $table->string('license_number')->unique();
             $table->timestamps();
