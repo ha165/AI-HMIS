@@ -79,9 +79,7 @@ const Doctors = () => {
       });
 
       if (response.ok) {
-        setdoctors(
-          doctors.filter((doctor) => doctor.id !== deletingdoctorId)
-        );
+        setdoctors(doctors.filter((doctor) => doctor.id !== deletingdoctorId));
       }
     } catch (error) {
       console.error("Error deleting doctor", error);
@@ -273,9 +271,7 @@ const Doctors = () => {
             value={updateddoctor.gender || ""}
             onChange={(
               e // Corrected the typo from "onchannge" to "onChange"
-            ) =>
-              setUpdateddoctor({ ...updateddoctor, gender: e.target.value })
-            }
+            ) => setUpdateddoctor({ ...updateddoctor, gender: e.target.value })}
             fullWidth
             margin="normal"
           />
