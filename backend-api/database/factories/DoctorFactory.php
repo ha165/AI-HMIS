@@ -35,6 +35,6 @@ class DoctorFactory extends Factory
 
     private function generateLicenseNumber()
     {
-        return strtoupper($this->faker->lexify('???-####')); /
+        return strtoupper($this->faker->lexify('???-####')); 
     }
 }
