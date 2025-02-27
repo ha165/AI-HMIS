@@ -13,6 +13,7 @@ import { tokens } from "../../../themes";
 import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
 import PeopleOutlinedIcon from "@mui/icons-material/PeopleOutlined";
 import ContactsOutlinedIcon from "@mui/icons-material/ContactsOutlined";
+import BusinessIcon from "@mui/icons-material/Business";
 import ReceiptOutlinedIcon from "@mui/icons-material/ReceiptOutlined";
 import HealthAndSafetyIcon from "@mui/icons-material/HealthAndSafety";
 import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
@@ -23,7 +24,7 @@ import BarChartOutlinedIcon from "@mui/icons-material/BarChartOutlined";
 import PieChartOutlineOutlinedIcon from "@mui/icons-material/PieChartOutlineOutlined";
 import TimelineOutlinedIcon from "@mui/icons-material/TimelineOutlined";
 import MenuOutlinedIcon from "@mui/icons-material/MenuOutlined";
-import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
+import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import MapOutlinedIcon from "@mui/icons-material/MapOutlined";
 import ChatIcon from "@mui/icons-material/Chat";
 
@@ -217,6 +218,13 @@ const Sidebar = () => {
                     title="Invoices Balances"
                     to="/invoices"
                     icon={<ReceiptOutlinedIcon />}
+                    selected={selected}
+                    setSelected={setSelected}
+                  />
+                  <Item
+                    title="Departments"
+                    to="/departments"
+                    icon={<BusinessIcon />}
                     selected={selected}
                     setSelected={setSelected}
                   />
