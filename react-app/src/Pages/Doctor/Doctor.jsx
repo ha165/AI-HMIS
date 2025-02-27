@@ -53,8 +53,8 @@ const Doctors = () => {
       last_name: doctor.last_name,
       phone: doctor.phone,
       email: doctor.email,
-      gender: doctor.gender,
-      emergency_contact: doctor.emergency_contact,
+      specialization: doctor.specialization,
+      license_number: doctor.license_number,
     });
     setOpenEditModal(true);
   };
@@ -265,11 +265,11 @@ const Doctors = () => {
           />
           <TextField
             label="specilization"
-            value={updateddoctor.specilization || ""}
+            value={updateddoctor.specialization || ""}
             onChange={(e) =>
               setUpdateddoctor({
                 ...updateddoctor,
-                specilization: e.target.value,
+                specialization: e.target.value,
               })
             }
             fullWidth
