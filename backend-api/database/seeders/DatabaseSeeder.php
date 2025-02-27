@@ -1,6 +1,7 @@
 <?php
 namespace Database\Seeders;
 
+use App\Models\Departments;
 use Illuminate\Database\Seeder;
 use App\Models\User;
 use App\Models\Patients;
@@ -23,7 +24,10 @@ class DatabaseSeeder extends Seeder
 
 
         Billing::factory(200)->create();
-        
+
+
         Doctor::factory(200)->create();
+
+        Departments::factory(200)->create();
     }
 }
