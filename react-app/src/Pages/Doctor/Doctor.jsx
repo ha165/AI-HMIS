@@ -1,5 +1,5 @@
 import { useContext, useState, useEffect } from "react";
-import { AppContext } from "../../Context/AppContext"; 
+import { AppContext } from "../../Context/AppContext";
 import {
   Box,
   Typography,
@@ -10,6 +10,7 @@ import {
   useTheme,
 } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
+import fetchWrapper from "../../Context/fetchwrapper";
 import { tokens } from "../../../themes";
 import Sidebar from "../../Scenes/global/SideBar";
 import Topbar from "../../Scenes/global/TopBar";
@@ -28,22 +29,28 @@ const Doctors = () => {
   const [deletingdoctorId, setDeletingdoctorId] = useState(null);
 
   useEffect(() => {
-    async function fetchdoctors() {
+    let isMounted = true;
+
+    async function fetchDoctors() {
       try {
-        const res = await fetch("api/doctors", {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        });
-        const data = await res.json();
-        setdoctors(data);
+        const data = await fetchWrapper("/doctors");
+        if (isMounted) {
+          setdoctors(data);
+        }
       } catch (error) {
-        console.error("Error fetching doctors", error);
+        console.error("Error fetching doctors:", error);
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     }
-    fetchdoctors();
+
+    fetchDoctors();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const handleEdit = (doctor) => {
@@ -53,6 +60,7 @@ const Doctors = () => {
       last_name: doctor.last_name,
       phone: doctor.phone,
       email: doctor.email,
+      address: doctor.address,
       specialization: doctor.specialization,
       license_number: doctor.license_number,
     });
@@ -119,6 +127,7 @@ const Doctors = () => {
     { field: "last_name", headerName: "Last Name", flex: 1 },
     { field: "email", headerName: "Email", flex: 1 },
     { field: "phone", headerName: "Phone Number", flex: 1 },
+    { field: "address", headerName: "Address", flex: 1 },
     { field: "specialization", headerName: "Specialization", flex: 1 },
     { field: "license_number", headerName: "License Number", flex: 1 },
     {
@@ -259,6 +268,15 @@ const Doctors = () => {
             value={updateddoctor.email || ""}
             onChange={(e) =>
               setUpdateddoctor({ ...updateddoctor, email: e.target.value })
+            }
+            fullWidth
+            margin="normal"
+          />
+          <TextField
+            label="Address"
+            value={updateddoctor.address || ""}
+            onChange={(e) =>
+              setUpdateddoctor({ ...updateddoctor, address: e.target.value })
             }
             fullWidth
             margin="normal"

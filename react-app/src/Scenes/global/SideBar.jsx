@@ -10,6 +10,7 @@ import {
 import { Link } from "react-router-dom";
 import "react-pro-sidebar/dist/css/styles.css";
 import { tokens } from "../../../themes";
+import fetchWrapper from "../../Context/fetchwrapper";
 import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
 import PeopleOutlinedIcon from "@mui/icons-material/PeopleOutlined";
 import ContactsOutlinedIcon from "@mui/icons-material/ContactsOutlined";
@@ -55,22 +56,25 @@ const Sidebar = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let isMounted = true;
     async function fetchUser() {
       try {
-        const res = await fetch("api/user", {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        });
-        const data = await res.json();
-        setUser(data);
+        const data = await fetchWrapper("/user");
+        if (isMounted) {
+          setUser(data);
+        }
       } catch (error) {
         console.error("Failed to fetch user:", error);
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     }
     fetchUser();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   return (

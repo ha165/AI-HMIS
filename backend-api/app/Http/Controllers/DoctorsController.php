@@ -51,7 +51,49 @@ class DoctorsController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        //
+        $doctor = Doctor::find($id);
+
+        if (!$doctor) {
+            return response()->json(['message' => 'Doctor not found'], 404);
+        }
+
+        // Validate incoming data
+        $validatedData = $request->validate([
+            'first_name' => 'required|string',
+            'last_name' => 'required|string',
+            'email' => 'required|email',
+            'phone' => 'required|string',
+            'specialization' => 'nullable|string',
+            'address' => 'nullable|string',
+            'license_number' => 'nullable|string'
+        ]);
+
+        // Update the related User model
+        $doctor->user->update([
+            'first_name' => $validatedData['first_name'],
+            'last_name' => $validatedData['last_name'],
+            'email' => $validatedData['email'],
+            'phone' => $validatedData['phone'],
+        ]);
+
+        // Update the Doctor model
+        $doctor->update([
+            'specialization' => $validatedData['specialization'],
+            'address' => $validatedData['address'],
+            'license_number' => $validatedData['license_number']
+        ]);
+
+        // Return updated doctor data
+        return response()->json([
+            'id' => $doctor->id,
+            'first_name' => $doctor->user->first_name,
+            'last_name' => $doctor->user->last_name,
+            'email' => $doctor->user->email,
+            'phone' => $doctor->user->phone,
+            'specialization' => $doctor->specialization,
+            'address' => $doctor->address,
+            'license_number' => $doctor->license_number
+        ]);
     }
 
     /**
