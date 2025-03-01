@@ -130,9 +130,10 @@ const Appointments = () => {
 
   const columns = [
     { field: "id", headerName: "ID", width: 90 },
-    { field: "first_name", headerName: "Patient Name", flex: 1 },
+    { field: "patient_name", headerName: "Patient Name", flex: 1 },
     { field: "doctor_name", headerName: "Doctor Name", flex: 1 },
-    { field: "phone", headerName: "Phone Number", flex: 1 },
+    { field: "patient_phone", headerName: "Patient No", flex: 1 },
+    { field: "doctor_phone", headerName: "Doctor No", flex: 1 },
     { field: "specialization", headerName: "Specialization", flex: 1 },
     { field: "appointment_date", headerName: "Date", flex: 1 },
     { field: "status", headerName: "Status", flex: 1 },

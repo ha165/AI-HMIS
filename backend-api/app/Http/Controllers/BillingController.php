@@ -18,10 +18,8 @@ class BillingController extends Controller
         $user = auth()->user();
 
         if ($user->role === 'admin') {
-            // Admin sees all billing records
             $billings = Billing::with("patient.user")->get();
         } else {
-            // Patients see only their own billing records
             $billings = Billing::with("patient.user")
                 ->whereHas('patient', function ($query) use ($user) {
                     $query->where('user_id', $user->id);
