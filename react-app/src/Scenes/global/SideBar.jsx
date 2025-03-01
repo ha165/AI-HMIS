@@ -12,6 +12,7 @@ import "react-pro-sidebar/dist/css/styles.css";
 import { tokens } from "../../../themes";
 import fetchWrapper from "../../Context/fetchwrapper";
 import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
+import ScheduleIcon from "@mui/icons-material/Schedule";
 import PeopleOutlinedIcon from "@mui/icons-material/PeopleOutlined";
 import ContactsOutlinedIcon from "@mui/icons-material/ContactsOutlined";
 import BusinessIcon from "@mui/icons-material/Business";
@@ -245,6 +246,13 @@ const Sidebar = () => {
                 title="Profile Form"
                 to="/form"
                 icon={<PersonOutlinedIcon />}
+                selected={selected}
+                setSelected={setSelected}
+              />
+              <Item
+                title="Appointments"
+                to="/appointments"
+                icon={<ScheduleIcon />}
                 selected={selected}
                 setSelected={setSelected}
               />

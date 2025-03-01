@@ -1,6 +1,6 @@
 const logoutUser = async () => {
   try {
-    await fetch(`/api/logout`, {
+    await fetch("/api/logout", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -33,6 +33,11 @@ const fetchWrapper = async (url, options = {}) => {
     if (response.status === 401) {
       console.log("Token expired. Logging out...");
       await logoutUser();
+      return;
+    }
+
+    if (!response.ok) {
+      throw new Error(`Request failed with status ${response.status}`);
     }
 
     return response.json();
