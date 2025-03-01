@@ -143,6 +143,10 @@ export const themeSettings = (mode) => {
             background: {
               default: colors.primary[500],
             },
+            text: {
+              primary: colors.grey[100],
+              secondary: colors.grey[300],
+            },
           }
         : {
             // palette values for light mode
@@ -159,6 +163,10 @@ export const themeSettings = (mode) => {
             },
             background: {
               default: "#fcfcfc",
+            },
+            text: {
+              primary: colors.grey[700],
+              secondary: colors.grey[500],
             },
           }),
     },
@@ -188,6 +196,55 @@ export const themeSettings = (mode) => {
       h6: {
         fontFamily: ["Source Sans Pro", "sans-serif"].join(","),
         fontSize: 14,
+      },
+    },
+    components: {
+      MuiInputLabel: {
+        styleOverrides: {
+          root: {
+            color: mode === "dark" ? colors.grey[100] : colors.grey[700],
+            "&.Mui-focused": {
+              color: mode === "dark" ? colors.grey[100] : colors.grey[700],
+            },
+          },
+        },
+      },
+      MuiSelect: {
+        styleOverrides: {
+          icon: {
+            color: mode === "dark" ? colors.grey[100] : colors.grey[700],
+          },
+          root: {
+            "&:before": {
+              borderColor:
+                mode === "dark" ? colors.grey[100] : colors.grey[700],
+            },
+            "&:hover:not(.Mui-disabled):before": {
+              borderColor:
+                mode === "dark" ? colors.grey[100] : colors.grey[700],
+            },
+          },
+        },
+      },
+      MuiMenuItem: {
+        styleOverrides: {
+          root: {
+            color: mode === "dark" ? colors.grey[100] : colors.grey[700],
+            "&:hover": {
+              backgroundColor:
+                mode === "dark" ? colors.primary[600] : colors.grey[100],
+            },
+          },
+        },
+      },
+      MuiFormControl: {
+        styleOverrides: {
+          root: {
+            "& label.Mui-focused": {
+              color: mode === "dark" ? colors.grey[100] : colors.grey[700],
+            },
+          },
+        },
       },
     },
   };
