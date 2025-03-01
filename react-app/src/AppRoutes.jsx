@@ -116,9 +116,9 @@ const AppRoutes = ({ user }) => {
         path="/departments"
         element={<ProtectedRoute element={<Departments />} user={user} />}
       />
-      <Route 
-      path = "/appointments"
-      element={<ProtectedRoute element={<Appointments />} user={user} />}
+      <Route
+        path="/appointments"
+        element={<ProtectedRoute element={<Appointments />} user={user} />}
       />
     </Routes>
   );
