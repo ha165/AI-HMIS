@@ -60,12 +60,11 @@ const Appointments = () => {
     setSelectedappointment(appointment);
     setUpdatedappointment({
       first_name: appointment.first_name,
-      last_name: appointment.last_name,
+      doctor_name: appointment.doctor_name,
       phone: appointment.phone,
-      email: appointment.email,
-      address: appointment.address,
       specialization: appointment.specialization,
-      license_number: appointment.license_number,
+      date: appointment.appointment_date,
+      status: appointment.status,
     });
     setOpenEditModal(true);
   };
