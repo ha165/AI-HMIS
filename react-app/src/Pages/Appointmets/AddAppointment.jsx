@@ -157,7 +157,7 @@ const AddAppointment = () => {
                       shrink: true,
                     }}
                     inputProps={{
-                      min: new Date().toISOString().slice(0, 16), 
+                      min: new Date().toISOString().slice(0, 16),
                       step: 60,
                     }}
                   />

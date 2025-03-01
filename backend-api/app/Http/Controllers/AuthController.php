@@ -35,7 +35,7 @@ class AuthController extends Controller
 
     return response()->json([
       'user' => $user,
-      'role' => $user->role,  // Should now return 'patient'
+      'role' => $user->role,
       'token' => $token,
     ], 201);
   }

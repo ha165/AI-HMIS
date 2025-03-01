@@ -37,7 +37,19 @@ class AppointmentsController extends Controller
      */
     public function store(StoreAppointmentsRequest $request)
     {
-        
+        $fields = $request->validate([
+            'patient_id' => 'required|exists:users,id',
+            'doctor_id' => 'required|exists:users,id',
+            'appointment_date' => 'required|date',
+            'status' => 'required',
+            'reason' => 'required',
+        ]);
+
+        $fields['status'] = 'pending';
+
+        $appointment = Appointments::create($fields);
+
+        return response()->json($appointment);
     }
 
     /**
