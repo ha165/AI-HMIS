@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Appointments;
+use Carbon\Carbon;
 use App\Http\Requests\StoreAppointmentsRequest;
 use App\Http\Requests\UpdateAppointmentsRequest;
 
@@ -23,7 +24,7 @@ class AppointmentsController extends Controller
                 "patient_phone" => optional(optional($appointment->patient)->user)->phone ?? 'N/A',
                 "doctor_phone" => optional(optional($appointment->doctor)->user)->phone ?? 'N/A',
                 "specialization" => optional($appointment->doctor)->specialization ?? 'N/A',
-                "appointment_date" => optional($appointment->appointment_date)->format('Y-m-d H:i:s') ?? 'N/A',
+                "appointment_date" => $appointment->appointment_date ? Carbon::parse($appointment->appointment_date)->format('Y-m-d H:i:s') : 'N/A',
                 "status" => ucfirst($appointment->status ?? 'pending')
             ];
         });
