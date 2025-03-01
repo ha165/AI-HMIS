@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 class DoctorFactory extends Factory
 {
     protected $model = Doctor::class;
-   
+
     public function definition(): array
     {
         $specializations = [
@@ -35,6 +35,6 @@ class DoctorFactory extends Factory
 
     private function generateLicenseNumber()
     {
-        return strtoupper($this->faker->lexify('???-####')); 
+        return strtoupper(substr(md5(uniqid()), 0, 10));
     }
 }
