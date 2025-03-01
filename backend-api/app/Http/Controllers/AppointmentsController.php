@@ -18,12 +18,12 @@ class AppointmentsController extends Controller
         $formattedData = $appointments->map(function ($appointment): array {
             return [
                 "id" => $appointment->id,
-                "first_name" => optional(optional($appointment->patient)->user)->first_name . ' ' . optional(optional($appointment->patient)->user)->last_name,
+                "patient_name" => optional(optional($appointment->patient)->user)->first_name . ' ' . optional(optional($appointment->patient)->user)->last_name,
                 "doctor_name" => optional(optional($appointment->doctor)->user)->first_name . ' ' . optional(optional($appointment->doctor)->user)->last_name,
                 "patient_phone" => optional(optional($appointment->patient)->user)->phone ?? 'N/A',
                 "doctor_phone" => optional(optional($appointment->doctor)->user)->phone ?? 'N/A',
                 "specialization" => optional($appointment->doctor)->specialization ?? 'N/A',
-                "date" => optional($appointment->appointment_date)->format('Y-m-d H:i:s') ?? 'N/A',
+                "appointment_date" => optional($appointment->appointment_date)->format('Y-m-d H:i:s') ?? 'N/A',
                 "status" => ucfirst($appointment->status ?? 'pending')
             ];
         });
