@@ -14,6 +14,8 @@ import { useEffect, useState } from "react";
 import Header from "../../Components/Header";
 import Sidebar from "../../Scenes/global/SideBar";
 import Topbar from "../../Scenes/global/TopBar";
+import fetchWrapper from "../../Context/fetchwrapper";
+import { toast } from "react-toastify";
 
 const AddAppointment = () => {
   const isNonMobile = useMediaQuery("(min-width:600px)");
@@ -21,22 +23,36 @@ const AddAppointment = () => {
   const [doctors, setDoctors] = useState([]);
 
   useEffect(() => {
-    // patients
+    //patients
     fetch("/api/patients")
       .then((res) => res.json())
       .then((data) => setPatients(data))
       .catch((err) => console.error(err));
-
-    // doctors
+    //doctors
     fetch("/api/doctors")
       .then((res) => res.json())
       .then((data) => setDoctors(data))
       .catch((err) => console.error(err));
   }, []);
 
-  const handleFormSubmit = (values) => {
-    console.log(values);
-    
+  const handleFormSubmit = async (values) => {
+    try {
+      const response = await fetchWrapper("/appointments", {
+        method: "POST",
+        body: JSON.stringify(values),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to create appointment.");
+      }
+
+      const data = await response.json();
+      console.log(data);
+      toast.success("Appointment created successfully!");
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to create appointment.");
+    }
   };
 
   return (
@@ -141,7 +157,7 @@ const AddAppointment = () => {
                       shrink: true,
                     }}
                     inputProps={{
-                      min: new Date().toISOString().slice(0, 16),
+                      min: new Date().toISOString().slice(0, 16), 
                       step: 60,
                     }}
                   />

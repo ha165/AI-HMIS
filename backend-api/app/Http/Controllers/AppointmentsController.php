@@ -37,7 +37,7 @@ class AppointmentsController extends Controller
      */
     public function store(StoreAppointmentsRequest $request)
     {
-        //
+        
     }
 
     /**
