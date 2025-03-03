@@ -3,8 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Appointments;
-use App\Http\Requests\StoreAppointmentsRequest;
-use App\Http\Requests\UpdateAppointmentsRequest;
+use Illuminate\Http\Request;
 
 class AppointmentsController extends Controller
 {
@@ -35,13 +34,12 @@ class AppointmentsController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(StoreAppointmentsRequest $request)
+    public function store(Request $request)
     {
         $fields = $request->validate([
             'patient_id' => 'required|exists:users,id',
             'doctor_id' => 'required|exists:users,id',
             'appointment_date' => 'required|date',
-            'status' => 'required',
             'reason' => 'required',
         ]);
 
@@ -63,7 +61,7 @@ class AppointmentsController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateAppointmentsRequest $request, Appointments $appointments)
+    public function update($request, Appointments $appointments)
     {
         //
     }

@@ -39,7 +39,12 @@ const AddAppointment = () => {
     try {
       const response = await fetchWrapper("/appointments", {
         method: "POST",
-        body: JSON.stringify(values),
+        body: JSON.stringify({
+          patient_id: values.patientId,
+          doctor_id: values.doctorId,
+          appointment_date: values.appointmentDate,
+          reason: values.reason,
+        }),
       });
 
       if (!response.ok) {
