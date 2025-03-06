@@ -80,20 +80,16 @@ const Appointments = () => {
     if (!deletingappointmentId) return;
 
     try {
-      const response = await fetchWrapper(
-        `/appointments/${deletingappointmentId}`,
-        {
-          method: "DELETE",
-        }
+      await fetchWrapper(`/appointments/${deletingappointmentId}`, {
+        method: "DELETE",
+      });
+      setAppointments((prevAppointments) =>
+        prevAppointments.filter(
+          (appointment) => appointment.id !== deletingappointmentId
+        )
       );
 
-      if (response.ok) {
-        setAppointments(
-          Appointments.filter(
-            (appointment) => appointment.id !== deletingappointmentId
-          )
-        );
-      }
+      toast.success("Appointment deleted successfully!");
     } catch (error) {
       console.error("Error deleting appointment", error);
       toast.error("Error deleting appointment");
@@ -108,28 +104,26 @@ const Appointments = () => {
 
     const payload = { ...selectedappointment, ...updatedappointment };
     try {
-      const response = await fetchWrapper(
+      const updatedData = await fetchWrapper(
         `/appointments/${selectedappointment.id}`,
         {
           method: "PUT",
           body: JSON.stringify(payload),
         }
       );
-      if (response.ok) {
-        const updatedData = await response.json();
-        setAppointments(
-          Appointments.map((appointment) =>
-            appointment.id === updatedData.id ? updatedData : appointment
-          )
-        );
-        setOpenEditModal(false);
-      }
+      setAppointments((prevAppointments) =>
+        prevAppointments.map((appointment) =>
+          appointment.id === updatedData.id ? updatedData : appointment
+        )
+      );
+
+      toast.success("Appointment updated successfully");
+      setOpenEditModal(false);
     } catch (error) {
-      console.error("Error updating appointment", error);
+      console.error("Error updating appointment:", error);
       toast.error("Error updating appointment");
     }
   };
-
   const columns = [
     { field: "id", headerName: "ID", width: 90 },
     { field: "patient_name", headerName: "Patient Name", flex: 1 },
@@ -184,7 +178,7 @@ const Appointments = () => {
               variant="contained"
               color="secondary"
               startIcon={<AddCircleOutline />}
-              component = {Link}
+              component={Link}
               to="/add-appointment"
             >
               Add Appointment
