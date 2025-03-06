@@ -61,9 +61,25 @@ class AppointmentsController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update($request, Appointments $appointments)
+    public function update(Request $request, $id)
     {
-        //
+        $request->validate([
+            'patient_id' => 'required|exists:patient,id',
+            'doctor_id' => 'required|exists:doctor,id',
+            'appointment_date' => 'required|date',
+            'reason' => 'required',
+            'status' => 'required|in:pending,accepted,rejected',
+        ]);
+
+        $appointment = Appointments::find($id);
+        if (!$appointment) {
+            return response()->json(['message' => 'Appointment not found'], 404);
+        }
+
+        $appointment->update($request->all());
+
+        return response()->json($appointment);
+        
     }
 
     /**
