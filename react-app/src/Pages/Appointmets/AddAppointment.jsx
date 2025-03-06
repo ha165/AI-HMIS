@@ -11,6 +11,7 @@ import { Formik } from "formik";
 import * as yup from "yup";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Header from "../../Components/Header";
 import Sidebar from "../../Scenes/global/SideBar";
 import Topbar from "../../Scenes/global/TopBar";
@@ -21,6 +22,7 @@ const AddAppointment = () => {
   const isNonMobile = useMediaQuery("(min-width:600px)");
   const [patients, setPatients] = useState([]);
   const [doctors, setDoctors] = useState([]);
+  const navigate = useNavigate(); 
 
   useEffect(() => {
     //patients
@@ -48,6 +50,7 @@ const AddAppointment = () => {
       });
 
       console.log("Appointment created successfully:", data);
+      navigate("/appointments");
       toast.success("Appointment created successfully!");
     } catch (error) {
       console.error("Error creating appointment:", error);
