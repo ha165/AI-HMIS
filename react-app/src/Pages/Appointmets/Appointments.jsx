@@ -5,6 +5,10 @@ import {
   Typography,
   CircularProgress,
   Button,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  Select,
   TextField,
   Modal,
   useTheme,
@@ -31,6 +35,22 @@ const Appointments = () => {
   const [updatedappointment, setUpdatedappointment] = useState({});
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
   const [deletingappointmentId, setDeletingappointmentId] = useState(null);
+  const [patients, setPatients] = useState([]);
+  const [doctors, setDoctors] = useState([]);
+
+  useEffect(() => {
+    // Fetch patients
+    fetch("/api/patients")
+      .then((res) => res.json())
+      .then((data) => setPatients(data))
+      .catch((err) => console.error("Error fetching patients:", err));
+
+    // Fetch doctors
+    fetch("/api/doctors")
+      .then((res) => res.json())
+      .then((data) => setDoctors(data))
+      .catch((err) => console.error("Error fetching doctors:", err));
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -61,11 +81,9 @@ const Appointments = () => {
   const handleEdit = (appointment) => {
     setSelectedappointment(appointment);
     setUpdatedappointment({
-      first_name: appointment.first_name,
-      doctor_name: appointment.doctor_name,
-      phone: appointment.phone,
-      specialization: appointment.specialization,
-      date: appointment.appointment_date,
+      patient_id: appointment.patient_id,
+      doctor_id: appointment.doctor_id,
+      reason: appointment.reason,
       status: appointment.status,
     });
     setOpenEditModal(true);
@@ -246,92 +264,85 @@ const Appointments = () => {
           }}
         >
           <Typography variant="h6" mb={2}>
-            Edit appointment
+            Edit Appointment
           </Typography>
+
+          {/* Patient Dropdown*/}
+          <FormControl fullWidth margin="normal">
+            <InputLabel>Patient</InputLabel>
+            <Select
+              value={updatedappointment.patient_id || ""}
+              onChange={(e) =>
+                setUpdatedappointment({
+                  ...updatedappointment,
+                  patient_id: e.target.value,
+                })
+              }
+            >
+              {patients.map((patient) => (
+                <MenuItem key={patient.id} value={patient.id}>
+                  {patient.first_name} {patient.last_name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          {/* Doctor Dropdown */}
+          <FormControl fullWidth margin="normal">
+            <InputLabel>Doctor</InputLabel>
+            <Select
+              value={updatedappointment.doctor_id || ""}
+              onChange={(e) =>
+                setUpdatedappointment({
+                  ...updatedappointment,
+                  doctor_id: e.target.value,
+                })
+              }
+            >
+              {doctors.map((doctor) => (
+                <MenuItem key={doctor.id} value={doctor.id}>
+                  {doctor.first_name} {doctor.last_name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          {/* Reason */}
           <TextField
-            label="First Name"
-            value={updatedappointment.first_name || ""}
+            label="Reason"
+            value={updatedappointment.reason || ""}
             onChange={(e) =>
               setUpdatedappointment({
                 ...updatedappointment,
-                first_name: e.target.value,
+                reason: e.target.value,
               })
             }
             fullWidth
+            multiline
+            rows={3}
             margin="normal"
           />
-          <TextField
-            label="Last Name"
-            value={updatedappointment.last_name || ""}
-            onChange={(e) =>
-              setUpdatedappointment({
-                ...updatedappointment,
-                last_name: e.target.value,
-              })
-            }
-            fullWidth
-            margin="normal"
-          />
-          <TextField
-            label="Phone Number"
-            value={updatedappointment.phone || ""}
-            onChange={(e) =>
-              setUpdatedappointment({
-                ...updatedappointment,
-                phone: e.target.value,
-              })
-            }
-            fullWidth
-            margin="normal"
-          />
-          <TextField
-            label="Email"
-            value={updatedappointment.email || ""}
-            onChange={(e) =>
-              setUpdatedappointment({
-                ...updatedappointment,
-                email: e.target.value,
-              })
-            }
-            fullWidth
-            margin="normal"
-          />
-          <TextField
-            label="Address"
-            value={updatedappointment.address || ""}
-            onChange={(e) =>
-              setUpdatedappointment({
-                ...updatedappointment,
-                address: e.target.value,
-              })
-            }
-            fullWidth
-            margin="normal"
-          />
-          <TextField
-            label="specilization"
-            value={updatedappointment.specialization || ""}
-            onChange={(e) =>
-              setUpdatedappointment({
-                ...updatedappointment,
-                specialization: e.target.value,
-              })
-            }
-            fullWidth
-            margin="normal"
-          />
-          <TextField
-            label="License Number"
-            value={updatedappointment.license_number || ""}
-            onChange={(e) =>
-              setUpdatedappointment({
-                ...updatedappointment,
-                license_number: e.target.value,
-              })
-            }
-            fullWidth
-            margin="normal"
-          />
+
+          {/* Status Dropdown */}
+          <FormControl fullWidth margin="normal">
+            <InputLabel>Status</InputLabel>
+            <Select
+              value={updatedappointment.status || ""}
+              onChange={(e) =>
+                setUpdatedappointment({
+                  ...updatedappointment,
+                  status: e.target.value,
+                })
+              }
+            >
+              <MenuItem value="pending">Pending</MenuItem>
+              <MenuItem value="confirmed">Confirmed</MenuItem>
+              <MenuItem value="completed">Completed</MenuItem>
+              <MenuItem value="cancelled">Cancelled</MenuItem>
+            </Select>
+          </FormControl>
+
+          {/* Update Button */}
           <Box display="flex" justifyContent="flex-end" mt={2}>
             <Button onClick={handleUpdate} variant="contained" color="primary">
               Update
