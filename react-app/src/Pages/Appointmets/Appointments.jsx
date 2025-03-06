@@ -10,10 +10,12 @@ import {
   useTheme,
 } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
+import { AddCircleOutline } from "@mui/icons-material";
 import fetchWrapper from "../../Context/fetchwrapper";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { tokens } from "../../../themes";
+import { Link } from "react-router-dom";
 import Sidebar from "../../Scenes/global/SideBar";
 import Topbar from "../../Scenes/global/TopBar";
 import Header from "../../Components/Header";
@@ -177,6 +179,17 @@ const Appointments = () => {
         <Topbar />
         <Box m="20px">
           <Header title="Appointments" subtitle="Managing the Appointments" />
+          <Box display="flex" justifyContent="flex-end" mb={2}>
+            <Button
+              variant="contained"
+              color="secondary"
+              startIcon={<AddCircleOutline />}
+              component = {Link}
+              to="/add-appointment"
+            >
+              Add Appointment
+            </Button>
+          </Box>
           <Box
             m="40px 0 0 0"
             height="75vh"

@@ -37,7 +37,7 @@ const AddAppointment = () => {
 
   const handleFormSubmit = async (values) => {
     try {
-      const response = await fetchWrapper("/appointments", {
+      const data = await fetchWrapper("/appointments", {
         method: "POST",
         body: JSON.stringify({
           patient_id: values.patientId,
@@ -47,15 +47,10 @@ const AddAppointment = () => {
         }),
       });
 
-      if (!response.ok) {
-        throw new Error("Failed to create appointment.");
-      }
-
-      const data = await response.json();
-      console.log(data);
+      console.log("Appointment created successfully:", data);
       toast.success("Appointment created successfully!");
     } catch (error) {
-      console.error(error);
+      console.error("Error creating appointment:", error);
       toast.error("Failed to create appointment.");
     }
   };
