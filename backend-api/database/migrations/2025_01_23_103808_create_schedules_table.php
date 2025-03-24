@@ -19,7 +19,6 @@ return new class extends Migration {
             $table->date('end_date')->virtualAs('DATE(end_time)')->comment('Virtual column for date filtering');
             $table->text('notes')->nullable();
             $table->timestamps();
-            // Add indexes for performance
             $table->index(['doctor_id', 'start_time']);
             $table->index(['doctor_id', 'end_time']);
         });

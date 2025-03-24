@@ -34,4 +34,9 @@ class Appointments extends Model
     {
         return $this->belongsTo(Doctor::class);
     }
+    
+    public function schedules()
+    {
+        return $this->belongsTo(Schedules::class, 'schedule_id');
+    }
 }

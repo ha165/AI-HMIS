@@ -25,12 +25,14 @@ const AddAppointment = () => {
   const navigate = useNavigate(); 
 
   useEffect(() => {
-    //patients
+    // Fetch patients
+
     fetch("/api/patients")
       .then((res) => res.json())
       .then((data) => setPatients(data))
       .catch((err) => console.error(err));
-    //doctors
+    // Fetch available doctors
+
     fetch("/api/doctors")
       .then((res) => res.json())
       .then((data) => setDoctors(data))
