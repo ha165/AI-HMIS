@@ -10,6 +10,7 @@ use App\Http\Controllers\MedicalRecordsController;
 use App\Http\Controllers\NotificationsController;
 use App\Http\Controllers\PaymentsController;
 use App\Http\Controllers\PatientsController;
+use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\SchedulesController;
 use App\Http\Controllers\UserController;
 use Illuminate\Http\Request;
@@ -31,6 +32,10 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
+
+Route::get('/doctors/available', [DoctorsController::class, 'getAvailableDoctors']);
+Route::get('/doctor/{doctor_id}/available-schedules', [SchedulesController::class, 'getAvailableSchedules']);
+
 // Resource routes 
 Route::resources([
     'ai_diagnostics' => AiDiagnosticsController::class,
@@ -43,6 +48,7 @@ Route::resources([
     'patients' => PatientsController::class,
     'schedules' => SchedulesController::class,
     'doctors' => DoctorsController::class,
+    'services' => ServiceController::class
 ]);
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::post("/complete-registration", [PatientsController::class, "completeRegistration"]);

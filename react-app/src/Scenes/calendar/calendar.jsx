@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import FullCalendar from "@fullcalendar/react";
 import { formatDate } from "@fullcalendar/core";
 import dayGridPlugin from "@fullcalendar/daygrid";
@@ -21,32 +21,63 @@ import { tokens } from "../../../themes";
 const Calendar = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
-  const [currentEvents, setCurrentEvents] = useState([]);
+  const [events, setEvents] = useState([]);
 
-  const handleDateClick = (selected) => {
-    const title = prompt("Please enter a new title for your event");
-    const calendarApi = selected.view.calendar;
-    calendarApi.unselect();
+  // Fetch events from Laravel API
+  useEffect(() => {
+    fetch("http://localhost:8000/api/schedules")
+      .then((response) => response.json())
+      .then((data) =>
+        setEvents(
+          data.map((event) => ({
+            id: event.id,
+            title: event.notes || "Scheduled Event",
+            start: event.start_time,
+            end: event.end_time,
+          }))
+        )
+      );
+  }, []);
 
-    if (title) {
-      calendarApi.addEvent({
-        id: `${selected.dateStr}-${title}`,
+  // Handle event creation
+  const handleDateClick = async (selected) => {
+    const title = prompt("Enter event notes:");
+    if (!title) return;
+
+    const newEvent = {
+      doctor_id: 1, // Change this dynamically based on logged-in user
+      start_time: selected.startStr,
+      end_time: selected.endStr || selected.startStr,
+      notes: title,
+    };
+
+    const response = await fetch("http://localhost:8000/api/schedules", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(newEvent),
+    });
+
+    const savedEvent = await response.json();
+    setEvents([
+      ...events,
+      {
+        ...savedEvent,
         title,
-        start: selected.startStr,
-        end: selected.endStr,
-        allDay: selected.allDay,
-      });
-    }
+        start: savedEvent.start_time,
+        end: savedEvent.end_time,
+      },
+    ]);
   };
 
-  const handleEventClick = (selected) => {
-    if (
-      window.confirm(
-        `Are you sure you want to delete the event '${selected.event.title}'`
-      )
-    ) {
-      selected.event.remove();
-    }
+  // Handle event deletion
+  const handleEventClick = async (selected) => {
+    if (!window.confirm(`Delete event: ${selected.event.title}?`)) return;
+
+    await fetch(`http://localhost:8000/api/schedules/${selected.event.id}`, {
+      method: "DELETE",
+    });
+
+    setEvents(events.filter((event) => event.id !== selected.event.id));
   };
 
   return (
@@ -63,7 +94,7 @@ const Calendar = () => {
           <Header title="Calendar" subtitle="Full Calendar Interactive Page" />
 
           <Box display="flex" justifyContent="space-between">
-            {/* CALENDAR SIDEBAR */}
+            {/* Calendar Sidebar - Event List */}
             <Box
               flex="1 1 20%"
               backgroundColor={colors.primary[400]}
@@ -72,7 +103,7 @@ const Calendar = () => {
             >
               <Typography variant="h5">Events</Typography>
               <List>
-                {currentEvents.map((event) => (
+                {events.map((event) => (
                   <ListItem
                     key={event.id}
                     sx={{
@@ -98,7 +129,7 @@ const Calendar = () => {
               </List>
             </Box>
 
-            {/* CALENDAR */}
+            {/* Full Calendar */}
             <Box flex="1 1 100%" ml="15px">
               <FullCalendar
                 height="75vh"
@@ -114,25 +145,10 @@ const Calendar = () => {
                   right: "dayGridMonth,timeGridWeek,timeGridDay,listMonth",
                 }}
                 initialView="dayGridMonth"
-                editable={true}
-                selectable={true}
-                selectMirror={true}
-                dayMaxEvents={true}
+                selectable
                 select={handleDateClick}
+                events={events}
                 eventClick={handleEventClick}
-                eventsSet={(events) => setCurrentEvents(events)}
-                initialEvents={[
-                  {
-                    id: "12315",
-                    title: "All-day event",
-                    date: "2022-09-14",
-                  },
-                  {
-                    id: "5123",
-                    title: "Timed event",
-                    date: "2022-09-28",
-                  },
-                ]}
               />
             </Box>
           </Box>

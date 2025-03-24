@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Doctor;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class DoctorsController extends Controller
@@ -103,4 +104,19 @@ class DoctorsController extends Controller
     {
         //
     }
+    public function getAvailableDoctors(Request $request)
+    {
+        $specialization = $request->query('specialization');
+
+        $doctors = User::where('role', 'doctor')
+            ->where('specialization', $specialization)
+            ->whereHas('schedules', function ($query) {
+                $query->where('start_time', '>', now());
+            })
+            ->with('schedules')
+            ->get();
+
+        return response()->json($doctors);
+    }
+
 }

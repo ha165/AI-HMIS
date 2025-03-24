@@ -36,19 +36,32 @@ class AppointmentsController extends Controller
      */
     public function store(Request $request)
     {
-        $fields = $request->validate([
+        $request->validate([
             'patient_id' => 'required|exists:users,id',
             'doctor_id' => 'required|exists:users,id',
-            'appointment_date' => 'required|date',
+            'schedule_id' => 'required|exists:schedules,id',
             'reason' => 'required',
         ]);
 
-        $fields['status'] = 'pending';
+        // Check if schedule is available
+        $schedule = Schedule::find($request->schedule_id);
+        if (!$schedule || $schedule->appointments()->exists()) {
+            return response()->json(['message' => 'This schedule is no longer available'], 400);
+        }
 
-        $appointment = Appointments::create($fields);
+        // Create appointment
+        $appointment = Appointments::create([
+            'patient_id' => $request->patient_id,
+            'doctor_id' => $request->doctor_id,
+            'schedule_id' => $request->schedule_id,
+            'appointment_date' => $schedule->start_time,
+            'reason' => $request->reason,
+            'status' => 'pending',
+        ]);
 
         return response()->json($appointment);
     }
+
 
     /**
      * Display the specified resource.
@@ -79,7 +92,7 @@ class AppointmentsController extends Controller
         $appointment->update($request->all());
 
         return response()->json($appointment);
-        
+
     }
 
     /**

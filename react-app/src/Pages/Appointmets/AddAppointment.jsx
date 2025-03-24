@@ -1,218 +1,139 @@
-import {
-  Box,
-  Button,
-  TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-} from "@mui/material";
-import { Formik } from "formik";
-import * as yup from "yup";
-import useMediaQuery from "@mui/material/useMediaQuery";
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import Header from "../../Components/Header";
-import Sidebar from "../../Scenes/global/SideBar";
-import Topbar from "../../Scenes/global/TopBar";
-import fetchWrapper from "../../Context/fetchwrapper";
-import { toast } from "react-toastify";
+import { useState, useEffect } from "react";
+import FullCalendar from "@fullcalendar/react";
+import dayGridPlugin from "@fullcalendar/daygrid";
 
-const AddAppointment = () => {
-  const isNonMobile = useMediaQuery("(min-width:600px)");
-  const [patients, setPatients] = useState([]);
+const AppointmentBooking = () => {
+  const [services, setServices] = useState([]);
+  const [selectedService, setSelectedService] = useState("");
   const [doctors, setDoctors] = useState([]);
-  const navigate = useNavigate(); 
+  const [selectedDoctor, setSelectedDoctor] = useState("");
+  const [schedules, setSchedules] = useState([]);
+  const [selectedSchedule, setSelectedSchedule] = useState("");
+  const [reason, setReason] = useState("");
 
+  // Fetch available services
   useEffect(() => {
-    // Fetch patients
-
-    fetch("/api/patients")
+    fetch("http://localhost:8000/api/services")
       .then((res) => res.json())
-      .then((data) => setPatients(data))
-      .catch((err) => console.error(err));
-    // Fetch available doctors
-
-    fetch("/api/doctors")
-      .then((res) => res.json())
-      .then((data) => setDoctors(data))
-      .catch((err) => console.error(err));
+      .then((data) => setServices(data));
   }, []);
 
-  const handleFormSubmit = async (values) => {
-    try {
-      const data = await fetchWrapper("/appointments", {
-        method: "POST",
-        body: JSON.stringify({
-          patient_id: values.patientId,
-          doctor_id: values.doctorId,
-          appointment_date: values.appointmentDate,
-          reason: values.reason,
-        }),
-      });
+  // Fetch available doctors based on service
+  useEffect(() => {
+    if (!selectedService) return;
+    fetch(`http://localhost:8000/api/doctors/available?specialization=${selectedService}`)
+      .then((res) => res.json())
+      .then((data) => setDoctors(data));
+  }, [selectedService]);
 
-      console.log("Appointment created successfully:", data);
-      navigate("/appointments");
-      toast.success("Appointment created successfully!");
-    } catch (error) {
-      console.error("Error creating appointment:", error);
-      toast.error("Failed to create appointment.");
+  // Fetch available schedules based on doctor
+  useEffect(() => {
+    if (!selectedDoctor) return;
+    fetch(`http://localhost:8000/api/doctor/${selectedDoctor}/available-schedules`)
+      .then((res) => res.json())
+      .then((data) => setSchedules(data));
+  }, [selectedDoctor]);
+
+  // Handle appointment booking
+  const handleBookAppointment = () => {
+    if (!selectedDoctor || !selectedSchedule || !reason) {
+      alert("Please fill all fields!");
+      return;
     }
+
+    fetch("http://localhost:8000/api/appointments", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        patient_id: 1, // Replace with actual logged-in patient ID
+        doctor_id: selectedDoctor,
+        schedule_id: selectedSchedule,
+        reason,
+      }),
+    })
+      .then((res) => res.json())
+      .then(() => {
+        alert("Appointment booked successfully!");
+        setSelectedService("");
+        setSelectedDoctor("");
+        setSelectedSchedule("");
+        setReason("");
+      })
+      .catch((err) => console.error("Error:", err));
   };
 
   return (
-    <Box display="flex" height="100vh" flexDirection="row">
-      <Sidebar />
+    <div className="p-4">
+      <h1 className="text-2xl font-bold mb-4">Book an Appointment</h1>
 
-      <Box flexGrow={1} display="flex" flexDirection="column">
-        <Topbar />
+      {/* Service Selection */}
+      <select
+        className="w-full p-2 mb-4 border border-gray-300 rounded-md"
+        value={selectedService}
+        onChange={(e) => setSelectedService(e.target.value)}
+      >
+        <option value="" disabled>Select Service</option>
+        {services.map((service) => (
+          <option key={service.id} value={service.name}>{service.name}</option>
+        ))}
+      </select>
 
-        <Box flexGrow={1} p="20px">
-          <Header
-            title="CREATE APPOINTMENT"
-            subtitle="Schedule a New Appointment"
-          />
+      {/* Doctor Selection */}
+      <select
+        className="w-full p-2 mb-4 border border-gray-300 rounded-md"
+        value={selectedDoctor}
+        onChange={(e) => setSelectedDoctor(e.target.value)}
+      >
+        <option value="" disabled>Select Doctor</option>
+        {doctors.map((doctor) => (
+          <option key={doctor.id} value={doctor.id}>
+            {doctor.first_name} {doctor.last_name} - {doctor.specialization}
+          </option>
+        ))}
+      </select>
 
-          <Formik
-            onSubmit={handleFormSubmit}
-            initialValues={initialValues}
-            validationSchema={checkoutSchema}
-          >
-            {({
-              values,
-              errors,
-              touched,
-              handleBlur,
-              handleChange,
-              handleSubmit,
-            }) => (
-              <form onSubmit={handleSubmit}>
-                <Box
-                  display="grid"
-                  gap="30px"
-                  gridTemplateColumns="repeat(4, minmax(0, 1fr))"
-                  sx={{
-                    "& > div": {
-                      gridColumn: isNonMobile ? undefined : "span 4",
-                    },
-                  }}
-                >
-                  {/* Patient Select */}
-                  <FormControl
-                    fullWidth
-                    variant="filled"
-                    sx={{ gridColumn: "span 4" }}
-                  >
-                    <InputLabel>Patient</InputLabel>
-                    <Select
-                      name="patientId"
-                      value={values.patientId}
-                      onBlur={handleBlur}
-                      onChange={handleChange}
-                      error={!!touched.patientId && !!errors.patientId}
-                    >
-                      {patients.map((patient) => (
-                        <MenuItem key={patient.id} value={patient.id}>
-                          {patient.first_name} {patient.last_name}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
+      {/* Small Calendar for Available Days */}
+      <div className="mb-4">
+        <h2 className="text-xl font-semibold mb-2">Available Slots</h2>
+        <FullCalendar
+          plugins={[dayGridPlugin]}
+          initialView="dayGridMonth"
+          height="300px"
+          events={schedules.map((slot) => ({
+            id: slot.id,
+            title: "Available",
+            start: slot.start_time,
+          }))}
+          dateClick={(info) => {
+            const selectedSlot = schedules.find((s) => s.start_time.startsWith(info.dateStr));
+            if (selectedSlot) {
+              setSelectedSchedule(selectedSlot.id);
+              alert(`Selected slot: ${selectedSlot.start_time}`);
+            } else {
+              alert("No available slots on this day.");
+            }
+          }}
+        />
+      </div>
 
-                  {/* Doctor Select */}
-                  <FormControl
-                    fullWidth
-                    variant="filled"
-                    sx={{ gridColumn: "span 4" }}
-                  >
-                    <InputLabel>Doctor</InputLabel>
-                    <Select
-                      name="doctorId"
-                      value={values.doctorId}
-                      onBlur={handleBlur}
-                      onChange={handleChange}
-                      error={!!touched.doctorId && !!errors.doctorId}
-                    >
-                      {doctors.map((doctor) => (
-                        <MenuItem key={doctor.id} value={doctor.id}>
-                          {doctor.first_name} {doctor.last_name}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
+      {/* Reason Input */}
+      <textarea
+        className="w-full p-2 mb-4 border border-gray-300 rounded-md"
+        placeholder="Reason for Appointment"
+        value={reason}
+        onChange={(e) => setReason(e.target.value)}
+        rows={3}
+      />
 
-                  {/* Appointment Date */}
-                  <TextField
-                    fullWidth
-                    variant="filled"
-                    type="datetime-local"
-                    label="Appointment Date & Time"
-                    onBlur={handleBlur}
-                    onChange={handleChange}
-                    value={values.appointmentDate}
-                    name="appointmentDate"
-                    error={
-                      !!touched.appointmentDate && !!errors.appointmentDate
-                    }
-                    helperText={
-                      touched.appointmentDate && errors.appointmentDate
-                    }
-                    sx={{ gridColumn: "span 4" }}
-                    InputLabelProps={{
-                      shrink: true,
-                    }}
-                    inputProps={{
-                      min: new Date().toISOString().slice(0, 16),
-                      step: 60,
-                    }}
-                  />
-
-                  {/* Reason */}
-                  <TextField
-                    fullWidth
-                    variant="filled"
-                    type="text"
-                    label="Reason"
-                    onBlur={handleBlur}
-                    onChange={handleChange}
-                    value={values.reason}
-                    name="reason"
-                    error={!!touched.reason && !!errors.reason}
-                    helperText={touched.reason && errors.reason}
-                    sx={{ gridColumn: "span 4" }}
-                    multiline
-                    rows={4}
-                  />
-                </Box>
-                <Box display="flex" justifyContent="end" mt="20px">
-                  <Button type="submit" color="secondary" variant="contained">
-                    Create New Appointment
-                  </Button>
-                </Box>
-              </form>
-            )}
-          </Formik>
-        </Box>
-      </Box>
-    </Box>
+      {/* Book Appointment Button */}
+      <button
+        className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded"
+        onClick={handleBookAppointment}
+      >
+        Book Appointment
+      </button>
+    </div>
   );
 };
 
-const checkoutSchema = yup.object().shape({
-  patientId: yup.string().required("Patient is required"),
-  doctorId: yup.string().required("Doctor is required"),
-  appointmentDate: yup
-    .date()
-    .min(new Date(), "Appointment date must be in the future")
-    .required("Appointment date is required"),
-  reason: yup.string().required("Reason is required"),
-});
-
-const initialValues = {
-  patientId: "",
-  doctorId: "",
-  appointmentDate: "",
-  reason: "",
-};
-
-export default AddAppointment;
+export default AppointmentBooking;
