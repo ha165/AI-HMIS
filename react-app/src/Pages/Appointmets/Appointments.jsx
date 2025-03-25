@@ -40,25 +40,13 @@ const Appointments = () => {
 
   useEffect(() => {
     // Fetch patients
-    fetch("/api/patients",{
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
-      },
-    })
+    fetchWrapper("/patients")
       .then((res) => res.json())
       .then((data) => setPatients(data))
       .catch((err) => console.error("Error fetching patients:", err));
 
     // Fetch doctors
-    fetch("/api/doctors",{
-      method:"GET",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
-      },
-    })
+    fetch("/doctors")
       .then((res) => res.json())
       .then((data) => setDoctors(data))
       .catch((err) => console.error("Error fetching doctors:", err));
@@ -204,7 +192,7 @@ const Appointments = () => {
       <Box flex="1" display="flex" flexDirection="column">
         <Topbar />
         <Box m="20px">
-          <Header title="Appointments" subtitle="Managing the Appointments" />
+          <Header title="Appointments" subtitle="View Your Appointments" />
           <Box display="flex" justifyContent="flex-end" mb={2}>
             <Button
               variant="contained"
