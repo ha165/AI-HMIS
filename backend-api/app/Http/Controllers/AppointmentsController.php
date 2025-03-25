@@ -33,7 +33,7 @@ class AppointmentsController extends Controller
         $formattedData = $appointments->map(function ($appointment): array {
             return [
                 "id" => $appointment->id,
-                "patient_name" => optional($appointment->patient->user)->first_name . ' ' . optional($appointment->patient->user)->last_name ?? 'N/A',
+                "patient_name" => optional($appointment->patient->user)->first_name . ' ' . optional($appointment->patient->user)->last_name ?: 'N/A',
                 "service_name" => optional($appointment->services)->name ?? 'N/A',
                 "doctor_name" => optional($appointment->doctor->user)->first_name . ' ' . optional($appointment->doctor->user)->last_name ?? 'N/A',
                 "patient_phone" => optional($appointment->patient->user)->phone ?? 'N/A',
@@ -102,8 +102,8 @@ class AppointmentsController extends Controller
     public function update(Request $request, $id)
     {
         $request->validate([
-            'patient_id' => 'required|exists:patient,id',
-            'doctor_id' => 'required|exists:doctor,id',
+            'patient_id' => 'required|exists:patients,id',
+            'doctor_id' => 'required|exists:doctors,id',
             'appointment_date' => 'required|date',
             'reason' => 'required',
             'status' => 'required|in:pending,accepted,rejected',
