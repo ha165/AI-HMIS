@@ -136,4 +136,24 @@ class AppointmentsController extends Controller
 
         return response()->json(['message' => 'Appointment deleted successfully'], 200);
     }
+    public function complete(Request $request, $appointmentId)
+    {
+        $request->validate([
+            'diagnosis' => 'nullable|string',
+            'prescription' => 'nullable|string',
+            'vital_signs' => 'nullable|json',
+        ]);
+
+        $appointment = Appointments::findOrFail($appointmentId);
+
+        try {
+            $medicalRecord = $appointment->complete($request->all());
+            return response()->json([
+                'message' => 'Appointment completed and medical record created.',
+                'medical_record' => $medicalRecord,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 400);
+        }
+    }
 }
