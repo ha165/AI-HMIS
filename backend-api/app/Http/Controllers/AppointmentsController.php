@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Appointments;
+use App\Models\Doctor;
+use App\Models\Schedules;
 use Illuminate\Http\Request;
 
 class AppointmentsController extends Controller
@@ -18,11 +20,12 @@ class AppointmentsController extends Controller
             return [
                 "id" => $appointment->id,
                 "patient_name" => optional($appointment->patient->user)->first_name . ' ' . optional($appointment->patient->user)->last_name ?? 'N/A',
+                "service_name" => optional($appointment->services)->name ?? 'N/A',
                 "doctor_name" => optional($appointment->doctor->user)->first_name . ' ' . optional($appointment->doctor->user)->last_name ?? 'N/A',
                 "patient_phone" => optional($appointment->patient->user)->phone ?? 'N/A',
                 "doctor_phone" => optional($appointment->doctor->user)->phone ?? 'N/A',
                 "specialization" => optional($appointment->doctor)->specialization ?? 'N/A',
-                "appointment_date" => optional($appointment->appointment_date)->format('Y-m-d H:i:s') ?? 'N/A',
+                "appointment_date" => $appointment->appointment_date ? $appointment->appointment_date->format('Y-m-d') : 'N/A',
                 "status" => ucfirst($appointment->status ?? 'pending')
             ];
         });
@@ -40,11 +43,12 @@ class AppointmentsController extends Controller
             'patient_id' => 'required|exists:users,id',
             'doctor_id' => 'required|exists:users,id',
             'schedule_id' => 'required|exists:schedules,id',
+            'service_id' => 'required|exists:services,id',
             'reason' => 'required',
         ]);
 
         // Check if schedule is available
-        $schedule = Schedule::find($request->schedule_id);
+        $schedule = Schedules::find($request->schedule_id);
         if (!$schedule || $schedule->appointments()->exists()) {
             return response()->json(['message' => 'This schedule is no longer available'], 400);
         }
@@ -54,6 +58,7 @@ class AppointmentsController extends Controller
             'patient_id' => $request->patient_id,
             'doctor_id' => $request->doctor_id,
             'schedule_id' => $request->schedule_id,
+            'service_id' => $request->service_id,
             'appointment_date' => $schedule->start_time,
             'reason' => $request->reason,
             'status' => 'pending',

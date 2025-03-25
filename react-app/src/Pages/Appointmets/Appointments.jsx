@@ -82,6 +82,7 @@ const Appointments = () => {
     setSelectedappointment(appointment);
     setUpdatedappointment({
       patient_id: appointment.patient_id,
+      service_id: appointment.service_id,
       doctor_id: appointment.doctor_id,
       reason: appointment.reason,
       status: appointment.status,
@@ -146,6 +147,7 @@ const Appointments = () => {
     { field: "id", headerName: "ID", width: 90 },
     { field: "patient_name", headerName: "Patient Name", flex: 1 },
     { field: "doctor_name", headerName: "Doctor Name", flex: 1 },
+    { field: "service_name", headerName: "Service", flex: 1 },
     { field: "patient_phone", headerName: "Patient No", flex: 1 },
     { field: "doctor_phone", headerName: "Doctor No", flex: 1 },
     { field: "specialization", headerName: "Specialization", flex: 1 },

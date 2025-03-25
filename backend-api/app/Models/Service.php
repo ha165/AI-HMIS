@@ -16,13 +16,4 @@ class Service extends Model
         'duration_minutes',
         'is_active'
     ];
-
-    public function department()
-    {
-        return $this->belongsTo(Departments::class);
-    }
-    public function doctors()
-    {
-        return $this->belongsToMany(Doctor::class);
-    }
 }
