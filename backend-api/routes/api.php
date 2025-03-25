@@ -49,7 +49,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/doctor/{doctor_id}/available-schedules', [SchedulesController::class, 'getAvailableSchedules']);
     Route::get('/services/{service}/doctors', [ServiceController::class, 'getDoctors']);
     Route::get('/doctors/{doctor}/schedules', [DoctorsController::class, 'getSchedules']);
-    
+    Route::post('/appointments/{appointment}/complete', [AppointmentsController::class, 'complete']);
+
+
     Route::middleware(['admin'])->group(function () {
         Route::put('/users/{user}', [PatientsController::class, 'update']);
         Route::delete('/users/{user}', [PatientsController::class, 'destroy']);
