@@ -17,6 +17,7 @@ import Header from "../../Components/Header";
 import Sidebar from "../../Scenes/global/SideBar";
 import Topbar from "../../Scenes/global/TopBar";
 import { tokens } from "../../../themes";
+import fetchWrapper from "../../Context/fetchwrapper";
 
 const Calendar = () => {
   const theme = useTheme();
@@ -25,7 +26,7 @@ const Calendar = () => {
 
   // Fetch events from Laravel API
   useEffect(() => {
-    fetch("http://localhost:8000/api/schedules")
+    fetchWrapper("/schedules")
       .then((response) => response.json())
       .then((data) =>
         setEvents(
@@ -45,13 +46,13 @@ const Calendar = () => {
     if (!title) return;
 
     const newEvent = {
-      doctor_id: 1, // Change this dynamically based on logged-in user
+      doctor_id: 2, // Change this dynamically based on logged-in user
       start_time: selected.startStr,
       end_time: selected.endStr || selected.startStr,
       notes: title,
     };
 
-    const response = await fetch("http://localhost:8000/api/schedules", {
+    const response = await fetchWrapper("/schedules", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(newEvent),
@@ -73,7 +74,7 @@ const Calendar = () => {
   const handleEventClick = async (selected) => {
     if (!window.confirm(`Delete event: ${selected.event.title}?`)) return;
 
-    await fetch(`http://localhost:8000/api/schedules/${selected.event.id}`, {
+    await fetchWrapper(`/schedules/${selected.event.id}`, {
       method: "DELETE",
     });
 

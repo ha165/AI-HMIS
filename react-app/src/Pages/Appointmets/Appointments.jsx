@@ -40,13 +40,25 @@ const Appointments = () => {
 
   useEffect(() => {
     // Fetch patients
-    fetch("/api/patients")
+    fetch("/api/patients",{
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+    })
       .then((res) => res.json())
       .then((data) => setPatients(data))
       .catch((err) => console.error("Error fetching patients:", err));
 
     // Fetch doctors
-    fetch("/api/doctors")
+    fetch("/api/doctors",{
+      method:"GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+    })
       .then((res) => res.json())
       .then((data) => setDoctors(data))
       .catch((err) => console.error("Error fetching doctors:", err));

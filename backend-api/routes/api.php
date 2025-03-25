@@ -1,66 +1,62 @@
 <?php
-
-use App\Http\Controllers\AuthController;
-use App\Http\Controllers\AiDiagnosticsController;
-use App\Http\Controllers\AppointmentsController;
-use App\Http\Controllers\BillingController;
-use App\Http\Controllers\DepartmentsController;
-use App\Http\Controllers\DoctorsController;
-use App\Http\Controllers\MedicalRecordsController;
-use App\Http\Controllers\NotificationsController;
-use App\Http\Controllers\PaymentsController;
-use App\Http\Controllers\PatientsController;
-use App\Http\Controllers\ServiceController;
-use App\Http\Controllers\SchedulesController;
-use App\Http\Controllers\UserController;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Http\JsonResponse;
+use App\Http\Controllers\{
+    AuthController,
+    AiDiagnosticsController,
+    AppointmentsController,
+    BillingController,
+    DepartmentsController,
+    DoctorsController,
+    MedicalRecordsController,
+    NotificationsController,
+    PaymentsController,
+    PatientsController,
+    ServiceController,
+    SchedulesController,
+    UserController
+};
 
+// Public authentication routes (No authentication required)
+Route::post('/register', [AuthController::class, 'register']);
+Route::post('/login', [AuthController::class, 'login']);
 
-// User authentication route
-Route::middleware('auth:sanctum')->group(function () {
+// **Protected Routes (Require Sanctum Authentication)**
+Route::middleware(['auth:sanctum'])->group(function () {
+    Route::resources([
+        'ai_diagnostics' => AiDiagnosticsController::class,
+        'appointments' => AppointmentsController::class,
+        'billing' => BillingController::class,
+        'departments' => DepartmentsController::class,
+        'medical_records' => MedicalRecordsController::class,
+        'notifications' => NotificationsController::class,
+        'payments' => PaymentsController::class,
+        'patients' => PatientsController::class,
+        'schedules' => SchedulesController::class,
+        'doctors' => DoctorsController::class,
+        'services' => ServiceController::class
+    ]);
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
 
     Route::post('/logout', [AuthController::class, 'logout']);
-});
-
-// Public authentication routes
-Route::post('/register', [AuthController::class, 'register']);
-Route::post('/login', [AuthController::class, 'login']);
-
-
-Route::get('/doctors/available', [DoctorsController::class, 'getAvailableDoctors']);
-Route::get('/doctor/{doctor_id}/available-schedules', [SchedulesController::class, 'getAvailableSchedules']);
-Route::get('/services/{service}/doctors', [ServiceController::class, 'getDoctors']);
-Route::get('/doctors/{doctor}/schedules', [DoctorsController::class, 'getSchedules']);
-
-// Resource routes 
-Route::resources([
-    'ai_diagnostics' => AiDiagnosticsController::class,
-    'appointments' => AppointmentsController::class,
-    'billing' => BillingController::class,
-    'departments' => DepartmentsController::class,
-    'medical_records' => MedicalRecordsController::class,
-    'notifications' => NotificationsController::class,
-    'payments' => PaymentsController::class,
-    'patients' => PatientsController::class,
-    'schedules' => SchedulesController::class,
-    'doctors' => DoctorsController::class,
-    'services' => ServiceController::class
-]);
-Route::middleware(['auth:sanctum'])->group(function () {
+    Route::get('/user/role', [UserController::class, 'getRole']);
     Route::post("/complete-registration", [PatientsController::class, "completeRegistration"]);
+    Route::get('/doctors/available', [DoctorsController::class, 'getAvailableDoctors']);
+    Route::get('/doctor/{doctor_id}/available-schedules', [SchedulesController::class, 'getAvailableSchedules']);
+    Route::get('/services/{service}/doctors', [ServiceController::class, 'getDoctors']);
+    Route::get('/doctors/{doctor}/schedules', [DoctorsController::class, 'getSchedules']);
+    
+    Route::middleware(['admin'])->group(function () {
+        Route::put('/users/{user}', [PatientsController::class, 'update']);
+        Route::delete('/users/{user}', [PatientsController::class, 'destroy']);
+    });
 });
-Route::middleware(['auth:sanctum', 'admin'])->group(function () {
-    Route::put('/users/{user}', [PatientsController::class, 'update']);
-    Route::delete('/users/{user}', [PatientsController::class, 'destroy']);
-});
-Route::middleware(['auth:sanctum'])->get('/user/role', [UserController::class, 'getRole']);
 
+// **Public API Routes (No authentication required)**
 Route::post('/diagnosis-chat', function (Request $request): JsonResponse {
     $userMessage = $request->input('message');
     $apiKey = env('OPENAI_API_KEY');
@@ -79,14 +75,12 @@ Route::post('/diagnosis-chat', function (Request $request): JsonResponse {
             'response' => $response['choices'][0]['message']['content']
         ]);
     } else {
-        $errorResponse = $response->json();
-        $errorMessage = $errorResponse['error']['message'] ?? 'Failed to retrieve response from OpenAI API';
-
         return response()->json([
-            'error' => $errorMessage
+            'error' => $response->json()['error']['message'] ?? 'Failed to retrieve response from OpenAI API'
         ], $response->status());
     }
 });
+
 Route::post('/image-analyzer', function (Request $request) {
     $image = $request->file('image');
 

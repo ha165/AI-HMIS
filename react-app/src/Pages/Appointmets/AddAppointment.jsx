@@ -1,5 +1,13 @@
 import { useState, useEffect } from "react";
-import { Box, Button, MenuItem, Select, TextField, Typography } from "@mui/material";
+import {
+  Box,
+  Button,
+  MenuItem,
+  Select,
+  TextField,
+  Typography,
+} from "@mui/material";
+import { useNavigate } from "react-router-dom";
 import { useTheme } from "@mui/material/styles";
 import Sidebar from "../../Scenes/global/SideBar";
 import Topbar from "../../Scenes/global/TopBar";
@@ -10,6 +18,7 @@ import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import fetchWrapper from "../../Context/fetchwrapper";
 
 const AppointmentBooking = () => {
   const theme = useTheme();
@@ -23,50 +32,44 @@ const AppointmentBooking = () => {
   const [reason, setReason] = useState("");
   const [calendarEvents, setCalendarEvents] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
 
   // Fetch all active services
   useEffect(() => {
     setIsLoading(true);
-    fetch("/api/services")
-      .then((res) => res.json())
-      .then((data) => {
-        setServices(data);
-        setIsLoading(false);
-      })
+    fetchWrapper("/api/services")
+      .then(setServices)
       .catch((err) => {
         console.error("Error fetching services:", err);
         toast.error("Failed to load services");
-        setIsLoading(false);
-      });
+      })
+      .finally(() => setIsLoading(false));
   }, []);
 
   // Fetch doctors when service is selected
   useEffect(() => {
     if (!selectedService) return;
-    
+
     setIsLoading(true);
-    fetch(`/api/services/${selectedService}/doctors`)
-      .then((res) => res.json())
+    fetchWrapper(`/services/${selectedService}/doctors`)
       .then((data) => {
         setDoctors(data);
         setSelectedDoctor("");
         setSchedules([]);
-        setIsLoading(false);
       })
       .catch((err) => {
         console.error("Error fetching doctors:", err);
         toast.error("Failed to load doctors");
-        setIsLoading(false);
-      });
+      })
+      .finally(() => setIsLoading(false));
   }, [selectedService]);
 
   // Fetch schedules when doctor is selected
   useEffect(() => {
     if (!selectedDoctor) return;
-    
+
     setIsLoading(true);
-    fetch(`/api/doctors/${selectedDoctor}/schedules`)
-      .then((res) => res.json())
+    fetchWrapper(`/doctors/${selectedDoctor}/schedules`)
       .then((data) => {
         setSchedules(data);
         setCalendarEvents(
@@ -79,23 +82,27 @@ const AppointmentBooking = () => {
             borderColor: colors.success.dark,
           }))
         );
-        setIsLoading(false);
       })
       .catch((err) => {
         console.error("Error fetching schedules:", err);
         toast.error("Failed to load available slots");
-        setIsLoading(false);
-      });
+      })
+      .finally(() => setIsLoading(false));
   }, [selectedDoctor, colors]);
 
   const handleDateClick = (info) => {
     const clickedSlot = schedules.find(
-      (s) => new Date(s.start_time).toISOString() === info.event.start.toISOString()
+      (s) =>
+        new Date(s.start_time).toISOString() === info.event.start.toISOString()
     );
 
     if (clickedSlot) {
       setSelectedSchedule(clickedSlot.id);
-      toast.info(`Selected time slot: ${new Date(clickedSlot.start_time).toLocaleString()}`);
+      toast.info(
+        `Selected time slot: ${new Date(
+          clickedSlot.start_time
+        ).toLocaleString()}`
+      );
     }
   };
 
@@ -107,23 +114,18 @@ const AppointmentBooking = () => {
 
     setIsLoading(true);
     const toastId = toast.loading("Booking your appointment...");
-    
-    fetch("/api/appointments", {
+
+    fetchWrapper("/appointments", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         doctor_id: selectedDoctor,
         schedule_id: selectedSchedule,
+        service_id: selectedService,
         reason,
-        appointment_date: schedules.find((s) => s.id === selectedSchedule)?.start_time,
+        appointment_date: schedules.find((s) => s.id === selectedSchedule)
+          ?.start_time,
       }),
     })
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error(res.statusText);
-        }
-        return res.json();
-      })
       .then((data) => {
         toast.update(toastId, {
           render: `Appointment booked successfully! Confirmation #${data.id}`,
@@ -131,12 +133,17 @@ const AppointmentBooking = () => {
           isLoading: false,
           autoClose: 5000,
         });
-        // Reset form
+
         setSelectedService("");
         setSelectedDoctor("");
         setSelectedSchedule("");
         setReason("");
         setCalendarEvents([]);
+
+        // Redirect after success
+        setTimeout(() => {
+          navigate("/appointments");
+        }, 3000);
       })
       .catch((err) => {
         console.error("Error:", err);
@@ -154,19 +161,7 @@ const AppointmentBooking = () => {
 
   return (
     <Box display="flex" height="100vh">
-      <ToastContainer
-        position="top-right"
-        autoClose={5000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        theme={theme.palette.mode}
-      />
-      
+      <ToastContainer position="top-right" autoClose={5000} />
       <Sidebar />
       <Box flex="1" display="flex" flexDirection="column">
         <Topbar />
@@ -175,7 +170,6 @@ const AppointmentBooking = () => {
             title="Book Appointment"
             subtitle="Schedule with your preferred doctor"
           />
-
           <Box
             p={4}
             sx={{
@@ -184,108 +178,58 @@ const AppointmentBooking = () => {
               boxShadow: theme.shadows[3],
             }}
           >
-            {/* Service Selection */}
             <Select
               fullWidth
               value={selectedService}
               onChange={(e) => setSelectedService(e.target.value)}
               displayEmpty
               disabled={isLoading}
-              sx={{ 
-                mt: 2,
-                backgroundColor: colors.background.paper,
-                '& .MuiSelect-select': {
-                  color: colors.text.primary,
-                }
-              }}
             >
               <MenuItem value="" disabled>
-                <Typography color={colors.text.secondary}>
-                  Select Medical Service
-                </Typography>
+                Select Medical Service
               </MenuItem>
               {services.map((service) => (
                 <MenuItem key={service.id} value={service.id}>
-                  <Typography>
-                    {service.name} ({service.duration_minutes} mins)
-                  </Typography>
+                  {service.name} ({service.duration_minutes} mins)
                 </MenuItem>
               ))}
             </Select>
 
-            {/* Doctor Selection */}
             {selectedService && (
               <Select
                 fullWidth
                 value={selectedDoctor}
                 onChange={(e) => setSelectedDoctor(e.target.value)}
                 displayEmpty
-                disabled={isLoading || !selectedService}
-                sx={{ 
-                  mt: 2,
-                  backgroundColor: colors.background.paper,
-                  '& .MuiSelect-select': {
-                    color: colors.text.primary,
-                  }
-                }}
+                disabled={isLoading}
               >
                 <MenuItem value="" disabled>
-                  <Typography color={colors.text.secondary}>
-                    Select Doctor
-                  </Typography>
+                  Select Doctor
                 </MenuItem>
                 {doctors.map((doctor) => (
                   <MenuItem key={doctor.id} value={doctor.id}>
-                    <Typography>
-                      Dr. {doctor.first_name} {doctor.last_name} - {doctor.specialization}
-                    </Typography>
+                    Dr. {doctor.first_name} {doctor.last_name} -{" "}
+                    {doctor.specialization}
                   </MenuItem>
                 ))}
               </Select>
             )}
 
-            {/* Calendar View */}
             {selectedDoctor && (
               <Box mt={4}>
-                <Typography variant="h6" mb={2} color={colors.text.primary}>
+                <Typography variant="h6" mb={2}>
                   Available Time Slots
                 </Typography>
-                <Box sx={{
-                  '& .fc-header-toolbar': {
-                    backgroundColor: colors.primary.main,
-                    color: colors.primary.contrastText,
-                    p: 1,
-                    borderRadius: '4px 4px 0 0'
-                  },
-                  '& .fc-button': {
-                    backgroundColor: colors.primary.main,
-                    color: colors.primary.contrastText,
-                    borderColor: colors.primary.dark,
-                    '&:hover': {
-                      backgroundColor: colors.primary.dark,
-                    }
-                  },
-                }}>
-                  <FullCalendar
-                    plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-                    initialView="timeGridWeek"
-                    headerToolbar={{
-                      left: "prev,next today",
-                      center: "title",
-                      right: "dayGridMonth,timeGridWeek,timeGridDay",
-                    }}
-                    events={calendarEvents}
-                    eventClick={handleDateClick}
-                    height="500px"
-                    slotDuration="00:30:00"
-                    slotMinTime="08:00:00"
-                    slotMaxTime="20:00:00"
-                  />
-                </Box>
+                <FullCalendar
+                  plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+                  initialView="timeGridWeek"
+                  events={calendarEvents}
+                  eventClick={handleDateClick}
+                  height="500px"
+                />
               </Box>
             )}
 
-            {/* Reason Input */}
             <TextField
               fullWidth
               label="Reason for Appointment"
@@ -294,29 +238,13 @@ const AppointmentBooking = () => {
               multiline
               rows={3}
               disabled={isLoading}
-              sx={{ 
-                mt: 3,
-                '& .MuiInputBase-root': {
-                  backgroundColor: colors.background.paper,
-                },
-                '& .MuiInputLabel-root': {
-                  color: colors.text.secondary,
-                },
-              }}
             />
 
-            {/* Submit Button */}
             <Button
               variant="contained"
               color="primary"
               onClick={handleSubmit}
               disabled={isLoading || !selectedSchedule || !reason}
-              sx={{ 
-                mt: 3,
-                px: 4,
-                py: 1.5,
-                fontWeight: 'bold',
-              }}
             >
               {isLoading ? "Processing..." : "Confirm Appointment"}
             </Button>
