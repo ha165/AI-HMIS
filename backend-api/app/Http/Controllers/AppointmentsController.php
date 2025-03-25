@@ -14,7 +14,21 @@ class AppointmentsController extends Controller
      */
     public function index()
     {
-        $appointments = Appointments::with('patient.user', 'doctor.user')->get();
+        $user = auth()->user();
+
+        if (!$user) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        $query = Appointments::with('patient.user', 'doctor.user');
+
+        if ($user->role === 'patient') {
+            $query->where('patient_id', $user->id);
+        } elseif ($user->role === 'doctor') {
+            $query->where('doctor_id', $user->id);
+        }
+
+        $appointments = $query->get();
 
         $formattedData = $appointments->map(function ($appointment): array {
             return [
