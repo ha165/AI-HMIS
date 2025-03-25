@@ -50,4 +50,8 @@ class Appointments extends Model
     {
         return $this->belongsTo(Service::class, 'service_id');
     }
+    public function medical_records()
+    {
+        return $this->hasMany(Medical_Records::class);
+    }
 }
