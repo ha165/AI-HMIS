@@ -37,7 +37,7 @@ const AppointmentBooking = () => {
   // Fetch all active services
   useEffect(() => {
     setIsLoading(true);
-    fetchWrapper("/api/services")
+    fetchWrapper("/services")
       .then(setServices)
       .catch((err) => {
         console.error("Error fetching services:", err);
