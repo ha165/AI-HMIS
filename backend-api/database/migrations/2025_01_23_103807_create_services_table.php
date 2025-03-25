@@ -1,4 +1,5 @@
 <?php
+
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -7,24 +8,25 @@ return new class extends Migration {
     /**
      * Run the migrations.
      */
-    public function up(): void
+    public function up()
     {
         Schema::create('services', function (Blueprint $table) {
             $table->id();
             $table->string('name');
             $table->text('description')->nullable();
-            $table->foreignId('department_id')->nullable()->constrained('departments')->nullOnDelete();
-            $table->string('specialization')->nullable()->comment('Doctor specialization related to this service');
-            $table->decimal('price', 10, 2)->default(0);
-            $table->enum('status', ['active', 'inactive'])->default('active');
+            $table->decimal('price', 8, 2)->nullable();
+            $table->integer('duration_minutes')->default(30);
+            $table->boolean('is_active')->default(true);
             $table->timestamps();
+            $table->softDeletes();
         });
     }
+    
 
     /**
      * Reverse the migrations.
      */
-    public function down(): void
+    public function down()
     {
         Schema::dropIfExists('services');
     }

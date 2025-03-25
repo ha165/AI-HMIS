@@ -12,14 +12,17 @@ class Service extends Model
     protected $fillable = [
         'name',
         'description',
-        'department_id',
-        'specialization',
         'price',
-        'status'
+        'duration_minutes',
+        'is_active'
     ];
 
     public function department()
     {
         return $this->belongsTo(Departments::class);
+    }
+    public function doctors()
+    {
+        return $this->belongsToMany(Doctor::class);
     }
 }

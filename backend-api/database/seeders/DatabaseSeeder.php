@@ -1,28 +1,27 @@
 <?php
 namespace Database\Seeders;
 
-use App\Models\Departments;
 use Illuminate\Database\Seeder;
-use App\Models\User;
-use App\Models\Patients;
-use App\Models\Appointments;
-use App\Models\Billing;
-use App\Models\Doctor;
 
 class DatabaseSeeder extends Seeder
 {
     public function run()
     {
+        // Create services first
+        \App\Models\Service::factory(10)->create();
 
-        User::factory(200)->create();
+        // Create doctors with services
+        \App\Models\Doctor::factory(5)
+            ->withServices()
+            ->create();
 
+        // Create schedules for each doctor
+        \App\Models\Doctor::all()->each(function ($doctor) {
+            \App\Models\Schedules::factory(8)
+                ->create(['doctor_id' => $doctor->id]);
+        });
 
-        Patients::factory(200)->create();
-
-        Billing::factory(200)->create();
-
-        Doctor::factory(200)->create();
-
-        Departments::factory(200)->create();
+        // Create appointments
+        \App\Models\Appointments::factory(20)->create();
     }
 }

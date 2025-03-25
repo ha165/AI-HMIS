@@ -12,8 +12,8 @@ class ServiceController extends Controller
      */
     public function index()
     {
-        $services = Service::all();
-        return response()->json($services);
+        return Service::where('is_active', true)->get();
+
     }
 
     /**
@@ -70,5 +70,18 @@ class ServiceController extends Controller
         $service->delete();
 
         return response()->json(['message' => 'Service deleted successfully']);
+    }
+    public function getDoctors(Service $service)
+    {
+        return $service->doctors()
+            ->with('user')
+            ->get()
+            ->map(function ($doctor) {
+                return [
+                    'id' => $doctor->id,
+                    'name' => $doctor->user->name,
+                    'specialization' => $doctor->specialization
+                ];
+            });
     }
 }

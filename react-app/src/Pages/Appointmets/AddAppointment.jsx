@@ -1,8 +1,23 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
+import {
+  Box,
+  Button,
+  MenuItem,
+  Select,
+  TextField,
+  Typography,
+} from "@mui/material";
+import { useTheme } from "@mui/material/styles";
+import Sidebar from "../../Scenes/global/SideBar";
+import Topbar from "../../Scenes/global/TopBar";
+import Header from "../../Components/Header";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
+import timeGridPlugin from "@fullcalendar/timegrid";
+import interactionPlugin from "@fullcalendar/interaction";
 
 const AppointmentBooking = () => {
+  const theme = useTheme();
   const [services, setServices] = useState([]);
   const [selectedService, setSelectedService] = useState("");
   const [doctors, setDoctors] = useState([]);
@@ -10,129 +25,190 @@ const AppointmentBooking = () => {
   const [schedules, setSchedules] = useState([]);
   const [selectedSchedule, setSelectedSchedule] = useState("");
   const [reason, setReason] = useState("");
+  const [calendarEvents, setCalendarEvents] = useState([]);
 
-  // Fetch available services
+  // Fetch all active services
   useEffect(() => {
-    fetch("http://localhost:8000/api/services")
+    fetch("/api/services")
       .then((res) => res.json())
       .then((data) => setServices(data));
   }, []);
 
-  // Fetch available doctors based on service
+  // Fetch doctors when service is selected
   useEffect(() => {
     if (!selectedService) return;
-    fetch(`http://localhost:8000/api/doctors/available?specialization=${selectedService}`)
+
+    fetch(`/api/services/${selectedService}/doctors`)
       .then((res) => res.json())
-      .then((data) => setDoctors(data));
+      .then((data) => {
+        setDoctors(data);
+        setSelectedDoctor("");
+        setSchedules([]);
+      });
   }, [selectedService]);
 
-  // Fetch available schedules based on doctor
+  // Fetch schedules when doctor is selected
   useEffect(() => {
     if (!selectedDoctor) return;
-    fetch(`http://localhost:8000/api/doctor/${selectedDoctor}/available-schedules`)
+
+    fetch(`/api/doctors/${selectedDoctor}/schedules`)
       .then((res) => res.json())
-      .then((data) => setSchedules(data));
+      .then((data) => {
+        setSchedules(data);
+        setCalendarEvents(
+          data.map((slot) => ({
+            id: slot.id,
+            title: "Available",
+            start: slot.start_time,
+            end: slot.end_time,
+            backgroundColor: "#4CAF50",
+          }))
+        );
+      });
   }, [selectedDoctor]);
 
-  // Handle appointment booking
-  const handleBookAppointment = () => {
-    if (!selectedDoctor || !selectedSchedule || !reason) {
-      alert("Please fill all fields!");
-      return;
-    }
+  const handleDateClick = (info) => {
+    const clickedSlot = schedules.find(
+      (s) =>
+        new Date(s.start_time).toISOString() === info.event.start.toISOString()
+    );
 
-    fetch("http://localhost:8000/api/appointments", {
+    if (clickedSlot) {
+      setSelectedSchedule(clickedSlot.id);
+    }
+  };
+
+  const handleSubmit = () => {
+    fetch("/api/appointments", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        patient_id: 1, // Replace with actual logged-in patient ID
         doctor_id: selectedDoctor,
         schedule_id: selectedSchedule,
         reason,
+        appointment_date: schedules.find((s) => s.id === selectedSchedule)
+          ?.start_time,
       }),
     })
       .then((res) => res.json())
-      .then(() => {
+      .then((data) => {
         alert("Appointment booked successfully!");
+        // Reset form
         setSelectedService("");
         setSelectedDoctor("");
         setSelectedSchedule("");
         setReason("");
+        setCalendarEvents([]);
       })
       .catch((err) => console.error("Error:", err));
   };
 
   return (
-    <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">Book an Appointment</h1>
+    <Box display="flex" height="100vh">
+      <Sidebar />
+      <Box flex="1" display="flex" flexDirection="column">
+        <Topbar />
+        <Box m="20px">
+          <Header
+            title="Book Appointment"
+            subtitle="Schedule with your preferred doctor"
+          />
 
-      {/* Service Selection */}
-      <select
-        className="w-full p-2 mb-4 border border-gray-300 rounded-md"
-        value={selectedService}
-        onChange={(e) => setSelectedService(e.target.value)}
-      >
-        <option value="" disabled>Select Service</option>
-        {services.map((service) => (
-          <option key={service.id} value={service.name}>{service.name}</option>
-        ))}
-      </select>
+          <Box
+            p={4}
+            sx={{
+              backgroundColor: theme.palette.background.paper,
+              borderRadius: "10px",
+            }}
+          >
+            {/* Service Selection */}
+            <Select
+              fullWidth
+              value={selectedService}
+              onChange={(e) => setSelectedService(e.target.value)}
+              displayEmpty
+              sx={{ mt: 2 }}
+            >
+              <MenuItem value="" disabled>
+                Select Medical Service
+              </MenuItem>
+              {services.map((service) => (
+                <MenuItem key={service.id} value={service.id}>
+                  {service.name} ({service.duration_minutes} mins)
+                </MenuItem>
+              ))}
+            </Select>
 
-      {/* Doctor Selection */}
-      <select
-        className="w-full p-2 mb-4 border border-gray-300 rounded-md"
-        value={selectedDoctor}
-        onChange={(e) => setSelectedDoctor(e.target.value)}
-      >
-        <option value="" disabled>Select Doctor</option>
-        {doctors.map((doctor) => (
-          <option key={doctor.id} value={doctor.id}>
-            {doctor.first_name} {doctor.last_name} - {doctor.specialization}
-          </option>
-        ))}
-      </select>
+            {/* Doctor Selection */}
+            {selectedService && (
+              <Select
+                fullWidth
+                value={selectedDoctor}
+                onChange={(e) => setSelectedDoctor(e.target.value)}
+                displayEmpty
+                sx={{ mt: 2 }}
+                disabled={!selectedService}
+              >
+                <MenuItem value="" disabled>
+                  Select Doctor
+                </MenuItem>
+                {doctors.map((doctor) => (
+                  <MenuItem key={doctor.id} value={doctor.id}>
+                    Dr. {doctor.first_name} - {doctor.specialization}
+                  </MenuItem>
+                ))}
+              </Select>
+            )}
 
-      {/* Small Calendar for Available Days */}
-      <div className="mb-4">
-        <h2 className="text-xl font-semibold mb-2">Available Slots</h2>
-        <FullCalendar
-          plugins={[dayGridPlugin]}
-          initialView="dayGridMonth"
-          height="300px"
-          events={schedules.map((slot) => ({
-            id: slot.id,
-            title: "Available",
-            start: slot.start_time,
-          }))}
-          dateClick={(info) => {
-            const selectedSlot = schedules.find((s) => s.start_time.startsWith(info.dateStr));
-            if (selectedSlot) {
-              setSelectedSchedule(selectedSlot.id);
-              alert(`Selected slot: ${selectedSlot.start_time}`);
-            } else {
-              alert("No available slots on this day.");
-            }
-          }}
-        />
-      </div>
+            {/* Calendar View */}
+            {selectedDoctor && (
+              <Box mt={4}>
+                <Typography variant="h6" mb={2}>
+                  Available Time Slots
+                </Typography>
+                <FullCalendar
+                  plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+                  initialView="timeGridWeek"
+                  headerToolbar={{
+                    left: "prev,next today",
+                    center: "title",
+                    right: "dayGridMonth,timeGridWeek,timeGridDay",
+                  }}
+                  events={calendarEvents}
+                  eventClick={handleDateClick}
+                  height="500px"
+                  slotDuration="00:30:00"
+                  slotMinTime="08:00:00"
+                  slotMaxTime="20:00:00"
+                />
+              </Box>
+            )}
 
-      {/* Reason Input */}
-      <textarea
-        className="w-full p-2 mb-4 border border-gray-300 rounded-md"
-        placeholder="Reason for Appointment"
-        value={reason}
-        onChange={(e) => setReason(e.target.value)}
-        rows={3}
-      />
+            {/* Reason Input */}
+            <TextField
+              fullWidth
+              label="Reason for Appointment"
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              multiline
+              rows={3}
+              sx={{ mt: 3 }}
+            />
 
-      {/* Book Appointment Button */}
-      <button
-        className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded"
-        onClick={handleBookAppointment}
-      >
-        Book Appointment
-      </button>
-    </div>
+            {/* Submit Button */}
+            <Button
+              variant="contained"
+              color="secondary"
+              onClick={handleSubmit}
+              disabled={!selectedSchedule || !reason}
+              sx={{ mt: 3 }}
+            >
+              Confirm Appointment
+            </Button>
+          </Box>
+        </Box>
+      </Box>
+    </Box>
   );
 };
 

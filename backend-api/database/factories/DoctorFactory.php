@@ -1,40 +1,35 @@
 <?php
-
 namespace Database\Factories;
-use App\Models\Doctor;
+
 use App\Models\User;
-
 use Illuminate\Database\Eloquent\Factories\Factory;
-
-
+use App\Models\Doctor;
 class DoctorFactory extends Factory
 {
-    protected $model = Doctor::class;
-
-    public function definition(): array
+    public function definition()
     {
-        $specializations = [
-            'Cardiology',
-            'Dermatology',
-            'Neurology',
-            'Pediatrics',
-            'Orthopedics',
-            'General Practice',
-            'Psychiatry',
-            'Ophthalmology',
-            'Anesthesiology',
-            'Surgery'
-        ];
         return [
-            'user_id' => User::factory(),
-            'specialization' => $this->faker->randomElement($specializations),
-            'license_number' => $this->generateLicenseNumber(),
+            'user_id' => User::factory()->create(['role' => 'doctor'])->id,
+            'specialization' => $this->faker->randomElement([
+                'Cardiology',
+                'Dermatology',
+                'Neurology',
+                'Pediatrics',
+                'Orthopedics'
+            ]),
+            'address' => $this->faker->address,
+            'license_number' => 'MD-' . $this->faker->unique()->numberBetween(10000, 99999),
         ];
-
     }
 
-    private function generateLicenseNumber()
+    // Attach services to doctor after creation
+    public function withServices()
     {
-        return strtoupper(substr(md5(uniqid()), 0, 10));
+        return $this->afterCreating(function (Doctor $doctor) {
+            $services = \App\Models\Service::inRandomOrder()
+                ->limit(rand(2, 5))
+                ->pluck('id');
+            $doctor->services()->attach($services);
+        });
     }
 }

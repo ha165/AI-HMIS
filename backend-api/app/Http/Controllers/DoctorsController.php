@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Doctor;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class DoctorsController extends Controller
@@ -117,6 +118,21 @@ class DoctorsController extends Controller
             ->get();
 
         return response()->json($doctors);
+    }
+    public function getSchedules(Doctor $doctor)
+    {
+        return $doctor->schedules()
+            ->where('start_time', '>', now())
+            ->whereDoesntHave('appointment')
+            ->get()
+            ->map(function($schedule) {
+                return [
+                    'id' => $schedule->id,
+                    'start_time' => $schedule->start_time,
+                    'end_time' => $schedule->end_time,
+                    'formatted' => Carbon::parse($schedule->start_time)->format('D, M j, Y g:i A')
+                ];
+            });
     }
 
 }

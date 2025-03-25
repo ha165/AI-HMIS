@@ -35,6 +35,8 @@ Route::post('/login', [AuthController::class, 'login']);
 
 Route::get('/doctors/available', [DoctorsController::class, 'getAvailableDoctors']);
 Route::get('/doctor/{doctor_id}/available-schedules', [SchedulesController::class, 'getAvailableSchedules']);
+Route::get('/services/{service}/doctors', [ServiceController::class, 'getDoctors']);
+Route::get('/doctors/{doctor}/schedules', [DoctorsController::class, 'getSchedules']);
 
 // Resource routes 
 Route::resources([

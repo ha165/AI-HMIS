@@ -36,7 +36,7 @@ class Schedules extends Model
     /**
      * Get appointments for this schedule
      */
-    public function appointments(): HasMany
+    public function appointment(): HasMany
     {
         return $this->hasMany(Appointments::class, 'schedule_id');
     }
