@@ -6,8 +6,8 @@ import {
   Select,
   TextField,
   Typography,
+  useTheme,
 } from "@mui/material";
-import { useTheme } from "@mui/material/styles";
 import Sidebar from "../../Scenes/global/SideBar";
 import Topbar from "../../Scenes/global/TopBar";
 import Header from "../../Components/Header";
@@ -18,6 +18,7 @@ import interactionPlugin from "@fullcalendar/interaction";
 
 const AppointmentBooking = () => {
   const theme = useTheme();
+  const colors = theme.palette;
   const [services, setServices] = useState([]);
   const [selectedService, setSelectedService] = useState("");
   const [doctors, setDoctors] = useState([]);
@@ -41,6 +42,7 @@ const AppointmentBooking = () => {
     fetch(`/api/services/${selectedService}/doctors`)
       .then((res) => res.json())
       .then((data) => {
+        console.log("Doctors data:", data);
         setDoctors(data);
         setSelectedDoctor("");
         setSchedules([]);
@@ -61,11 +63,12 @@ const AppointmentBooking = () => {
             title: "Available",
             start: slot.start_time,
             end: slot.end_time,
-            backgroundColor: "#4CAF50",
+            backgroundColor: colors.success.main,
+            borderColor: colors.success.dark,
           }))
         );
       });
-  }, [selectedDoctor]);
+  }, [selectedDoctor, colors]);
 
   const handleDateClick = (info) => {
     const clickedSlot = schedules.find(
@@ -117,8 +120,9 @@ const AppointmentBooking = () => {
           <Box
             p={4}
             sx={{
-              backgroundColor: theme.palette.background.paper,
+              backgroundColor: colors.background.default,
               borderRadius: "10px",
+              boxShadow: theme.shadows[3],
             }}
           >
             {/* Service Selection */}
@@ -127,14 +131,24 @@ const AppointmentBooking = () => {
               value={selectedService}
               onChange={(e) => setSelectedService(e.target.value)}
               displayEmpty
-              sx={{ mt: 2 }}
+              sx={{
+                mt: 2,
+                backgroundColor: colors.background.paper,
+                "& .MuiSelect-select": {
+                  color: colors.text.primary,
+                },
+              }}
             >
               <MenuItem value="" disabled>
-                Select Medical Service
+                <Typography color={colors.text.secondary}>
+                  Select Medical Service
+                </Typography>
               </MenuItem>
               {services.map((service) => (
                 <MenuItem key={service.id} value={service.id}>
-                  {service.name} ({service.duration_minutes} mins)
+                  <Typography>
+                    {service.name} ({service.duration_minutes} mins)
+                  </Typography>
                 </MenuItem>
               ))}
             </Select>
@@ -146,15 +160,25 @@ const AppointmentBooking = () => {
                 value={selectedDoctor}
                 onChange={(e) => setSelectedDoctor(e.target.value)}
                 displayEmpty
-                sx={{ mt: 2 }}
+                sx={{
+                  mt: 2,
+                  backgroundColor: colors.background.paper,
+                  "& .MuiSelect-select": {
+                    color: colors.text.primary,
+                  },
+                }}
                 disabled={!selectedService}
               >
                 <MenuItem value="" disabled>
-                  Select Doctor
+                  <Typography color={colors.text.secondary}>
+                    Select Doctor
+                  </Typography>
                 </MenuItem>
                 {doctors.map((doctor) => (
                   <MenuItem key={doctor.id} value={doctor.id}>
-                    Dr. {doctor.first_name} - {doctor.specialization}
+                    <Typography>
+                      Dr. {doctor.first_name} {doctor.last_name} - {doctor.specialization}
+                    </Typography>
                   </MenuItem>
                 ))}
               </Select>
@@ -163,24 +187,49 @@ const AppointmentBooking = () => {
             {/* Calendar View */}
             {selectedDoctor && (
               <Box mt={4}>
-                <Typography variant="h6" mb={2}>
+                <Typography variant="h6" mb={2} color={colors.text.primary}>
                   Available Time Slots
                 </Typography>
-                <FullCalendar
-                  plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-                  initialView="timeGridWeek"
-                  headerToolbar={{
-                    left: "prev,next today",
-                    center: "title",
-                    right: "dayGridMonth,timeGridWeek,timeGridDay",
+                <Box
+                  sx={{
+                    "& .fc-header-toolbar": {
+                      backgroundColor: colors.primary.main,
+                      color: colors.primary.contrastText,
+                      p: 1,
+                      borderRadius: "4px 4px 0 0",
+                    },
+                    "& .fc-button": {
+                      backgroundColor: colors.primary.main,
+                      color: colors.primary.contrastText,
+                      borderColor: colors.primary.dark,
+                      "&:hover": {
+                        backgroundColor: colors.primary.dark,
+                      },
+                    },
+                    "& .fc-daygrid-day": {
+                      backgroundColor: colors.background.paper,
+                    },
+                    "& .fc-day-today": {
+                      backgroundColor: `${colors.primary.light} !important`,
+                    },
                   }}
-                  events={calendarEvents}
-                  eventClick={handleDateClick}
-                  height="500px"
-                  slotDuration="00:30:00"
-                  slotMinTime="08:00:00"
-                  slotMaxTime="20:00:00"
-                />
+                >
+                  <FullCalendar
+                    plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+                    initialView="timeGridWeek"
+                    headerToolbar={{
+                      left: "prev,next today",
+                      center: "title",
+                      right: "dayGridMonth,timeGridWeek,timeGridDay",
+                    }}
+                    events={calendarEvents}
+                    eventClick={handleDateClick}
+                    height="500px"
+                    slotDuration="00:30:00"
+                    slotMinTime="08:00:00"
+                    slotMaxTime="20:00:00"
+                  />
+                </Box>
               </Box>
             )}
 
@@ -192,16 +241,41 @@ const AppointmentBooking = () => {
               onChange={(e) => setReason(e.target.value)}
               multiline
               rows={3}
-              sx={{ mt: 3 }}
+              sx={{
+                mt: 3,
+                "& .MuiInputBase-root": {
+                  backgroundColor: colors.background.paper,
+                },
+                "& .MuiInputLabel-root": {
+                  color: colors.text.secondary,
+                },
+                "& .MuiOutlinedInput-root": {
+                  "& fieldset": {
+                    borderColor: colors.divider,
+                  },
+                  "&:hover fieldset": {
+                    borderColor: colors.primary.main,
+                  },
+                },
+              }}
             />
 
             {/* Submit Button */}
             <Button
               variant="contained"
-              color="secondary"
+              color="primary"
               onClick={handleSubmit}
               disabled={!selectedSchedule || !reason}
-              sx={{ mt: 3 }}
+              sx={{
+                mt: 3,
+                px: 4,
+                py: 1.5,
+                fontWeight: "bold",
+                "&:disabled": {
+                  backgroundColor: colors.action.disabledBackground,
+                  color: colors.action.disabled,
+                },
+              }}
             >
               Confirm Appointment
             </Button>

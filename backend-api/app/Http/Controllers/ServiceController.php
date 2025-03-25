@@ -79,7 +79,8 @@ class ServiceController extends Controller
             ->map(function ($doctor) {
                 return [
                     'id' => $doctor->id,
-                    'name' => $doctor->user->name,
+                    'first_name' => $doctor->user->first_name,
+                    'last_name' => $doctor->user->last_name,
                     'specialization' => $doctor->specialization
                 ];
             });
