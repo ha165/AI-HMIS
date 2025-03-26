@@ -255,7 +255,6 @@ export default function Login() {
   );
 }
 
-// Reuse the same text field styles from Register component
 const textFieldStyles = (colors) => ({
   "& .MuiOutlinedInput-root": {
     "& fieldset": {
