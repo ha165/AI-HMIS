@@ -28,7 +28,9 @@ import TimelineOutlinedIcon from "@mui/icons-material/TimelineOutlined";
 import MenuOutlinedIcon from "@mui/icons-material/MenuOutlined";
 import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import MapOutlinedIcon from "@mui/icons-material/MapOutlined";
+import LogoutIcon from "@mui/icons-material/Logout";
 import ChatIcon from "@mui/icons-material/Chat";
+import useLogout from "../../Pages/Auth/Logout";
 
 const Item = ({ title, to, icon, selected, setSelected }) => {
   const theme = useTheme();
@@ -55,6 +57,7 @@ const Sidebar = () => {
   const [selected, setSelected] = useState("Dashboard");
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const { handleLogout } = useLogout();
 
   useEffect(() => {
     let isMounted = true;
@@ -346,8 +349,22 @@ const Sidebar = () => {
                     selected={selected}
                     setSelected={setSelected}
                   />
+                 
                 </>
+                
               )}
+               <MenuItem
+                    onClick={handleLogout}
+                    icon={<LogoutIcon />}
+                    style={{
+                      color: colors.grey[100],
+                      marginTop: "20px",
+                      borderTop: `1px solid ${colors.grey[700]}`,
+                      paddingTop: "15px",
+                    }}
+                  >
+                    <Typography>Logout</Typography>
+                  </MenuItem>
             </Box>
           </Menu>
         )}

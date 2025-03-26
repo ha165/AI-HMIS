@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Appointments;
 use App\Models\Doctor;
 use App\Models\Schedules;
+use App\Models\Patients;
 use Illuminate\Http\Request;
 
 class AppointmentsController extends Controller
@@ -20,17 +21,34 @@ class AppointmentsController extends Controller
             return response()->json(['message' => 'Unauthorized'], 401);
         }
 
-        $query = Appointments::with('patient.user', 'doctor.user');
+        // Start the query
+        $query = Appointments::with(['patient.user', 'doctor.user', 'services']);
 
+        // Handle different roles
         if ($user->role === 'patient') {
-            $query->where('patient_id', $user->id);
+            $patient = Patients::where('user_id', $user->id)->first();
+            if ($patient) {
+                $query->where('patient_id', $patient->id);
+            } else {
+                return response()->json(['message' => 'Patient profile not found'], 400);
+            }
         } elseif ($user->role === 'doctor') {
-            $query->where('doctor_id', $user->id);
+            $doctor = Doctor::where('user_id', $user->id)->first();
+            if ($doctor) {
+                $query->where('doctor_id', $doctor->id);
+            } else {
+                return response()->json(['message' => 'Doctor profile not found'], 400);
+            }
         }
 
+        // Fetch appointments
         $appointments = $query->get();
+        if ($appointments->isEmpty()) {
+            return response()->json(['message' => 'No appointments found'], 404);
+        }
 
-        $formattedData = $appointments->map(function ($appointment): array {
+        // Format the data
+        $formattedData = $appointments->map(function ($appointment) {
             return [
                 "id" => $appointment->id,
                 "patient_name" => optional($appointment->patient->user)->first_name . ' ' . optional($appointment->patient->user)->last_name ?: 'N/A',
@@ -48,6 +66,7 @@ class AppointmentsController extends Controller
     }
 
 
+
     /**
      * Store a newly created resource in storage.
      */
@@ -59,11 +78,15 @@ class AppointmentsController extends Controller
             return response()->json(['message' => 'Unauthorized'], 401);
         }
 
-        // Get patient record associated with the user
-        $patient = $user->patient;
+        // Fetch the patient manually
+        $patient = Patients::where('user_id', $user->id)->first();
 
         if (!$patient) {
-            return response()->json(['message' => 'Patient profile not found'], 400);
+            return response()->json([
+                'message' => 'Patient profile not found',
+                'user_id' => $user->id,
+                'all_patients' => Patients::all()
+            ], 400);
         }
 
         $request->validate([
@@ -73,13 +96,11 @@ class AppointmentsController extends Controller
             'reason' => 'required',
         ]);
 
-        // Check if schedule is available
         $schedule = Schedules::find($request->schedule_id);
         if (!$schedule || Appointments::where('schedule_id', $request->schedule_id)->exists()) {
             return response()->json(['message' => 'This schedule is no longer available'], 400);
         }
 
-        // Create appointment
         $appointment = Appointments::create([
             'patient_id' => $patient->id,
             'doctor_id' => $request->doctor_id,
@@ -92,6 +113,7 @@ class AppointmentsController extends Controller
 
         return response()->json($appointment);
     }
+
 
 
     /**
