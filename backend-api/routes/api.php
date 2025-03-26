@@ -36,7 +36,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
         'patients' => PatientsController::class,
         'schedules' => SchedulesController::class,
         'doctors' => DoctorsController::class,
-        'services' => ServiceController::class
+        'services' => ServiceController::class,
+        'medical-records'=>MedicalRecordsController::class
     ]);
     Route::get('/user', function (Request $request) {
         return $request->user();

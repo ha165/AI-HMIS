@@ -44,6 +44,9 @@ const Appointments = () => {
   const [openMedicalRecordModal, setOpenMedicalRecordModal] = useState(false);
   const [currentAppointment, setCurrentAppointment] = useState(null);
   const [medicalRecordData, setMedicalRecordData] = useState({
+    patient_id: null,
+    doctor_id: null,
+    appointment_id: null,
     diagnosis: "",
     prescription: "",
     notes: "",
@@ -139,7 +142,14 @@ const Appointments = () => {
         method: "POST",
       });
 
-      // Store the completed appointment for medical record
+      // Set IDs in state before opening modal
+      setMedicalRecordData({
+        ...medicalRecordData,
+        patient_id: appointment.patient_id,
+        doctor_id: appointment.doctor_id,
+        appointment_id: appointment.id,
+      });
+
       setCurrentAppointment(appointment);
       setOpenMedicalRecordModal(true);
 
@@ -153,25 +163,26 @@ const Appointments = () => {
 
   const handleMedicalRecordSubmit = async () => {
     try {
-      // Create/update medical record
+      // Submit with all data including IDs
       await fetchWrapper("/medical-records", {
         method: "POST",
-        body: JSON.stringify({
-          appointment_id: currentAppointment.id,
-          patient_id: currentAppointment.patient_id,
-          doctor_id: currentAppointment.doctor_id,
-          ...medicalRecordData,
-        }),
+        body: JSON.stringify(medicalRecordData),
       });
 
       toast.success("Medical record saved successfully");
-      setOpenMedicalRecordModal(false);
+
+      // Reset state after submission
       setMedicalRecordData({
+        patient_id: null,
+        doctor_id: null,
+        appointment_id: null,
         diagnosis: "",
         prescription: "",
         notes: "",
         vital_signs: "",
       });
+
+      setOpenMedicalRecordModal(false);
     } catch (error) {
       toast.error("Error saving medical record");
     }
@@ -482,6 +493,11 @@ const Appointments = () => {
           <Typography variant="h5" mb={3}>
             Medical Record for {currentAppointment?.patient_name}
           </Typography>
+
+          {/* Hidden fields to store IDs */}
+          <input type="hidden" value={medicalRecordData.patient_id || ""} />
+          <input type="hidden" value={medicalRecordData.doctor_id || ""} />
+          <input type="hidden" value={medicalRecordData.appointment_id || ""} />
 
           <TextField
             label="Diagnosis"

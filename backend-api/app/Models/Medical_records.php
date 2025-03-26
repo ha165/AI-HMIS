@@ -46,6 +46,6 @@ class Medical_Records extends Model
 
     public function appointment()
     {
-        return $this->belongsTo(Appointments::class);
+        return $this->belongsTo(Appointments::class, 'appointment_id');
     }
 }

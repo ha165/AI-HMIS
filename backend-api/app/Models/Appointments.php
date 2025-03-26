@@ -63,7 +63,7 @@ class Appointments extends Model
         $this->update(['status' => 'completed']);
 
         //create a medical record linked to this appointment
-        return $this->medical_records()->create([
+        return Medical_Records::create([
             'patient_id' => $this->patient_id,
             'doctor_id' => $this->doctor_id,
             'appointment_id' => $this->id,

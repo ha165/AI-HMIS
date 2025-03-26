@@ -175,7 +175,7 @@ class AppointmentsController extends Controller
         $appointment = Appointments::findOrFail($appointmentId);
 
         try {
-            $medicalRecord = $appointment->complete($request->all());
+            $medicalRecord = $appointment->completed($request->all());
             return response()->json([
                 'message' => 'Appointment completed and medical record created.',
                 'medical_record' => $medicalRecord,
