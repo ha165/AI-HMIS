@@ -3,7 +3,7 @@ import React from "react";
 import { CircularProgress, Box, Typography, useTheme } from "@mui/material";
 
 const Loader = () => {
-  const theme = useTheme(); // Access the theme
+  const theme = useTheme();
 
   return (
     <Box
