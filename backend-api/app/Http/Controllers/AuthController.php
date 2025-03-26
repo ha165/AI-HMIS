@@ -4,17 +4,26 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Password;
 
 class AuthController extends Controller
 {
   public function register(Request $request)
   {
     $fields = $request->validate([
-      'first_name' => 'required|max:255',
-      'last_name' => 'required|max:255',
+      'first_name' => 'required|max:255|regex:/^[a-zA-Z\s]+$/',
+      'last_name' => 'required|max:255|regex:/^[a-zA-Z\s]+$/',
       'email' => 'required|email|unique:users,email',
-      'password' => 'required|min:8|confirmed',
-      'phone' => 'required|digits:10',
+      'password' => [
+        'required',
+        'confirmed',
+        Password::min(8)
+          ->mixedCase()
+          ->numbers()
+          ->symbols()
+      ],
+      'phone' => 'required|regex:/^254\d{9}$/',
       'profile_photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
     ]);
 
@@ -23,12 +32,11 @@ class AuthController extends Controller
       $profilePhotoPath = $request->file('profile_photo')->store('profile_photos', 'public');
       $fields['profile_photo'] = $profilePhotoPath;
     }
-    $fields['password'] = Hash::make($fields['password']);
 
+    $fields['password'] = Hash::make($fields['password']);
     $fields['role'] = 'patient';
 
     $user = User::create($fields);
-
     $user->refresh();
 
     $token = $user->createToken('auth_token')->plainTextToken;
@@ -39,7 +47,6 @@ class AuthController extends Controller
       'token' => $token,
     ], 201);
   }
-
 
   public function login(Request $request)
   {
@@ -58,7 +65,6 @@ class AuthController extends Controller
       ], 401);
     }
 
-    // Create token with a generic name
     $token = $user->createToken('auth_token');
 
     return response()->json([
