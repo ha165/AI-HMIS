@@ -447,7 +447,6 @@ export default function Register() {
   );
 }
 
-// Helper function for consistent text field styles
 const textFieldStyles = (colors) => ({
   "& .MuiOutlinedInput-root": {
     "& fieldset": {
