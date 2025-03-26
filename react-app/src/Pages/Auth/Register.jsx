@@ -152,7 +152,15 @@ export default function Register() {
       setToken(data.token);
       toast.success("Registration Successful");
 
-      navigate(data.role === "admin" ? "/" : "/complete-registration");
+      navigate(data.role === "admin" ? "/" : "/complete-registration", {
+        state: {
+          user: {
+            first_name: formdata.first_name,
+            last_name: formdata.last_name,
+            email: formdata.email,
+          },
+        },
+      });
     } catch (error) {
       if (error.errors) {
         setErrors(error.errors);
