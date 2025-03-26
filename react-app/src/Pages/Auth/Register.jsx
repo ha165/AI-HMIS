@@ -40,7 +40,7 @@ export default function Register() {
     first_name: "",
     last_name: "",
     email: "",
-    phone: "",
+    phone: "254",
     password: "",
     password_confirmation: "",
     profile_photo: null,
@@ -50,28 +50,46 @@ export default function Register() {
 
   const validateForm = () => {
     const newErrors = {};
+    const nameRegex = /^[a-zA-Z\s]+$/;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const phoneRegex = /^254\d{9}$/;
+    const passwordRegex =
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@#$%^&*()_]).{8,}$/;
 
-    // Required field validation
-    if (!formdata.first_name.trim())
+    // Name validation
+    if (!formdata.first_name.trim()) {
       newErrors.first_name = ["First name is required"];
-    if (!formdata.last_name.trim())
+    } else if (!nameRegex.test(formdata.first_name)) {
+      newErrors.first_name = ["Name should only contain letters"];
+    }
+
+    if (!formdata.last_name.trim()) {
       newErrors.last_name = ["Last name is required"];
+    } else if (!nameRegex.test(formdata.last_name)) {
+      newErrors.last_name = ["Name should only contain letters"];
+    }
 
     // Email validation
     if (!formdata.email.trim()) {
       newErrors.email = ["Email is required"];
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formdata.email)) {
+    } else if (!emailRegex.test(formdata.email)) {
       newErrors.email = ["Please enter a valid email"];
     }
 
     // Phone validation
-    if (!formdata.phone.trim()) newErrors.phone = ["Phone number is required"];
+    if (!formdata.phone.trim()) {
+      newErrors.phone = ["Phone number is required"];
+    } else if (!phoneRegex.test(formdata.phone)) {
+      newErrors.phone = ["Phone must start with 254 followed by 9 digits"];
+    }
 
     // Password validation
     if (!formdata.password) {
       newErrors.password = ["Password is required"];
-    } else if (formdata.password.length < 6) {
-      newErrors.password = ["Password must be at least 6 characters"];
+    } else if (!passwordRegex.test(formdata.password)) {
+      newErrors.password = [
+        "Password must be at least 8 characters with uppercase, lowercase, number, and special character (@#$%^&*()_)",
+      ];
     }
 
     // Password confirmation
@@ -83,10 +101,20 @@ export default function Register() {
     return Object.keys(newErrors).length === 0;
   };
 
+  const handlePhoneChange = (e) => {
+    const value = e.target.value;
+    // Ensure phone starts with 254 and only contains numbers
+    if (value.startsWith("254") && /^\d*$/.test(value.slice(3))) {
+      setFormData({ ...formdata, phone: value });
+      if (errors.phone) setErrors({ ...errors, phone: null });
+    } else if (value.length <= 3) {
+      setFormData({ ...formdata, phone: "254" });
+    }
+  };
+
   async function handleRegister(e) {
     e.preventDefault();
 
-    // Validate form before submission
     if (!validateForm()) {
       toast.error("Please fix the errors in the form");
       return;
@@ -124,7 +152,6 @@ export default function Register() {
       setToken(data.token);
       toast.success("Registration Successful");
 
-      // Redirect based on role
       navigate(data.role === "admin" ? "/" : "/complete-registration");
     } catch (error) {
       if (error.errors) {
@@ -141,18 +168,23 @@ export default function Register() {
 
   function handleInputChange(e) {
     const { name, value } = e.target;
-    setFormData({ ...formdata, [name]: value });
-    // Clear error when user types
-    if (errors[name]) {
-      setErrors({ ...errors, [name]: null });
+
+    // Special handling for name fields to prevent numbers
+    if (name === "first_name" || name === "last_name") {
+      if (/^[a-zA-Z\s]*$/.test(value)) {
+        setFormData({ ...formdata, [name]: value });
+        if (errors[name]) setErrors({ ...errors, [name]: null });
+      }
+      return;
     }
+
+    setFormData({ ...formdata, [name]: value });
+    if (errors[name]) setErrors({ ...errors, [name]: null });
   }
 
   function handleFileChange(e) {
     setFormData({ ...formdata, profile_photo: e.target.files[0] });
-    if (errors.profile_photo) {
-      setErrors({ ...errors, profile_photo: null });
-    }
+    if (errors.profile_photo) setErrors({ ...errors, profile_photo: null });
   }
 
   const togglePasswordVisibility = () => setShowPassword(!showPassword);
@@ -165,10 +197,7 @@ export default function Register() {
       justifyContent="center"
       alignItems="center"
       minHeight="100vh"
-      sx={{
-        backgroundColor: colors.primary[400],
-        p: 3,
-      }}
+      sx={{ backgroundColor: colors.primary[400], p: 3 }}
     >
       <Box width="100%" maxWidth="600px">
         <Header
@@ -187,11 +216,7 @@ export default function Register() {
           <Box
             component="form"
             onSubmit={handleRegister}
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-              gap: 3,
-            }}
+            sx={{ display: "flex", flexDirection: "column", gap: 3 }}
           >
             <Box display="flex" gap={2}>
               <TextField
@@ -261,7 +286,7 @@ export default function Register() {
               label="Phone Number"
               name="phone"
               value={formdata.phone}
-              onChange={handleInputChange}
+              onChange={handlePhoneChange}
               error={!!errors.phone}
               helperText={errors.phone?.[0]}
               InputProps={{
@@ -348,9 +373,7 @@ export default function Register() {
                 sx={{
                   color: colors.grey[100],
                   borderColor: colors.grey[100],
-                  "&:hover": {
-                    borderColor: colors.blueAccent[300],
-                  },
+                  "&:hover": { borderColor: colors.blueAccent[300] },
                   "&:disabled": {
                     borderColor: colors.grey[700],
                     color: colors.grey[700],
@@ -389,12 +412,8 @@ export default function Register() {
               disabled={isSubmitting}
               sx={{
                 backgroundColor: colors.blueAccent[600],
-                "&:hover": {
-                  backgroundColor: colors.blueAccent[700],
-                },
-                "&:disabled": {
-                  backgroundColor: colors.grey[700],
-                },
+                "&:hover": { backgroundColor: colors.blueAccent[700] },
+                "&:disabled": { backgroundColor: colors.grey[700] },
                 py: 1.5,
                 mt: 2,
               }}
@@ -449,23 +468,13 @@ export default function Register() {
 
 const textFieldStyles = (colors) => ({
   "& .MuiOutlinedInput-root": {
-    "& fieldset": {
-      borderColor: colors.grey[100],
-    },
-    "&:hover fieldset": {
-      borderColor: colors.blueAccent[300],
-    },
-    "&.Mui-focused fieldset": {
-      borderColor: colors.blueAccent[500],
-    },
+    "& fieldset": { borderColor: colors.grey[100] },
+    "&:hover fieldset": { borderColor: colors.blueAccent[300] },
+    "&.Mui-focused fieldset": { borderColor: colors.blueAccent[500] },
   },
   "& .MuiInputLabel-root": {
     color: colors.grey[100],
-    "&.Mui-focused": {
-      color: colors.blueAccent[300],
-    },
+    "&.Mui-focused": { color: colors.blueAccent[300] },
   },
-  "& .MuiFormHelperText-root": {
-    color: colors.redAccent[400],
-  },
+  "& .MuiFormHelperText-root": { color: colors.redAccent[400] },
 });
