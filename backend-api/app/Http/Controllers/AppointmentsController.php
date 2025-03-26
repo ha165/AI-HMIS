@@ -54,8 +54,16 @@ class AppointmentsController extends Controller
     public function store(Request $request)
     {
         $user = auth()->user();
+
         if (!$user) {
             return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        // Get patient record associated with the user
+        $patient = $user->patient;
+
+        if (!$patient) {
+            return response()->json(['message' => 'Patient profile not found'], 400);
         }
 
         $request->validate([
@@ -73,7 +81,7 @@ class AppointmentsController extends Controller
 
         // Create appointment
         $appointment = Appointments::create([
-            'patient_id' => $user->id,
+            'patient_id' => $patient->id,
             'doctor_id' => $request->doctor_id,
             'schedule_id' => $request->schedule_id,
             'service_id' => $request->service_id,
@@ -82,11 +90,9 @@ class AppointmentsController extends Controller
             'status' => 'pending',
         ]);
 
-        \Log::info('Authenticated User:', ['user' => auth()->user()]);
-
-
         return response()->json($appointment);
     }
+
 
     /**
      * Display the specified resource.
