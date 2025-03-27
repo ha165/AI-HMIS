@@ -37,7 +37,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         'schedules' => SchedulesController::class,
         'doctors' => DoctorsController::class,
         'services' => ServiceController::class,
-        'medical-records'=>MedicalRecordsController::class
+        'medical-records' => MedicalRecordsController::class
     ]);
     Route::get('/user', function (Request $request) {
         return $request->user();
@@ -50,7 +50,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/doctor/{doctor_id}/available-schedules', [SchedulesController::class, 'getAvailableSchedules']);
     Route::get('/services/{service}/doctors', [ServiceController::class, 'getDoctors']);
     Route::get('/doctors/{doctor}/schedules', [DoctorsController::class, 'getSchedules']);
-    Route::post('/appointments/{appointment}/complete', [AppointmentsController::class, 'complete']);
 
 
     Route::middleware(['admin'])->group(function () {
