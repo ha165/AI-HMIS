@@ -54,22 +54,4 @@ class Appointments extends Model
     {
         return $this->hasOne(Medical_Records::class);
     }
-
-    public function completed(array $medicalData = []): Medical_Records
-    {
-        if ($this->status == 'completed') {
-            throw new \Exception('Appointment already completed');
-        }
-        $this->update(['status' => 'completed']);
-
-        //create a medical record linked to this appointment
-        return Medical_Records::create([
-            'patient_id' => $this->patient_id,
-            'doctor_id' => $this->doctor_id,
-            'appointment_id' => $this->id,
-            'diagnosis' => $medicalData['diagnosis'] ?? null,
-            'prescription' => $medicalData['prescription'] ?? null,
-            'vital_signs' => $medicalData['vital_signs'] ?? null,
-        ]);
-    }
 }
