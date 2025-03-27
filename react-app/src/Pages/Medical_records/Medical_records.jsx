@@ -114,16 +114,11 @@ const MedicalRecords = () => {
 
   const columns = [
     { field: "id", headerName: "ID", width: 90 },
-    { field: "patient_id", headerName: "Patient ID", flex: 1 },
-    { field: "doctor_id", headerName: "Doctor ID", flex: 1 },
+    { field: "patient_name", headerName: "Patient ID", flex: 1 },
+    { field: "doctor_name", headerName: "Doctor ID", flex: 1 },
     { field: "diagnosis", headerName: "Diagnosis", flex: 1 },
     { field: "status", headerName: "Status", flex: 1 },
-    {
-      field: "created_at",
-      headerName: "Created At",
-      flex: 1,
-      valueFormatter: (params) => new Date(params.value).toLocaleDateString(),
-    },
+    { field: "created_at", headerName: "Created At", flex: 1 },
     {
       field: "actions",
       headerName: "Actions",

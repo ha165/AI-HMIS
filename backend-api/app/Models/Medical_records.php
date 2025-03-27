@@ -31,8 +31,9 @@ class Medical_Records extends Model
     protected $casts = [
         'vital_signs' => 'array',
         'lab_results' => 'array',
+        'created_at' => 'datetime',
     ];
-
+    protected $dates = ['created_at', 'updated_at'];
     // Relationships
     public function patient()
     {
