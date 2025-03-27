@@ -70,8 +70,20 @@ const Appointments = () => {
         const response = await fetchWrapper(
           `/appointments?page=${pagination.page}&per_page=${pagination.pageSize}`
         );
+
         if (isMounted) {
-          setAppointments(response.data || response); // Handle both paginated and non-paginated responses
+          // Ensure we have the raw IDs in the appointment data
+          const formattedAppointments = (response.data || response).map(
+            (appt) => ({
+              ...appt,
+              // Make sure these fields are included
+              patient_id: appt.patient_id || appt.patient?.id,
+              doctor_id: appt.doctor_id || appt.doctor?.id,
+              service_id: appt.service_id || appt.service?.id,
+            })
+          );
+
+          setAppointments(formattedAppointments);
           setPagination((prev) => ({
             ...prev,
             total: response.pagination?.total || response.length || 0,
@@ -97,11 +109,11 @@ const Appointments = () => {
   const handleEdit = (appointment) => {
     setSelectedAppointment(appointment);
     setUpdatedAppointment({
-      patient_id: appointment.patient_id,
-      service_id: appointment.service_id,
-      doctor_id: appointment.doctor_id,
-      reason: appointment.reason,
-      status: appointment.status,
+      patient_id: appointment.patient_id || "",
+      doctor_id: appointment.doctor_id || "",
+      service_id: appointment.service_id || "",
+      reason: appointment.reason || "",
+      status: appointment.status || "pending",
     });
     setOpenEditModal(true);
   };
@@ -297,6 +309,7 @@ const Appointments = () => {
           <FormControl fullWidth margin="normal">
             <InputLabel>Patient</InputLabel>
             <Select
+              label="Patient"
               value={updatedAppointment.patient_id || ""}
               onChange={(e) =>
                 setUpdatedAppointment({
@@ -316,6 +329,7 @@ const Appointments = () => {
           <FormControl fullWidth margin="normal">
             <InputLabel>Doctor</InputLabel>
             <Select
+              label="Doctor"
               value={updatedAppointment.doctor_id || ""}
               onChange={(e) =>
                 setUpdatedAppointment({
@@ -350,7 +364,8 @@ const Appointments = () => {
           <FormControl fullWidth margin="normal">
             <InputLabel>Status</InputLabel>
             <Select
-              value={updatedAppointment.status || ""}
+              label="Status"
+              value={updatedAppointment.status || "pending"}
               onChange={(e) =>
                 setUpdatedAppointment({
                   ...updatedAppointment,
