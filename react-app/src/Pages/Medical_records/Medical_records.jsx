@@ -1,295 +1,344 @@
-import { Box, Button, TextField, CircularProgress } from "@mui/material";
-import { Formik } from "formik";
-import * as yup from "yup";
-import useMediaQuery from "@mui/material/useMediaQuery";
-import { useDispatch, useSelector } from "react-redux";
+import { useContext, useState, useEffect } from "react";
+import { AppContext } from "../../Context/AppContext";
+import { Link } from "react-router-dom";
 import {
-  fetchMedicalRecords,
-  createMedicalRecord,
-} from "../../Redux/medicalRecordsSlice";
-import Header from "../../Components/Header";
+  Box,
+  Typography,
+  CircularProgress,
+  Button,
+  TextField,
+  Modal,
+  useTheme,
+} from "@mui/material";
+import { DataGrid } from "@mui/x-data-grid";
+import fetchWrapper from "../../Context/fetchwrapper";
+import { tokens } from "../../../themes";
 import Sidebar from "../../Scenes/global/SideBar";
 import Topbar from "../../Scenes/global/TopBar";
-import { toast } from "react-toastify";
-import { useEffect, useState } from "react";
+import Header from "../../Components/Header";
 
 const MedicalRecords = () => {
-  const dispatch = useDispatch();
-  const { records, loading } = useSelector((state) => state.medicalRecords);
-  const isNonMobile = useMediaQuery("(min-width:600px)");
-
-  const initialValues = {
-    patient_id: "",
-    doctor_id: "",
-    appointment_id: "",
-    diagnosis: "",
-    prescription: "",
-    medical_history: "",
-    medications: "",
-    allergies: "",
-    vital_signs: "",
-    treatment_plan: "",
-    lab_results: "",
-    notes: "",
-    status: "draft",
-  };
-
-  const checkoutSchema = yup.object().shape({
-    patient_id: yup.string().required("Patient ID is required"),
-    doctor_id: yup.string().required("Doctor ID is required"),
-    diagnosis: yup.string().required("Diagnosis is required"),
-    prescription: yup.string(),
-    medical_history: yup.string(),
-    medications: yup.string(),
-    allergies: yup.string(),
-    vital_signs: yup.string(),
-    treatment_plan: yup.string(),
-    lab_results: yup.string(),
-    notes: yup.string(),
-    status: yup.string().oneOf(["draft", "finalized"]).required(),
-  });
+  const theme = useTheme();
+  const colors = tokens(theme.palette.mode);
+  const { userRole } = useContext(AppContext);
+  const [records, setRecords] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [openEditModal, setOpenEditModal] = useState(false);
+  const [selectedRecord, setSelectedRecord] = useState(null);
+  const [updatedRecord, setUpdatedRecord] = useState({});
+  const [openDeleteModal, setOpenDeleteModal] = useState(false);
+  const [deletingRecordId, setDeletingRecordId] = useState(null);
 
   useEffect(() => {
-    const loadRecords = async () => {
+    let isMounted = true;
+
+    async function fetchRecords() {
       try {
-        await dispatch(fetchMedicalRecords());
+        const data = await fetchWrapper("/medical_records");
+        if (isMounted) {
+          setRecords(data);
+        }
       } catch (error) {
-        console.error("Failed to fetch medical records:", error);
+        console.error("Error fetching medical records:", error);
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
       }
+    }
+
+    fetchRecords();
+
+    return () => {
+      isMounted = false;
     };
+  }, []);
 
-    loadRecords();
-  }, [dispatch]);
+  const handleEdit = (record) => {
+    setSelectedRecord(record);
+    setUpdatedRecord({
+      diagnosis: record.diagnosis,
+      prescription: record.prescription,
+      medical_history: record.medical_history,
+      medications: record.medications,
+      allergies: record.allergies,
+      treatment_plan: record.treatment_plan,
+      notes: record.notes,
+      status: record.status,
+    });
+    setOpenEditModal(true);
+  };
 
-  const handleFormSubmit = async (values) => {
+  const handleDelete = (id) => {
+    setDeletingRecordId(id);
+    setOpenDeleteModal(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deletingRecordId) return;
+
     try {
-      await dispatch(createMedicalRecord(values)).unwrap();
-      toast.success("Medical record created successfully!");
+      await fetchWrapper(`/medical_records/${deletingRecordId}`, {
+        method: "DELETE",
+      });
+      setRecords(records.filter((record) => record.id !== deletingRecordId));
     } catch (error) {
-      toast.error("Error creating medical record");
-      console.error("Error:", error);
+      console.error("Error deleting medical record", error);
+    } finally {
+      setOpenDeleteModal(false);
+      setDeletingRecordId(null);
     }
   };
 
-  return (
-    <Box display="flex" height="100vh" flexDirection="row">
-      {/* Sidebar */}
-      <Sidebar />
+  const handleUpdate = async () => {
+    if (!selectedRecord) return;
 
-      <Box flexGrow={1} display="flex" flexDirection="column">
-        {/* Topbar */}
-        <Topbar />
+    try {
+      const updatedData = await fetchWrapper(
+        `/medical_records/${selectedRecord.id}`,
+        {
+          method: "PUT",
+          body: JSON.stringify(updatedRecord),
+        }
+      );
+      setRecords(
+        records.map((record) =>
+          record.id === updatedData.id ? updatedData : record
+        )
+      );
+      setOpenEditModal(false);
+    } catch (error) {
+      console.error("Error updating medical record", error);
+    }
+  };
 
-        <Box flexGrow={1} p="20px">
-          <Header title="MEDICAL RECORDS" subtitle="Manage Medical Records" />
-
-          {loading ? (
-            <CircularProgress />
-          ) : (
-            <Formik
-              onSubmit={handleFormSubmit}
-              initialValues={initialValues}
-              validationSchema={checkoutSchema}
+  const columns = [
+    { field: "id", headerName: "ID", width: 90 },
+    { field: "patient_id", headerName: "Patient ID", flex: 1 },
+    { field: "doctor_id", headerName: "Doctor ID", flex: 1 },
+    { field: "diagnosis", headerName: "Diagnosis", flex: 1 },
+    { field: "status", headerName: "Status", flex: 1 },
+    {
+      field: "created_at",
+      headerName: "Created At",
+      flex: 1,
+      valueFormatter: (params) => new Date(params.value).toLocaleDateString(),
+    },
+    {
+      field: "actions",
+      headerName: "Actions",
+      flex: 1.5,
+      renderCell: (params) => {
+        return (
+          <Box display="flex" gap={1}>
+            <Button
+              component={Link}
+              to={`/view-medical-records?id=${params.row.id}`}
+              variant="contained"
+              color="info"
+              size="small"
             >
-              {({
-                values,
-                errors,
-                touched,
-                handleBlur,
-                handleChange,
-                handleSubmit,
-              }) => (
-                <form onSubmit={handleSubmit}>
-                  <Box
-                    display="grid"
-                    gap="30px"
-                    gridTemplateColumns="repeat(4, minmax(0, 1fr))"
-                    sx={{
-                      "& > div": {
-                        gridColumn: isNonMobile ? undefined : "span 4",
-                      },
-                    }}
-                  >
-                    <TextField
-                      fullWidth
-                      variant="filled"
-                      label="Patient ID"
-                      onBlur={handleBlur}
-                      onChange={handleChange}
-                      value={values.patient_id}
-                      name="patient_id"
-                      error={!!touched.patient_id && !!errors.patient_id}
-                      helperText={touched.patient_id && errors.patient_id}
-                      sx={{ gridColumn: "span 2" }}
-                    />
-                    <TextField
-                      fullWidth
-                      variant="filled"
-                      label="Doctor ID"
-                      onBlur={handleBlur}
-                      onChange={handleChange}
-                      value={values.doctor_id}
-                      name="doctor_id"
-                      error={!!touched.doctor_id && !!errors.doctor_id}
-                      helperText={touched.doctor_id && errors.doctor_id}
-                      sx={{ gridColumn: "span 2" }}
-                    />
-                    <TextField
-                      fullWidth
-                      variant="filled"
-                      label="Appointment ID"
-                      onBlur={handleBlur}
-                      onChange={handleChange}
-                      value={values.appointment_id}
-                      name="appointment_id"
-                      error={
-                        !!touched.appointment_id && !!errors.appointment_id
-                      }
-                      helperText={
-                        touched.appointment_id && errors.appointment_id
-                      }
-                      sx={{ gridColumn: "span 4" }}
-                    />
-                    <TextField
-                      fullWidth
-                      variant="filled"
-                      label="Diagnosis"
-                      onBlur={handleBlur}
-                      onChange={handleChange}
-                      value={values.diagnosis}
-                      name="diagnosis"
-                      error={!!touched.diagnosis && !!errors.diagnosis}
-                      helperText={touched.diagnosis && errors.diagnosis}
-                      sx={{ gridColumn: "span 4" }}
-                    />
-                    <TextField
-                      fullWidth
-                      variant="filled"
-                      label="Prescription"
-                      onBlur={handleBlur}
-                      onChange={handleChange}
-                      value={values.prescription}
-                      name="prescription"
-                      error={!!touched.prescription && !!errors.prescription}
-                      helperText={touched.prescription && errors.prescription}
-                      sx={{ gridColumn: "span 4" }}
-                    />
-                    <TextField
-                      fullWidth
-                      variant="filled"
-                      label="Medical History"
-                      onBlur={handleBlur}
-                      onChange={handleChange}
-                      value={values.medical_history}
-                      name="medical_history"
-                      error={
-                        !!touched.medical_history && !!errors.medical_history
-                      }
-                      helperText={
-                        touched.medical_history && errors.medical_history
-                      }
-                      sx={{ gridColumn: "span 4" }}
-                    />
-                    <TextField
-                      fullWidth
-                      variant="filled"
-                      label="Medications"
-                      onBlur={handleBlur}
-                      onChange={handleChange}
-                      value={values.medications}
-                      name="medications"
-                      error={!!touched.medications && !!errors.medications}
-                      helperText={touched.medications && errors.medications}
-                      sx={{ gridColumn: "span 4" }}
-                    />
-                    <TextField
-                      fullWidth
-                      variant="filled"
-                      label="Allergies"
-                      onBlur={handleBlur}
-                      onChange={handleChange}
-                      value={values.allergies}
-                      name="allergies"
-                      error={!!touched.allergies && !!errors.allergies}
-                      helperText={touched.allergies && errors.allergies}
-                      sx={{ gridColumn: "span 4" }}
-                    />
-                    <TextField
-                      fullWidth
-                      variant="filled"
-                      label="Vital Signs"
-                      onBlur={handleBlur}
-                      onChange={handleChange}
-                      value={values.vital_signs}
-                      name="vital_signs"
-                      error={!!touched.vital_signs && !!errors.vital_signs}
-                      helperText={touched.vital_signs && errors.vital_signs}
-                      sx={{ gridColumn: "span 4" }}
-                    />
-                    <TextField
-                      fullWidth
-                      variant="filled"
-                      label="Treatment Plan"
-                      onBlur={handleBlur}
-                      onChange={handleChange}
-                      value={values.treatment_plan}
-                      name="treatment_plan"
-                      error={
-                        !!touched.treatment_plan && !!errors.treatment_plan
-                      }
-                      helperText={
-                        touched.treatment_plan && errors.treatment_plan
-                      }
-                      sx={{ gridColumn: "span 4" }}
-                    />
-                    <TextField
-                      fullWidth
-                      variant="filled"
-                      label="Lab Results"
-                      onBlur={handleBlur}
-                      onChange={handleChange}
-                      value={values.lab_results}
-                      name="lab_results"
-                      error={!!touched.lab_results && !!errors.lab_results}
-                      helperText={touched.lab_results && errors.lab_results}
-                      sx={{ gridColumn: "span 4" }}
-                    />
-                    <TextField
-                      fullWidth
-                      variant="filled"
-                      label="Notes"
-                      onBlur={handleBlur}
-                      onChange={handleChange}
-                      value={values.notes}
-                      name="notes"
-                      error={!!touched.notes && !!errors.notes}
-                      helperText={touched.notes && errors.notes}
-                      sx={{ gridColumn: "span 4" }}
-                    />
-                    <TextField
-                      fullWidth
-                      variant="filled"
-                      label="Status"
-                      onBlur={handleBlur}
-                      onChange={handleChange}
-                      value={values.status}
-                      name="status"
-                      error={!!touched.status && !!errors.status}
-                      helperText={touched.status && errors.status}
-                      sx={{ gridColumn: "span 4" }}
-                    />
-                  </Box>
-                  <Box display="flex" justifyContent="end" mt="20px">
-                    <Button type="submit" color="secondary" variant="contained">
-                      Create Medical Record
-                    </Button>
-                  </Box>
-                </form>
-              )}
-            </Formik>
-          )}
+              View
+            </Button>
+            {userRole === "admin" && (
+              <>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  size="small"
+                  onClick={() => handleEdit(params.row)}
+                >
+                  Edit
+                </Button>
+                <Button
+                  variant="contained"
+                  color="secondary"
+                  size="small"
+                  onClick={() => handleDelete(params.row.id)}
+                >
+                  Delete
+                </Button>
+              </>
+            )}
+          </Box>
+        );
+      },
+    },
+  ];
+
+  return (
+    <Box display="flex" height="100vh">
+      <Sidebar />
+      <Box flex="1" display="flex" flexDirection="column">
+        <Topbar />
+        <Box m="20px">
+          <Header title="Medical Records" subtitle="Managing medical records" />
+          <Box display="flex" justifyContent="flex-end" mb={2}>
+            <Button
+              component={Link}
+              to="/add-medicalrecords"
+              variant="contained"
+              color="success"
+            >
+              Add New Record
+            </Button>
+          </Box>
+          <Box
+            m="40px 0 0 0"
+            height="75vh"
+            sx={{
+              "& .MuiDataGrid-root": { border: "none" },
+              "& .MuiDataGrid-cell": { borderBottom: "none" },
+              "& .MuiDataGrid-columnHeaders": {
+                backgroundColor: colors.blueAccent[700],
+                borderBottom: "none",
+              },
+              "& .MuiDataGrid-virtualScroller": {
+                backgroundColor: colors.primary[400],
+              },
+              "& .MuiDataGrid-footerContainer": {
+                borderTop: "none",
+                backgroundColor: colors.blueAccent[700],
+              },
+              "& .MuiCheckbox-root": {
+                color: `${colors.greenAccent[200]} !important`,
+              },
+            }}
+          >
+            {loading ? (
+              <Box
+                display="flex"
+                justifyContent="center"
+                alignItems="center"
+                height="100%"
+              >
+                <CircularProgress color="secondary" />
+              </Box>
+            ) : (
+              <DataGrid checkboxSelection rows={records} columns={columns} />
+            )}
+          </Box>
         </Box>
       </Box>
+
+      {/* Edit Modal */}
+      <Modal
+        open={openEditModal}
+        onClose={() => setOpenEditModal(false)}
+        aria-labelledby="edit-record-modal"
+      >
+        <Box
+          sx={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            backgroundColor: colors.primary[500],
+            padding: "20px",
+            borderRadius: "10px",
+            width: "400px",
+          }}
+        >
+          <Typography variant="h6" mb={2}>
+            Edit Medical Record
+          </Typography>
+          <TextField
+            label="Diagnosis"
+            value={updatedRecord.diagnosis || ""}
+            onChange={(e) =>
+              setUpdatedRecord({ ...updatedRecord, diagnosis: e.target.value })
+            }
+            fullWidth
+            margin="normal"
+            multiline
+            rows={3}
+          />
+          <TextField
+            label="Prescription"
+            value={updatedRecord.prescription || ""}
+            onChange={(e) =>
+              setUpdatedRecord({
+                ...updatedRecord,
+                prescription: e.target.value,
+              })
+            }
+            fullWidth
+            margin="normal"
+            multiline
+            rows={3}
+          />
+          <TextField
+            label="Status"
+            select
+            value={updatedRecord.status || "draft"}
+            onChange={(e) =>
+              setUpdatedRecord({ ...updatedRecord, status: e.target.value })
+            }
+            fullWidth
+            margin="normal"
+            SelectProps={{
+              native: true,
+            }}
+          >
+            <option value="draft">Draft</option>
+            <option value="finalized">Finalized</option>
+          </TextField>
+          <Box display="flex" justifyContent="flex-end" mt={2}>
+            <Button onClick={handleUpdate} variant="contained" color="primary">
+              Update
+            </Button>
+          </Box>
+        </Box>
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        open={openDeleteModal}
+        onClose={() => {
+          setOpenDeleteModal(false);
+          setDeletingRecordId(null);
+        }}
+        aria-labelledby="delete-confirmation-modal"
+      >
+        <Box
+          sx={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            backgroundColor: colors.primary[500],
+            padding: "20px",
+            borderRadius: "10px",
+            width: "400px",
+          }}
+        >
+          <Typography variant="h6" mb={2}>
+            Confirm Delete
+          </Typography>
+          <Typography variant="body1" mb={3}>
+            Are you sure you want to delete this medical record? This action
+            cannot be undone.
+          </Typography>
+          <Box display="flex" justifyContent="flex-end" gap={2}>
+            <Button
+              variant="outlined"
+              onClick={() => {
+                setOpenDeleteModal(false);
+                setDeletingRecordId(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="contained"
+              color="secondary"
+              onClick={handleConfirmDelete}
+            >
+              Confirm Delete
+            </Button>
+          </Box>
+        </Box>
+      </Modal>
     </Box>
   );
 };

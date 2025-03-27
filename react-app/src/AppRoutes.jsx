@@ -27,6 +27,10 @@ const Line = lazy(() => import("./Scenes/line"));
 const Pie = lazy(() => import("./Scenes/pie"));
 const Geography = lazy(() => import("./Scenes/geography"));
 const Doctors = lazy(() => import("./Pages/Doctor/Doctor"));
+const AddMedicalRecords = lazy(() => import("./Pages/Medical_records/add_medicalRecord"));
+const ViewmedRecords = lazy(() =>
+  import("./Pages/Medical_records/view_medical")
+);
 
 // The main Routes component
 const AppRoutes = ({ user }) => {
@@ -126,13 +130,22 @@ const AppRoutes = ({ user }) => {
         element={<ProtectedRoute element={<AddAppointment />} user={user} />}
       />
       <Route
+        path="/add-medicalrecords"
+        element={<ProtectedRoute element={<AddMedicalRecords />} user={user} />}
+      />
+
+      <Route
         path="/medical-records"
         element={<ProtectedRoute element={<Medical />} user={user} />}
       />
       <Route
         path="/appointments/:appointmentId/medical-record"
-        element={<Medical />}
+        element={<ProtectedRoute element={<Medical />} user={user} />}
         user={user}
+      />
+      <Route
+        path="/view-medical-records"
+        element={<ProtectedRoute element={<ViewmedRecords />} user={user} />}
       />
     </Routes>
   );
