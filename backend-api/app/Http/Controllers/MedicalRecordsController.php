@@ -113,9 +113,9 @@ class MedicalRecordsController extends Controller
     {
         $user = auth()->user();
         $record = Medical_Records::with([
-            'patient.user:id,first_name,last_name,phone,id',
-            'doctor.user:id,first_name,last_name,phone,id',
-            'appointment:id,appointment_date,status'
+            'patient.user:id,first_name,last_name,phone,email,id',
+            'doctor.user:id,first_name,last_name,phone,email,id',
+            'appointment:id,appointment_date,status,reason'
         ])->find($id);
 
         if (!$record) {
@@ -145,6 +145,7 @@ class MedicalRecordsController extends Controller
             "patient_email" => $patient_user?->email ?? 'N/A',
             "patient_dob" => $record->patient?->dob?->format('Y-m-d') ?? 'N/A',
             "patient_gender" => $record->patient?->gender ?? 'N/A',
+            "patient_address" => $record->patient?->address ?? 'N/A',
 
             // Doctor Details
             "doctor_name" => $doctor_user
@@ -152,9 +153,13 @@ class MedicalRecordsController extends Controller
                 : 'N/A',
             "doctor_phone" => $doctor_user?->phone ?? 'N/A',
             "doctor_email" => $doctor_user?->email ?? 'N/A',
+            "doctor_specialization" => $record->doctor?->specialization ?? 'N/A',
+            "doctor_address" => $record->doctor?->address ?? 'N/A',
+            "doctor_license_number" => $record->doctor?->license_number ?? 'N/A',
 
             // Appointment Details
             "appointment_date" => $record->appointment?->appointment_date?->format('Y-m-d') ?? 'N/A',
+            "appointment_reason" => $record->appointment?->reason ?? 'N/A',
             "appointment_status" => ucfirst($record->appointment?->status ?? 'N/A'),
 
             // Medical Details

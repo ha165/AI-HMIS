@@ -20,8 +20,6 @@ return new class extends Migration {
             $table->text('reason')->nullable();
             $table->enum('status', ['pending', 'accepted', 'completed', 'cancelled'])->default('pending');
             $table->timestamps();
-
-            // Add composite index for availability checks
             $table->index(['doctor_id', 'appointment_date']);
         });
     }

@@ -155,7 +155,7 @@ const ViewMedicalRecord = () => {
           <Card>
             <CardContent>
               <Typography variant="h4" gutterBottom>
-                Medical Record Details (ID: {id})
+                Medical Record Details (Patient: {record.patient_name})
               </Typography>
 
               <Chip
@@ -311,15 +311,6 @@ const ViewMedicalRecord = () => {
                           </TableCell>
                           <TableCell>
                             {formatDate(record.appointment_date)}
-                          </TableCell>
-                        </TableRow>
-                        <TableRow>
-                          <TableCell sx={{ fontWeight: "bold" }}>
-                            Time
-                          </TableCell>
-                          <TableCell>
-                            {record.appointment_start_time} -{" "}
-                            {record.appointment_end_time}
                           </TableCell>
                         </TableRow>
                         <TableRow>

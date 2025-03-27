@@ -1,4 +1,4 @@
-import { useState, useEffect,useContext} from "react";
+import { useState, useEffect, useContext } from "react";
 import {
   Box,
   Typography,
@@ -14,6 +14,7 @@ import Sidebar from "../../Scenes/global/SideBar";
 import Topbar from "../../Scenes/global/TopBar";
 import Header from "../../Components/Header";
 import { AppContext } from "../../Context/AppContext";
+import fetchWrapper from "../../Context/fetchwrapper";
 
 const Patients = () => {
   const theme = useTheme();
@@ -23,19 +24,14 @@ const Patients = () => {
   const [openEditModal, setOpenEditModal] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [updatedPatient, setUpdatedPatient] = useState({});
-  const {userRole} = useContext(AppContext);
+  const { userRole } = useContext(AppContext);
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
   const [deletingPatientId, setDeletingPatientId] = useState(null);
 
   useEffect(() => {
     async function fetchPatients() {
       try {
-        const res = await fetch("api/patients", {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        });
-        const data = await res.json();
+        const data = await fetchWrapper("/patients");
         setPatients(data);
       } catch (error) {
         console.error("Error fetching patients", error);
@@ -69,18 +65,12 @@ const Patients = () => {
     if (!deletingPatientId) return;
 
     try {
-      const response = await fetch(`api/patients/${deletingPatientId}`, {
+      await fetchWrapper(`/patients/${deletingPatientId}`, {
         method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
       });
-
-      if (response.ok) {
-        setPatients(
-          patients.filter((patient) => patient.id !== deletingPatientId)
-        );
-      }
+      setPatients(
+        patients.filter((patient) => patient.id !== deletingPatientId)
+      );
     } catch (error) {
       console.error("Error deleting patient", error);
     } finally {
@@ -94,23 +84,19 @@ const Patients = () => {
 
     const payload = { ...selectedPatient, ...updatedPatient };
     try {
-      const response = await fetch(`api/patients/${selectedPatient.id}`, {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
-      if (response.ok) {
-        const updatedData = await response.json();
-        setPatients(
-          patients.map((patient) =>
-            patient.id === updatedData.id ? updatedData : patient
-          )
-        );
-        setOpenEditModal(false);
-      }
+      const updatedData = await fetchWrapper(
+        `/patients/${selectedPatient.id}`,
+        {
+          method: "PUT",
+          body: JSON.stringify(payload),
+        }
+      );
+      setPatients(
+        patients.map((patient) =>
+          patient.id === updatedData.id ? updatedData : patient
+        )
+      );
+      setOpenEditModal(false);
     } catch (error) {
       console.error("Error updating patient", error);
     }
@@ -269,9 +255,7 @@ const Patients = () => {
           <TextField
             label="Gender"
             value={updatedPatient.gender || ""}
-            onChange={(
-              e // Corrected the typo from "onchannge" to "onChange"
-            ) =>
+            onChange={(e) =>
               setUpdatedPatient({ ...updatedPatient, gender: e.target.value })
             }
             fullWidth
