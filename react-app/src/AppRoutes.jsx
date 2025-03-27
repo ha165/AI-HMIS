@@ -17,7 +17,7 @@ const Departments = lazy(() => import("./Pages/Departments/Department"));
 const Dashboard = lazy(() => import("./Scenes/dashboard"));
 const AddAppointment = lazy(() => import("./Pages/Appointmets/AddAppointment"));
 const Patients = lazy(() => import("./Pages/Patients/Patients"));
-const Medical = lazy(() => import("./Pages/Medical/MedicalRecords"));
+const Medical = lazy(() => import("./Pages/Medical_records/Medical_records"));
 const Contacts = lazy(() => import("./Pages/Contacts/Contacts"));
 const Forms = lazy(() => import("./Pages/Forms/Form"));
 const Calendar = lazy(() => import("./Scenes/calendar/calendar"));
@@ -128,6 +128,11 @@ const AppRoutes = ({ user }) => {
       <Route
         path="/medical-records"
         element={<ProtectedRoute element={<Medical />} user={user} />}
+      />
+      <Route
+        path="/appointments/:appointmentId/medical-record"
+        element={<Medical />}
+        user={user}
       />
     </Routes>
   );

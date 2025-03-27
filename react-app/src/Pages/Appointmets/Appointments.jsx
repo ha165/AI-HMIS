@@ -1,6 +1,7 @@
 import { useState, useEffect, useContext } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { AppContext } from "../../Context/AppContext";
+import { useNavigate } from "react-router-dom";
 import {
   Box,
   Typography,
@@ -53,6 +54,7 @@ const Appointments = () => {
   // Local state
   const [openRescheduleModal, setOpenRescheduleModal] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
+  const navigate = useNavigate();
   const [reason, setReason] = useState("");
   const [selectedDoctor, setSelectedDoctor] = useState("");
   const [selectedSchedule, setSelectedSchedule] = useState("");
@@ -103,6 +105,7 @@ const Appointments = () => {
       .unwrap()
       .then(() => {
         toast.success("Appointment marked as completed!");
+        navigate(`/appointments/${id}/medical-record`);
       })
       .catch((error) => {
         toast.error("Error updating appointment");

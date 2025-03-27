@@ -14,6 +14,7 @@ import fetchWrapper from "../../Context/fetchwrapper";
 import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
 import ScheduleIcon from "@mui/icons-material/Schedule";
 import PeopleOutlinedIcon from "@mui/icons-material/PeopleOutlined";
+import MedicalInformationIcon from '@mui/icons-material/MedicalInformation';
 import ContactsOutlinedIcon from "@mui/icons-material/ContactsOutlined";
 import BusinessIcon from "@mui/icons-material/Business";
 import ReceiptOutlinedIcon from "@mui/icons-material/ReceiptOutlined";
@@ -143,7 +144,7 @@ const Sidebar = () => {
                 <Box display="flex" justifyContent="center" alignItems="center">
                   {loading ? (
                     <Typography variant="h6" color={colors.grey[100]}>
-                      Loading...
+                   
                     </Typography>
                   ) : (
                     <img
