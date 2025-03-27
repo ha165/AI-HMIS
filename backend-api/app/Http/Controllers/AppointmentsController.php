@@ -180,4 +180,26 @@ class AppointmentsController extends Controller
 
         return response()->json(['message' => 'Appointment marked as completed', 'appointment' => $appointment]);
     }
+    // app/Http/Controllers/AppointmentController.php
+public function reschedule(Appointments $appointment, Request $request)
+{
+    $validated = $request->validate([
+        'schedule_id' => 'required|exists:schedules,id',
+        'reason' => 'sometimes|string|max:500'
+    ]);
+
+    // Check if the appointment belongs to the user (for patients)
+    if (auth()->user()->patients() && $appointment->patient_id !== auth()->id()) {
+        abort(403, 'Unauthorized action.');
+    }
+
+    // Update the appointment
+    $appointment->update([
+        'schedule_id' => $validated['schedule_id'],
+        'reason' => $validated['reason'] ?? $appointment->reason,
+        'status' => 'rescheduled', // or whatever status you want
+    ]);
+
+    return response()->json($appointment);
+}
 }
