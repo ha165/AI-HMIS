@@ -137,11 +137,12 @@ class MedicalRecordsController extends Controller
             "patient_name" => $record->patient && $record->patient->user
                 ? trim($record->patient->user->first_name . ' ' . $record->patient->user->last_name)
                 : 'N/A',
-            "doctor_name" => $record->doctor
-                ? trim($record->doctor->first_name . ' ' . $record->doctor->last_name)
+            "doctor_name" => $record->doctor && $record->doctor->user
+                ? trim($record->doctor->user->first_name . ' ' . $record->doctor->user->last_name)
                 : 'N/A',
-            "patient_phone" => $record->patient->user->phone ?? 'N/A',
-            "doctor_phone" => $record->doctor->phone ?? 'N/A',
+            "doctor_phone" => $record->doctor && $record->doctor->user
+                ? $record->doctor->user->phone
+                : 'N/A',
             "appointment_date" => $record->appointment->appointment_date?->format('Y-m-d') ?? 'N/A',
             "appointment_status" => ucfirst($record->appointment->status ?? 'N/A'),
             "diagnosis" => $record->diagnosis,

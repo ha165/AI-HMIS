@@ -31,7 +31,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         'appointments' => AppointmentsController::class,
         'billing' => BillingController::class,
         'departments' => DepartmentsController::class,
-        'medical_records' => MedicalRecordsController::class,
+        'medical-records' => MedicalRecordsController::class,
         'notifications' => NotificationsController::class,
         'payments' => PaymentsController::class,
         'patients' => PatientsController::class,

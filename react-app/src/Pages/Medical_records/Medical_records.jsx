@@ -34,7 +34,7 @@ const MedicalRecords = () => {
 
     async function fetchRecords() {
       try {
-        const data = await fetchWrapper("/medical_records");
+        const data = await fetchWrapper("/medical-records");
         if (isMounted) {
           setRecords(data);
         }
@@ -78,7 +78,7 @@ const MedicalRecords = () => {
     if (!deletingRecordId) return;
 
     try {
-      await fetchWrapper(`/medical_records/${deletingRecordId}`, {
+      await fetchWrapper(`/medical-records/${deletingRecordId}`, {
         method: "DELETE",
       });
       setRecords(records.filter((record) => record.id !== deletingRecordId));
@@ -95,7 +95,7 @@ const MedicalRecords = () => {
 
     try {
       const updatedData = await fetchWrapper(
-        `/medical_records/${selectedRecord.id}`,
+        `/medical-records/${selectedRecord.id}`,
         {
           method: "PUT",
           body: JSON.stringify(updatedRecord),
@@ -128,7 +128,7 @@ const MedicalRecords = () => {
           <Box display="flex" gap={1}>
             <Button
               component={Link}
-              to={`/view-medical-records?id=${params.row.id}`}
+              to={`/view-medical-records/${params.row.id}`}
               variant="contained"
               color="info"
               size="small"

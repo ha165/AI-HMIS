@@ -28,7 +28,7 @@ const Pie = lazy(() => import("./Scenes/pie"));
 const Geography = lazy(() => import("./Scenes/geography"));
 const Doctors = lazy(() => import("./Pages/Doctor/Doctor"));
 const AddMedicalRecords = lazy(() => import("./Pages/Medical_records/add_medicalRecord"));
-const ViewmedRecords = lazy(() =>
+const ViewmedicalRecord = lazy(() =>
   import("./Pages/Medical_records/view_medical")
 );
 
@@ -144,8 +144,8 @@ const AppRoutes = ({ user }) => {
         user={user}
       />
       <Route
-        path="/view-medical-records"
-        element={<ProtectedRoute element={<ViewmedRecords />} user={user} />}
+        path="/view-medical-records/:id"
+        element={<ProtectedRoute element={<ViewmedicalRecord />} user={user} />}
       />
     </Routes>
   );
