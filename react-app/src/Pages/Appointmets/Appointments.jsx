@@ -1,6 +1,4 @@
-import { useContext, useState, useEffect } from "react";
 import { AppContext } from "../../Context/AppContext";
-import { useNavigate } from "react-router-dom";
 import {
   Box,
   Typography,
@@ -29,63 +27,59 @@ const Appointments = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   const { userRole } = useContext(AppContext);
-  const navigate = useNavigate();
-  const [appointments, setAppointments] = useState([]);
+  const [Appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [openEditModal, setOpenEditModal] = useState(false);
-  const [selectedAppointment, setSelectedAppointment] = useState(null);
-  const [updatedAppointment, setUpdatedAppointment] = useState({});
+  const [selectedappointment, setSelectedappointment] = useState(null);
+  const [updatedappointment, setUpdatedappointment] = useState({});
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
-  const [deletingAppointmentId, setDeletingAppointmentId] = useState(null);
+  const [deletingappointmentId, setDeletingappointmentId] = useState(null);
   const [patients, setPatients] = useState([]);
   const [doctors, setDoctors] = useState([]);
 
-  // Medical Record Modal State
-  const [openMedicalRecordModal, setOpenMedicalRecordModal] = useState(false);
-  const [currentAppointment, setCurrentAppointment] = useState(null);
-  const [medicalRecordData, setMedicalRecordData] = useState({
-    patient_id: null,
-    doctor_id: null,
-    appointment_id: null,
-    diagnosis: "",
-    prescription: "",
-    notes: "",
-    vital_signs: "",
-  });
-
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [patientsRes, doctorsRes] = await Promise.all([
-          fetchWrapper("/patients"),
-          fetchWrapper("/doctors"),
-        ]);
-        setPatients(patientsRes);
-        setDoctors(doctorsRes);
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      }
-    };
-    fetchData();
+    // Fetch patients
+    fetchWrapper("/patients")
+      .then((res) => res.json())
+      .then((data) => setPatients(data))
+      .catch((err) => console.error("Error fetching patients:", err));
+
+    // Fetch doctors
+    fetch("/doctors")
+      .then((res) => res.json())
+      .then((data) => setDoctors(data))
+      .catch((err) => console.error("Error fetching doctors:", err));
   }, []);
 
   useEffect(() => {
-    const fetchAppointments = async () => {
+    let isMounted = true;
+
+    async function fetchAppointments() {
       try {
         const data = await fetchWrapper("/appointments");
-        setAppointments(data);
+        if (isMounted) {
+          setAppointments(data);
+        }
       } catch (error) {
-        toast.error("Error fetching appointments");
+        console.error("Error fetching Appointments:", error);
+        toast.error("Error fetching Appointments");
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
-    };
+    }
+
     fetchAppointments();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const handleEdit = (appointment) => {
-    setSelectedAppointment(appointment);
-    setUpdatedAppointment({
+    setSelectedappointment(appointment);
+    setUpdatedappointment({
       patient_id: appointment.patient_id,
       service_id: appointment.service_id,
       doctor_id: appointment.doctor_id,
@@ -96,179 +90,94 @@ const Appointments = () => {
   };
 
   const handleDelete = (id) => {
-    setDeletingAppointmentId(id);
+    setDeletingappointmentId(id);
     setOpenDeleteModal(true);
   };
 
   const handleConfirmDelete = async () => {
+    if (!deletingappointmentId) return;
+
     try {
-      await fetchWrapper(`/appointments/${deletingAppointmentId}`, {
+      await fetchWrapper(`/appointments/${deletingappointmentId}`, {
         method: "DELETE",
       });
-      setAppointments(
-        appointments.filter((a) => a.id !== deletingAppointmentId)
+      setAppointments((prevAppointments) =>
+        prevAppointments.filter(
+          (appointment) => appointment.id !== deletingappointmentId
+        )
       );
+
       toast.success("Appointment deleted successfully!");
     } catch (error) {
+      console.error("Error deleting appointment", error);
       toast.error("Error deleting appointment");
     } finally {
       setOpenDeleteModal(false);
+      setDeletingappointmentId(null);
     }
   };
 
   const handleUpdate = async () => {
+    if (!selectedappointment) return;
+
+    const payload = { ...selectedappointment, ...updatedappointment };
     try {
       const updatedData = await fetchWrapper(
-        `/appointments/${selectedAppointment.id}`,
+        `/appointments/${selectedappointment.id}`,
         {
           method: "PUT",
-          body: JSON.stringify(updatedAppointment),
+          body: JSON.stringify(payload),
         }
       );
-      setAppointments(
-        appointments.map((a) => (a.id === updatedData.id ? updatedData : a))
+      setAppointments((prevAppointments) =>
+        prevAppointments.map((appointment) =>
+          appointment.id === updatedData.id ? updatedData : appointment
+        )
       );
+
       toast.success("Appointment updated successfully");
       setOpenEditModal(false);
     } catch (error) {
+      console.error("Error updating appointment:", error);
       toast.error("Error updating appointment");
     }
   };
-
-  const handleComplete = async (appointment) => {
-    try {
-      // First mark appointment as completed
-      await fetchWrapper(`/appointments/${appointment.id}/complete`, {
-        method: "POST",
-      });
-
-      // Set IDs in state before opening modal
-      setMedicalRecordData({
-        ...medicalRecordData,
-        patient_id: appointment.patient_id,
-        doctor_id: appointment.doctor_id,
-        appointment_id: appointment.id,
-      });
-
-      setCurrentAppointment(appointment);
-      setOpenMedicalRecordModal(true);
-
-      // Refresh appointments list
-      const updatedAppointments = await fetchWrapper("/appointments");
-      setAppointments(updatedAppointments);
-    } catch (error) {
-      toast.error(error.message || "Failed to complete appointment");
-    }
-  };
-
-  const handleMedicalRecordSubmit = async () => {
-    try {
-      // Submit with all data including IDs
-      await fetchWrapper("/medical-records", {
-        method: "POST",
-        body: JSON.stringify(medicalRecordData),
-      });
-
-      toast.success("Medical record saved successfully");
-
-      // Reset state after submission
-      setMedicalRecordData({
-        patient_id: null,
-        doctor_id: null,
-        appointment_id: null,
-        diagnosis: "",
-        prescription: "",
-        notes: "",
-        vital_signs: "",
-      });
-
-      setOpenMedicalRecordModal(false);
-    } catch (error) {
-      toast.error("Error saving medical record");
-    }
-  };
-
   const columns = [
     { field: "id", headerName: "ID", width: 90 },
     { field: "patient_name", headerName: "Patient Name", flex: 1 },
     { field: "doctor_name", headerName: "Doctor Name", flex: 1 },
     { field: "service_name", headerName: "Service", flex: 1 },
+    { field: "patient_phone", headerName: "Patient No", flex: 1 },
+    { field: "doctor_phone", headerName: "Doctor No", flex: 1 },
+    { field: "specialization", headerName: "Specialization", flex: 1 },
     { field: "appointment_date", headerName: "Date", flex: 1 },
-    {
-      field: "status",
-      headerName: "Status",
-      flex: 1,
-      renderCell: (params) => (
-        <Typography
-          color={
-            params.value === "completed"
-              ? "success.main"
-              : params.value === "cancelled"
-              ? "error.main"
-              : "warning.main"
-          }
-        >
-          {params.value}
-        </Typography>
-      ),
-    },
+    { field: "status", headerName: "Status", flex: 1 },
     {
       field: "actions",
       headerName: "Actions",
-      flex: 1.5,
+      flex: 1,
       renderCell: (params) => {
-        const isAdminOrDoctor = ["admin", "doctor"].includes(userRole);
-        const canComplete = ["pending", "accepted"].includes(params.row.status);
-
         return (
-          <Box display="flex" gap={1}>
-            {/* Edit Button (Admin Only) */}
+          <Box display="flex" justifyContent="space-around">
             {userRole === "admin" && (
-              <Button
-                variant="contained"
-                size="small"
-                onClick={() => handleEdit(params.row)}
-                sx={{ backgroundColor: colors.blueAccent[600] }}
-              >
-                Edit
-              </Button>
-            )}
-
-            {/* Delete Button (Admin Only) */}
-            {userRole === "admin" && (
-              <Button
-                variant="contained"
-                size="small"
-                color="error"
-                onClick={() => handleDelete(params.row.id)}
-              >
-                Delete
-              </Button>
-            )}
-
-            {/* Complete Button (Admin/Doctor) */}
-            {isAdminOrDoctor && canComplete && (
-              <Button
-                variant="contained"
-                size="small"
-                color="success"
-                onClick={() => handleComplete(params.row)}
-              >
-                Complete
-              </Button>
-            )}
-
-            {/* View Record Button */}
-            {params.row.status === "completed" && (
-              <Button
-                variant="outlined"
-                size="small"
-                onClick={() =>
-                  navigate(`/medical-records?appointment_id=${params.row.id}`)
-                }
-              >
-                View Record
-              </Button>
+              <>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  size="small"
+                  onClick={() => handleEdit(params.row)}
+                >
+                  Edit
+                </Button>
+                <Button
+                  variant="contained"
+                  color="secondary"
+                  size="small"
+                  onClick={() => handleDelete(params.row.id)}
+                >
+                  Delete
+                </Button>
+              </>
             )}
           </Box>
         );
@@ -282,7 +191,7 @@ const Appointments = () => {
       <Box flex="1" display="flex" flexDirection="column">
         <Topbar />
         <Box m="20px">
-          <Header title="Appointments" subtitle="Manage Appointments" />
+          <Header title="Appointments" subtitle="View Your Appointments" />
           <Box display="flex" justifyContent="flex-end" mb={2}>
             <Button
               variant="contained"
@@ -311,6 +220,9 @@ const Appointments = () => {
                 borderTop: "none",
                 backgroundColor: colors.blueAccent[700],
               },
+              "& .MuiCheckbox-root": {
+                color: `${colors.greenAccent[200]} !important`,
+              },
             }}
           >
             {loading ? (
@@ -324,46 +236,49 @@ const Appointments = () => {
               </Box>
             ) : (
               <DataGrid
-                rows={appointments}
+                checkboxSelection
+                rows={Appointments}
                 columns={columns}
-                pageSize={10}
-                rowsPerPageOptions={[10]}
               />
             )}
           </Box>
         </Box>
       </Box>
 
-      {/* Edit Appointment Modal */}
-      <Modal open={openEditModal} onClose={() => setOpenEditModal(false)}>
+      {/* Edit Modal */}
+      <Modal
+        open={openEditModal}
+        onClose={() => setOpenEditModal(false)}
+        aria-labelledby="edit-appointment-modal"
+        aria-describedby="edit-appointment-details"
+      >
         <Box
           sx={{
             position: "absolute",
             top: "50%",
             left: "50%",
             transform: "translate(-50%, -50%)",
-            width: 400,
-            bgcolor: "background.paper",
-            boxShadow: 24,
-            p: 4,
-            borderRadius: 2,
+            backgroundColor: colors.primary[500],
+            padding: "20px",
+            borderRadius: "10px",
+            width: "400px",
           }}
         >
-          <Typography variant="h6" mb={3}>
+          <Typography variant="h6" mb={2}>
             Edit Appointment
           </Typography>
 
+          {/* Patient Dropdown*/}
           <FormControl fullWidth margin="normal">
             <InputLabel>Patient</InputLabel>
             <Select
-              value={updatedAppointment.patient_id || ""}
+              value={updatedappointment.patient_id || ""}
               onChange={(e) =>
-                setUpdatedAppointment({
-                  ...updatedAppointment,
+                setUpdatedappointment({
+                  ...updatedappointment,
                   patient_id: e.target.value,
                 })
               }
-              label="Patient"
             >
               {patients.map((patient) => (
                 <MenuItem key={patient.id} value={patient.id}>
@@ -373,17 +288,17 @@ const Appointments = () => {
             </Select>
           </FormControl>
 
+          {/* Doctor Dropdown */}
           <FormControl fullWidth margin="normal">
             <InputLabel>Doctor</InputLabel>
             <Select
-              value={updatedAppointment.doctor_id || ""}
+              value={updatedappointment.doctor_id || ""}
               onChange={(e) =>
-                setUpdatedAppointment({
-                  ...updatedAppointment,
+                setUpdatedappointment({
+                  ...updatedappointment,
                   doctor_id: e.target.value,
                 })
               }
-              label="Doctor"
             >
               {doctors.map((doctor) => (
                 <MenuItem key={doctor.id} value={doctor.id}>
@@ -393,43 +308,44 @@ const Appointments = () => {
             </Select>
           </FormControl>
 
+          {/* Reason */}
           <TextField
             label="Reason"
-            fullWidth
-            margin="normal"
-            multiline
-            rows={3}
-            value={updatedAppointment.reason || ""}
+            value={updatedappointment.reason || ""}
             onChange={(e) =>
-              setUpdatedAppointment({
-                ...updatedAppointment,
+              setUpdatedappointment({
+                ...updatedappointment,
                 reason: e.target.value,
               })
             }
+            fullWidth
+            multiline
+            rows={3}
+            margin="normal"
           />
 
+          {/* Status Dropdown */}
           <FormControl fullWidth margin="normal">
             <InputLabel>Status</InputLabel>
             <Select
-              value={updatedAppointment.status || ""}
+              value={updatedappointment.status || ""}
               onChange={(e) =>
-                setUpdatedAppointment({
-                  ...updatedAppointment,
+                setUpdatedappointment({
+                  ...updatedappointment,
                   status: e.target.value,
                 })
               }
-              label="Status"
             >
               <MenuItem value="pending">Pending</MenuItem>
-              <MenuItem value="accepted">Accepted</MenuItem>
+              <MenuItem value="confirmed">Confirmed</MenuItem>
               <MenuItem value="completed">Completed</MenuItem>
               <MenuItem value="cancelled">Cancelled</MenuItem>
             </Select>
           </FormControl>
 
-          <Box display="flex" justifyContent="flex-end" mt={3} gap={2}>
-            <Button onClick={() => setOpenEditModal(false)}>Cancel</Button>
-            <Button variant="contained" onClick={handleUpdate}>
+          {/* Update Button */}
+          <Box display="flex" justifyContent="flex-end" mt={2}>
+            <Button onClick={handleUpdate} variant="contained" color="primary">
               Update
             </Button>
           </Box>
@@ -437,43 +353,13 @@ const Appointments = () => {
       </Modal>
 
       {/* Delete Confirmation Modal */}
-      <Modal open={openDeleteModal} onClose={() => setOpenDeleteModal(false)}>
-        <Box
-          sx={{
-            position: "absolute",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            width: 400,
-            bgcolor: "background.paper",
-            boxShadow: 24,
-            p: 4,
-            borderRadius: 2,
-          }}
-        >
-          <Typography variant="h6" mb={2}>
-            Confirm Delete
-          </Typography>
-          <Typography mb={3}>
-            Are you sure you want to delete this appointment?
-          </Typography>
-          <Box display="flex" justifyContent="flex-end" gap={2}>
-            <Button onClick={() => setOpenDeleteModal(false)}>Cancel</Button>
-            <Button
-              variant="contained"
-              color="error"
-              onClick={handleConfirmDelete}
-            >
-              Delete
-            </Button>
-          </Box>
-        </Box>
-      </Modal>
-
-      {/* Medical Record Modal */}
       <Modal
-        open={openMedicalRecordModal}
-        onClose={() => setOpenMedicalRecordModal(false)}
+        open={openDeleteModal}
+        onClose={() => {
+          setOpenDeleteModal(false);
+          setDeletingappointmentId(null);
+        }}
+        aria-labelledby="delete-confirmation-modal"
       >
         <Box
           sx={{
@@ -481,93 +367,35 @@ const Appointments = () => {
             top: "50%",
             left: "50%",
             transform: "translate(-50%, -50%)",
-            width: 600,
-            maxHeight: "80vh",
-            overflowY: "auto",
-            bgcolor: "background.paper",
-            boxShadow: 24,
-            p: 4,
-            borderRadius: 2,
+            backgroundColor: colors.primary[500],
+            padding: "20px",
+            borderRadius: "10px",
+            width: "400px",
           }}
         >
-          <Typography variant="h5" mb={3}>
-            Medical Record for {currentAppointment?.patient_name}
+          <Typography variant="h6" mb={2}>
+            Confirm Delete
           </Typography>
-
-          {/* Hidden fields to store IDs */}
-          <input type="hidden" value={medicalRecordData.patient_id || ""} />
-          <input type="hidden" value={medicalRecordData.doctor_id || ""} />
-          <input type="hidden" value={medicalRecordData.appointment_id || ""} />
-
-          <TextField
-            label="Diagnosis"
-            fullWidth
-            margin="normal"
-            multiline
-            rows={3}
-            value={medicalRecordData.diagnosis}
-            onChange={(e) =>
-              setMedicalRecordData({
-                ...medicalRecordData,
-                diagnosis: e.target.value,
-              })
-            }
-          />
-
-          <TextField
-            label="Prescription"
-            fullWidth
-            margin="normal"
-            multiline
-            rows={4}
-            value={medicalRecordData.prescription}
-            onChange={(e) =>
-              setMedicalRecordData({
-                ...medicalRecordData,
-                prescription: e.target.value,
-              })
-            }
-          />
-
-          <TextField
-            label="Vital Signs (JSON)"
-            fullWidth
-            margin="normal"
-            placeholder='{"blood_pressure": "120/80", "heart_rate": 72}'
-            value={medicalRecordData.vital_signs}
-            onChange={(e) =>
-              setMedicalRecordData({
-                ...medicalRecordData,
-                vital_signs: e.target.value,
-              })
-            }
-          />
-
-          <TextField
-            label="Notes"
-            fullWidth
-            margin="normal"
-            multiline
-            rows={3}
-            value={medicalRecordData.notes}
-            onChange={(e) =>
-              setMedicalRecordData({
-                ...medicalRecordData,
-                notes: e.target.value,
-              })
-            }
-          />
-
-          <Box display="flex" justifyContent="flex-end" mt={3} gap={2}>
-            <Button onClick={() => setOpenMedicalRecordModal(false)}>
+          <Typography variant="body1" mb={3}>
+            Are you sure you want to delete this appointment? This action cannot
+            be undone.
+          </Typography>
+          <Box display="flex" justifyContent="flex-end" gap={2}>
+            <Button
+              variant="outlined"
+              onClick={() => {
+                setOpenDeleteModal(false);
+                setDeletingappointmentId(null);
+              }}
+            >
               Cancel
             </Button>
             <Button
               variant="contained"
-              color="success"
-              onClick={handleMedicalRecordSubmit}
+              color="secondary"
+              onClick={handleConfirmDelete}
             >
-              Save Medical Record
+              Confirm Delete
             </Button>
           </Box>
         </Box>
