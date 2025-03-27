@@ -1,4 +1,5 @@
 import { AppContext } from "../../Context/AppContext";
+import { useContext, useState, useEffect } from "react";
 import {
   Box,
   Typography,
@@ -40,13 +41,11 @@ const Appointments = () => {
   useEffect(() => {
     // Fetch patients
     fetchWrapper("/patients")
-      .then((res) => res.json())
       .then((data) => setPatients(data))
       .catch((err) => console.error("Error fetching patients:", err));
 
     // Fetch doctors
-    fetch("/doctors")
-      .then((res) => res.json())
+    fetchWrapper("/doctors")
       .then((data) => setDoctors(data))
       .catch((err) => console.error("Error fetching doctors:", err));
   }, []);
