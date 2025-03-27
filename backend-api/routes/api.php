@@ -50,6 +50,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/doctor/{doctor_id}/available-schedules', [SchedulesController::class, 'getAvailableSchedules']);
     Route::get('/services/{service}/doctors', [ServiceController::class, 'getDoctors']);
     Route::get('/doctors/{doctor}/schedules', [DoctorsController::class, 'getSchedules']);
+    Route::put('/appointments/{id}/complete', [AppointmentsController::class, 'markComplete']);
 
 
     Route::middleware(['admin'])->group(function () {

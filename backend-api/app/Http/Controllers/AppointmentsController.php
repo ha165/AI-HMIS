@@ -21,37 +21,44 @@ class AppointmentsController extends Controller
             return response()->json(['message' => 'Unauthorized'], 401);
         }
 
+        // Eager load with all required foreign keys
         $query = Appointments::with([
-            'patient.user:id,first_name,last_name,phone',
-            'doctor.user:id,first_name,last_name,phone',
-            'doctor:id,specialization',
+            'patient.user:id,first_name,last_name,phone,id',
+            'doctor.user:id,first_name,last_name,phone,id',
+            'doctor:id,specialization,user_id',
             'services:id,name'
         ]);
-
-        // Role-based filtering
         if ($user->role === 'patient') {
-            $query->whereHas('patient', function ($q) use ($user) {
-                $q->where('user_id', $user->id);
-            });
+            $patient = Patients::where('user_id', $user->id)->first();
+            if ($patient) {
+                $query->where('patient_id', $patient->id);
+            } else {
+                return response()->json(['message' => 'Patient profile not found'], 400);
+            }
         } elseif ($user->role === 'doctor') {
-            $query->whereHas('doctor', function ($q) use ($user) {
-                $q->where('user_id', $user->id);
-            });
+            $doctor = Doctor::where('user_id', $user->id)->first();
+            if ($doctor) {
+                $query->where('doctor_id', $doctor->id);
+            } else {
+                return response()->json(['message' => 'Doctor profile not found'], 400);
+            }
         }
 
-        // Add pagination
-        $appointments = $query->paginate(15); // Adjust per page as needed
+        $appointments = $query->get();
 
         if ($appointments->isEmpty()) {
             return response()->json(['message' => 'No appointments found'], 404);
         }
-
-        $formattedData = $appointments->getCollection()->map(function ($appointment) {
+        $formattedData = $appointments->map(function ($appointment) {
             return [
                 "id" => $appointment->id,
-                "patient_name" => $this->formatName($appointment->patient->user ?? null),
+                "patient_name" => $appointment->patient && $appointment->patient->user
+                    ? trim($appointment->patient->user->first_name . ' ' . $appointment->patient->user->last_name)
+                    : 'N/A',
                 "service_name" => $appointment->services->name ?? 'N/A',
-                "doctor_name" => $this->formatName($appointment->doctor->user ?? null),
+                "doctor_name" => $appointment->doctor && $appointment->doctor->user
+                    ? trim($appointment->doctor->user->first_name . ' ' . $appointment->doctor->user->last_name)
+                    : 'N/A',
                 "patient_phone" => $appointment->patient->user->phone ?? 'N/A',
                 "doctor_phone" => $appointment->doctor->user->phone ?? 'N/A',
                 "specialization" => $appointment->doctor->specialization ?? 'N/A',
@@ -60,22 +67,8 @@ class AppointmentsController extends Controller
             ];
         });
 
-        return response()->json([
-            'data' => $formattedData,
-            'pagination' => [
-                'total' => $appointments->total(),
-                'per_page' => $appointments->perPage(),
-                'current_page' => $appointments->currentPage(),
-                'last_page' => $appointments->lastPage(),
-            ]
-        ]);
+        return response()->json($formattedData);
     }
-
-    private function formatName($user)
-    {
-        return $user ? trim($user->first_name . ' ' . $user->last_name) : 'N/A';
-    }
-
 
     /**
      * Store a newly created resource in storage.
@@ -173,5 +166,18 @@ class AppointmentsController extends Controller
         $appointment->delete();
 
         return response()->json(['message' => 'Appointment deleted successfully'], 200);
+    }
+    public function markComplete($id)
+    {
+        $appointment = Appointments::findOrFail($id);
+
+        if ($appointment->status === 'cancelled') {
+            return response()->json(['message' => 'Cannot complete a cancelled appointment'], 400);
+        }
+
+        $appointment->status = 'completed';
+        $appointment->save();
+
+        return response()->json(['message' => 'Appointment marked as completed', 'appointment' => $appointment]);
     }
 }
