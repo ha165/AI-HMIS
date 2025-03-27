@@ -18,6 +18,9 @@ class Patients extends Model
         'address',
         'emergency_contact',
     ];
+    protected $casts = [
+        'dob' => 'date', 
+    ];
 
     public function user()
     {

@@ -218,7 +218,7 @@ const ViewMedicalRecord = () => {
                           <TableCell sx={{ fontWeight: "bold" }}>
                             Phone
                           </TableCell>
-                          <TableCell>{record.patien_phone || "N/A"}</TableCell>
+                          <TableCell>{record.patient_phone || "N/A"}</TableCell>
                         </TableRow>
                         <TableRow>
                           <TableCell sx={{ fontWeight: "bold" }}>
