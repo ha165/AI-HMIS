@@ -114,7 +114,7 @@ class MedicalRecordsController extends Controller
         $user = auth()->user();
         $record = Medical_Records::with([
             'patient.user:id,first_name,last_name,phone,id',
-            'doctor:id,first_name,last_name,phone,id',
+            'doctor.user:id,first_name,last_name,phone,id',
             'appointment:id,appointment_date,status'
         ])->find($id);
 
