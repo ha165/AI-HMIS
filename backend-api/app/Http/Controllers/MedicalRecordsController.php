@@ -131,32 +131,33 @@ class MedicalRecordsController extends Controller
         } elseif ($user->role === 'doctor' && $record->doctor_id !== $user->id) {
             return response()->json(['message' => 'Unauthorized to view this record'], 403);
         }
+        $patient_user = $record->patient->user ?? null;
+        $doctor_user = $record->doctor->user ?? null;
 
         $formattedRecord = [
             "id" => $record->id,
-            "patient_name" => $record->patient && $record->patient->user
-                ? trim($record->patient->user->first_name . ' ' . $record->patient->user->last_name)
+
+            // Patient Details
+            "patient_name" => $patient_user
+                ? trim($patient_user->first_name . ' ' . $patient_user->last_name)
                 : 'N/A',
-            "patient_phone" => $record->patient && $record->patient->user
-                ? $record->patient->user->phone
+            "patient_phone" => $patient_user?->phone ?? 'N/A',
+            "patient_email" => $patient_user?->email ?? 'N/A',
+            "patient_dob" => $record->patient?->dob?->format('Y-m-d') ?? 'N/A',
+            "patient_gender" => $record->patient?->gender ?? 'N/A',
+
+            // Doctor Details
+            "doctor_name" => $doctor_user
+                ? trim($doctor_user->first_name . ' ' . $doctor_user->last_name)
                 : 'N/A',
-            "patient_email" => $record->patient && $record->patient->user
-                ? $record->patient->user->email
-                : 'N/A',
-            "patient_dob" => $record->patient->dob?->format('Y-m-d') ?? 'N/A',
-            "patient_gender" => $record->patient->gender ?? 'N/A',
-            "doctor_name" => $record->doctor && $record->doctor->user
-                ? trim($record->doctor->user->first_name . ' ' . $record->doctor->user->last_name)
-                : 'N/A',
-            "doctor_phone" => $record->doctor && $record->doctor->user
-                ? $record->doctor->user->phone
-                : 'N/A',
-            "doctor_email" => $record->doctor && $record->doctor->user
-                ? $record->doctor->user->email
-                : 'N/A',
-            
-            "appointment_date" => $record->appointment->appointment_date?->format('Y-m-d') ?? 'N/A',
-            "appointment_status" => ucfirst($record->appointment->status ?? 'N/A'),
+            "doctor_phone" => $doctor_user?->phone ?? 'N/A',
+            "doctor_email" => $doctor_user?->email ?? 'N/A',
+
+            // Appointment Details
+            "appointment_date" => $record->appointment?->appointment_date?->format('Y-m-d') ?? 'N/A',
+            "appointment_status" => ucfirst($record->appointment?->status ?? 'N/A'),
+
+            // Medical Details
             "diagnosis" => $record->diagnosis,
             "prescription" => $record->prescription,
             "medical_history" => $record->medical_history,
