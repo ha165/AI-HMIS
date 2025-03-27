@@ -1,5 +1,5 @@
 import { useContext, useState, useEffect } from "react";
-import { AppContext } from "../../Context/AppContext"; 
+import { AppContext } from "../../Context/AppContext";
 import {
   Box,
   Typography,
@@ -14,31 +14,27 @@ import { tokens } from "../../../themes";
 import Sidebar from "../../Scenes/global/SideBar";
 import Topbar from "../../Scenes/global/TopBar";
 import Header from "../../Components/Header";
+import fetchWrapper from "../../Context/fetchwrapper";
 
 const Departments = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   const { userRole } = useContext(AppContext);
-  const [Departments, setDepartments] = useState([]);
+  const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [openEditModal, setOpenEditModal] = useState(false);
-  const [selecteddepartment, setSelecteddepartment] = useState(null);
-  const [updateddepartment, setUpdateddepartment] = useState({});
+  const [selectedDepartment, setSelectedDepartment] = useState(null);
+  const [updatedDepartment, setUpdatedDepartment] = useState({});
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
-  const [deletingdepartmentId, setDeletingdepartmentId] = useState(null);
+  const [deletingDepartmentId, setDeletingDepartmentId] = useState(null);
 
   useEffect(() => {
     async function fetchDepartments() {
       try {
-        const res = await fetch("api/departments", {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        });
-        const data = await res.json();
+        const data = await fetchWrapper("/departments");
         setDepartments(data);
       } catch (error) {
-        console.error("Error fetching Departments", error);
+        console.error("Error fetching departments", error);
       } finally {
         setLoading(false);
       }
@@ -47,8 +43,8 @@ const Departments = () => {
   }, []);
 
   const handleEdit = (department) => {
-    setSelecteddepartment(department);
-    setUpdateddepartment({
+    setSelectedDepartment(department);
+    setUpdatedDepartment({
       name: department.name,
       description: department.description,
     });
@@ -56,54 +52,48 @@ const Departments = () => {
   };
 
   const handleDelete = (id) => {
-    setDeletingdepartmentId(id);
+    setDeletingDepartmentId(id);
     setOpenDeleteModal(true);
   };
 
   const handleConfirmDelete = async () => {
-    if (!deletingdepartmentId) return;
+    if (!deletingDepartmentId) return;
 
     try {
-      const response = await fetch(`api/departments/${deletingdepartmentId}`, {
+      await fetchWrapper(`/departments/${deletingDepartmentId}`, {
         method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
       });
-
-      if (response.ok) {
-        setDepartments(Departments.filter((department) => department.id !== deletingdepartmentId));
-      }
+      setDepartments(
+        departments.filter(
+          (department) => department.id !== deletingDepartmentId
+        )
+      );
     } catch (error) {
       console.error("Error deleting department", error);
     } finally {
       setOpenDeleteModal(false);
-      setDeletingdepartmentId(null);
+      setDeletingDepartmentId(null);
     }
   };
 
   const handleUpdate = async () => {
-    if (!selecteddepartment) return;
+    if (!selectedDepartment) return;
 
-    const payload = { ...selecteddepartment, ...updateddepartment };
+    const payload = { ...selectedDepartment, ...updatedDepartment };
     try {
-      const response = await fetch(`api/departments/${selecteddepartment.id}`, {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
-      if (response.ok) {
-        const updatedData = await response.json();
-        setDepartments(
-          Departments.map((department) =>
-            department.id === updatedData.id ? updatedData : department
-          )
-        );
-        setOpenEditModal(false);
-      }
+      const updatedData = await fetchWrapper(
+        `/departments/${selectedDepartment.id}`,
+        {
+          method: "PUT",
+          body: JSON.stringify(payload),
+        }
+      );
+      setDepartments(
+        departments.map((department) =>
+          department.id === updatedData.id ? updatedData : department
+        )
+      );
+      setOpenEditModal(false);
     } catch (error) {
       console.error("Error updating department", error);
     }
@@ -185,7 +175,11 @@ const Departments = () => {
                 <CircularProgress color="secondary" />
               </Box>
             ) : (
-              <DataGrid checkboxSelection rows={Departments} columns={columns} />
+              <DataGrid
+                checkboxSelection
+                rows={departments}
+                columns={columns}
+              />
             )}
           </Box>
         </Box>
@@ -211,14 +205,14 @@ const Departments = () => {
           }}
         >
           <Typography variant="h6" mb={2}>
-            Edit department
+            Edit Department
           </Typography>
           <TextField
-            label="First Name"
-            value={updateddepartment.name || ""}
+            label="Department Name"
+            value={updatedDepartment.name || ""}
             onChange={(e) =>
-              setUpdateddepartment({
-                ...updateddepartment,
+              setUpdatedDepartment({
+                ...updatedDepartment,
                 name: e.target.value,
               })
             }
@@ -226,11 +220,11 @@ const Departments = () => {
             margin="normal"
           />
           <TextField
-            label="Last Name"
-            value={updateddepartment.description || ""}
+            label="Description"
+            value={updatedDepartment.description || ""}
             onChange={(e) =>
-              setUpdateddepartment({
-                ...updateddepartment,
+              setUpdatedDepartment({
+                ...updatedDepartment,
                 description: e.target.value,
               })
             }
@@ -250,7 +244,7 @@ const Departments = () => {
         open={openDeleteModal}
         onClose={() => {
           setOpenDeleteModal(false);
-          setDeletingdepartmentId(null);
+          setDeletingDepartmentId(null);
         }}
         aria-labelledby="delete-confirmation-modal"
       >
@@ -270,15 +264,15 @@ const Departments = () => {
             Confirm Delete
           </Typography>
           <Typography variant="body1" mb={3}>
-            Are you sure you want to delete this department? This action cannot be
-            undone.
+            Are you sure you want to delete this department? This action cannot
+            be undone.
           </Typography>
           <Box display="flex" justifyContent="flex-end" gap={2}>
             <Button
               variant="outlined"
               onClick={() => {
                 setOpenDeleteModal(false);
-                setDeletingdepartmentId(null);
+                setDeletingDepartmentId(null);
               }}
             >
               Cancel
