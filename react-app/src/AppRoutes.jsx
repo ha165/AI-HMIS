@@ -1,10 +1,6 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { lazy } from "react";
 import ProtectedRoute from "./ProtectedRoute";
-import Departments from "./Pages/Departments/Department";
-import Appointments from "./Pages/Appointmets/Appointments";
-import AddAppointment from "./Pages/Appointmets/AddAppointment";
-
 // Lazy-loaded components
 const UserDashboard = lazy(() => import("./Scenes/dashboard/UserDashboard"));
 const DiagnosisChat = lazy(() => import("./Pages/AI/DiagnosisChat"));
@@ -16,8 +12,12 @@ const CompleteRegistration = lazy(() =>
 const Home = lazy(() => import("./Pages/Home"));
 const Register = lazy(() => import("./Pages/Auth/Register"));
 const Login = lazy(() => import("./Pages/Auth/Login"));
+const Appointments = lazy(() => import("./Pages/Appointmets/Appointments"));
+const Departments = lazy(() => import("./Pages/Departments/Department"));
 const Dashboard = lazy(() => import("./Scenes/dashboard"));
+const AddAppointment = lazy(() => import("./Pages/Appointmets/AddAppointment"));
 const Patients = lazy(() => import("./Pages/Patients/Patients"));
+const Medical = lazy(() => import("./Pages/Medical/MedicalRecords"));
 const Contacts = lazy(() => import("./Pages/Contacts/Contacts"));
 const Forms = lazy(() => import("./Pages/Forms/Form"));
 const Calendar = lazy(() => import("./Scenes/calendar/calendar"));
@@ -121,9 +121,13 @@ const AppRoutes = ({ user }) => {
         path="/appointments"
         element={<ProtectedRoute element={<Appointments />} user={user} />}
       />
-      <Route 
-      path = "/add-appointment"
-      element={<ProtectedRoute element={<AddAppointment />} user={user} />}
+      <Route
+        path="/add-appointment"
+        element={<ProtectedRoute element={<AddAppointment />} user={user} />}
+      />
+      <Route
+        path="/medical-records"
+        element={<ProtectedRoute element={<Medical />} user={user} />}
       />
     </Routes>
   );
