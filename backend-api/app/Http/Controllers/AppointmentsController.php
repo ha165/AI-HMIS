@@ -21,50 +21,60 @@ class AppointmentsController extends Controller
             return response()->json(['message' => 'Unauthorized'], 401);
         }
 
-        // Start the query
-        $query = Appointments::with(['patient.user', 'doctor.user', 'services']);
+        $query = Appointments::with([
+            'patient.user:id,first_name,last_name,phone',
+            'doctor.user:id,first_name,last_name,phone',
+            'doctor:id,specialization',
+            'services:id,name'
+        ]);
 
-        // Handle different roles
+        // Role-based filtering
         if ($user->role === 'patient') {
-            $patient = Patients::where('user_id', $user->id)->first();
-            if ($patient) {
-                $query->where('patient_id', $patient->id);
-            } else {
-                return response()->json(['message' => 'Patient profile not found'], 400);
-            }
+            $query->whereHas('patient', function ($q) use ($user) {
+                $q->where('user_id', $user->id);
+            });
         } elseif ($user->role === 'doctor') {
-            $doctor = Doctor::where('user_id', $user->id)->first();
-            if ($doctor) {
-                $query->where('doctor_id', $doctor->id);
-            } else {
-                return response()->json(['message' => 'Doctor profile not found'], 400);
-            }
+            $query->whereHas('doctor', function ($q) use ($user) {
+                $q->where('user_id', $user->id);
+            });
         }
 
-        // Fetch appointments
-        $appointments = $query->get();
+        // Add pagination
+        $appointments = $query->paginate(15); // Adjust per page as needed
+
         if ($appointments->isEmpty()) {
             return response()->json(['message' => 'No appointments found'], 404);
         }
 
-        // Format the data
-        $formattedData = $appointments->map(function ($appointment) {
+        $formattedData = $appointments->getCollection()->map(function ($appointment) {
             return [
                 "id" => $appointment->id,
-                "patient_name" => optional($appointment->patient->user)->first_name . ' ' . optional($appointment->patient->user)->last_name ?: 'N/A',
-                "service_name" => optional($appointment->services)->name ?? 'N/A',
-                "doctor_name" => optional($appointment->doctor->user)->first_name . ' ' . optional($appointment->doctor->user)->last_name ?? 'N/A',
-                "patient_phone" => optional($appointment->patient->user)->phone ?? 'N/A',
-                "doctor_phone" => optional($appointment->doctor->user)->phone ?? 'N/A',
-                "specialization" => optional($appointment->doctor)->specialization ?? 'N/A',
-                "appointment_date" => $appointment->appointment_date ? $appointment->appointment_date->format('Y-m-d') : 'N/A',
+                "patient_name" => $this->formatName($appointment->patient->user ?? null),
+                "service_name" => $appointment->services->name ?? 'N/A',
+                "doctor_name" => $this->formatName($appointment->doctor->user ?? null),
+                "patient_phone" => $appointment->patient->user->phone ?? 'N/A',
+                "doctor_phone" => $appointment->doctor->user->phone ?? 'N/A',
+                "specialization" => $appointment->doctor->specialization ?? 'N/A',
+                "appointment_date" => $appointment->appointment_date?->format('Y-m-d') ?? 'N/A',
                 "status" => ucfirst($appointment->status ?? 'pending')
             ];
         });
 
-        return response()->json($formattedData);
+        return response()->json([
+            'data' => $formattedData,
+            'pagination' => [
+                'total' => $appointments->total(),
+                'per_page' => $appointments->perPage(),
+                'current_page' => $appointments->currentPage(),
+                'last_page' => $appointments->lastPage(),
+            ]
+        ]);
     }
 
+    private function formatName($user)
+    {
+        return $user ? trim($user->first_name . ' ' . $user->last_name) : 'N/A';
+    }
 
 
     /**

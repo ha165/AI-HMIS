@@ -28,57 +28,75 @@ const Appointments = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   const { userRole } = useContext(AppContext);
-  const [Appointments, setAppointments] = useState([]);
+  const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [openEditModal, setOpenEditModal] = useState(false);
-  const [selectedappointment, setSelectedappointment] = useState(null);
-  const [updatedappointment, setUpdatedappointment] = useState({});
+  const [selectedAppointment, setSelectedAppointment] = useState(null);
+  const [updatedAppointment, setUpdatedAppointment] = useState({});
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
-  const [deletingappointmentId, setDeletingappointmentId] = useState(null);
+  const [deletingAppointmentId, setDeletingAppointmentId] = useState(null);
   const [patients, setPatients] = useState([]);
   const [doctors, setDoctors] = useState([]);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    pageSize: 10,
+    total: 0,
+  });
 
   useEffect(() => {
-    // Fetch patients
-    fetchWrapper("/patients")
-      .then((data) => setPatients(data))
-      .catch((err) => console.error("Error fetching patients:", err));
+    const fetchInitialData = async () => {
+      try {
+        const [patientsData, doctorsData] = await Promise.all([
+          fetchWrapper("/patients"),
+          fetchWrapper("/doctors"),
+        ]);
+        setPatients(patientsData.data || patientsData);
+        setDoctors(doctorsData.data || doctorsData);
+      } catch (error) {
+        console.error("Error fetching initial data:", error);
+        toast.error("Error loading initial data");
+      }
+    };
 
-    // Fetch doctors
-    fetchWrapper("/doctors")
-      .then((data) => setDoctors(data))
-      .catch((err) => console.error("Error fetching doctors:", err));
+    fetchInitialData();
   }, []);
 
   useEffect(() => {
     let isMounted = true;
 
-    async function fetchAppointments() {
+    const fetchAppointments = async () => {
       try {
-        const data = await fetchWrapper("/appointments");
+        setLoading(true);
+        const response = await fetchWrapper(
+          `/appointments?page=${pagination.page}&per_page=${pagination.pageSize}`
+        );
         if (isMounted) {
-          setAppointments(data);
+          setAppointments(response.data || response); // Handle both paginated and non-paginated responses
+          setPagination((prev) => ({
+            ...prev,
+            total: response.pagination?.total || response.length || 0,
+          }));
         }
       } catch (error) {
-        console.error("Error fetching Appointments:", error);
-        toast.error("Error fetching Appointments");
+        console.error("Error fetching appointments:", error);
+        toast.error("Error fetching appointments");
       } finally {
         if (isMounted) {
           setLoading(false);
         }
       }
-    }
+    };
 
     fetchAppointments();
 
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [pagination.page, pagination.pageSize]);
 
   const handleEdit = (appointment) => {
-    setSelectedappointment(appointment);
-    setUpdatedappointment({
+    setSelectedAppointment(appointment);
+    setUpdatedAppointment({
       patient_id: appointment.patient_id,
       service_id: appointment.service_id,
       doctor_id: appointment.doctor_id,
@@ -89,51 +107,47 @@ const Appointments = () => {
   };
 
   const handleDelete = (id) => {
-    setDeletingappointmentId(id);
+    setDeletingAppointmentId(id);
     setOpenDeleteModal(true);
   };
 
   const handleConfirmDelete = async () => {
-    if (!deletingappointmentId) return;
+    if (!deletingAppointmentId) return;
 
     try {
-      await fetchWrapper(`/appointments/${deletingappointmentId}`, {
+      await fetchWrapper(`/appointments/${deletingAppointmentId}`, {
         method: "DELETE",
       });
-      setAppointments((prevAppointments) =>
-        prevAppointments.filter(
-          (appointment) => appointment.id !== deletingappointmentId
-        )
+      setAppointments((prev) =>
+        prev.filter((appointment) => appointment.id !== deletingAppointmentId)
       );
-
       toast.success("Appointment deleted successfully!");
     } catch (error) {
       console.error("Error deleting appointment", error);
       toast.error("Error deleting appointment");
     } finally {
       setOpenDeleteModal(false);
-      setDeletingappointmentId(null);
+      setDeletingAppointmentId(null);
     }
   };
 
   const handleUpdate = async () => {
-    if (!selectedappointment) return;
+    if (!selectedAppointment) return;
 
-    const payload = { ...selectedappointment, ...updatedappointment };
+    const payload = { ...selectedAppointment, ...updatedAppointment };
     try {
       const updatedData = await fetchWrapper(
-        `/appointments/${selectedappointment.id}`,
+        `/appointments/${selectedAppointment.id}`,
         {
           method: "PUT",
           body: JSON.stringify(payload),
         }
       );
-      setAppointments((prevAppointments) =>
-        prevAppointments.map((appointment) =>
+      setAppointments((prev) =>
+        prev.map((appointment) =>
           appointment.id === updatedData.id ? updatedData : appointment
         )
       );
-
       toast.success("Appointment updated successfully");
       setOpenEditModal(false);
     } catch (error) {
@@ -141,6 +155,15 @@ const Appointments = () => {
       toast.error("Error updating appointment");
     }
   };
+
+  const handlePageChange = (newPage) => {
+    setPagination((prev) => ({ ...prev, page: newPage + 1 }));
+  };
+
+  const handlePageSizeChange = (newPageSize) => {
+    setPagination((prev) => ({ ...prev, pageSize: newPageSize }));
+  };
+
   const columns = [
     { field: "id", headerName: "ID", width: 90 },
     { field: "patient_name", headerName: "Patient Name", flex: 1 },
@@ -155,32 +178,30 @@ const Appointments = () => {
       field: "actions",
       headerName: "Actions",
       flex: 1,
-      renderCell: (params) => {
-        return (
-          <Box display="flex" justifyContent="space-around">
-            {userRole === "admin" && (
-              <>
-                <Button
-                  variant="contained"
-                  color="primary"
-                  size="small"
-                  onClick={() => handleEdit(params.row)}
-                >
-                  Edit
-                </Button>
-                <Button
-                  variant="contained"
-                  color="secondary"
-                  size="small"
-                  onClick={() => handleDelete(params.row.id)}
-                >
-                  Delete
-                </Button>
-              </>
-            )}
-          </Box>
-        );
-      },
+      renderCell: (params) => (
+        <Box display="flex" justifyContent="space-around">
+          {userRole === "admin" && (
+            <>
+              <Button
+                variant="contained"
+                color="primary"
+                size="small"
+                onClick={() => handleEdit(params.row)}
+              >
+                Edit
+              </Button>
+              <Button
+                variant="contained"
+                color="secondary"
+                size="small"
+                onClick={() => handleDelete(params.row.id)}
+              >
+                Delete
+              </Button>
+            </>
+          )}
+        </Box>
+      ),
     },
   ];
 
@@ -236,8 +257,15 @@ const Appointments = () => {
             ) : (
               <DataGrid
                 checkboxSelection
-                rows={Appointments}
+                rows={Array.isArray(appointments) ? appointments : []}
                 columns={columns}
+                pagination
+                pageSize={pagination.pageSize}
+                rowsPerPageOptions={[5, 10, 25]}
+                rowCount={pagination.total}
+                paginationMode="server"
+                onPageChange={handlePageChange}
+                onPageSizeChange={handlePageSizeChange}
               />
             )}
           </Box>
@@ -249,7 +277,6 @@ const Appointments = () => {
         open={openEditModal}
         onClose={() => setOpenEditModal(false)}
         aria-labelledby="edit-appointment-modal"
-        aria-describedby="edit-appointment-details"
       >
         <Box
           sx={{
@@ -267,14 +294,13 @@ const Appointments = () => {
             Edit Appointment
           </Typography>
 
-          {/* Patient Dropdown*/}
           <FormControl fullWidth margin="normal">
             <InputLabel>Patient</InputLabel>
             <Select
-              value={updatedappointment.patient_id || ""}
+              value={updatedAppointment.patient_id || ""}
               onChange={(e) =>
-                setUpdatedappointment({
-                  ...updatedappointment,
+                setUpdatedAppointment({
+                  ...updatedAppointment,
                   patient_id: e.target.value,
                 })
               }
@@ -287,14 +313,13 @@ const Appointments = () => {
             </Select>
           </FormControl>
 
-          {/* Doctor Dropdown */}
           <FormControl fullWidth margin="normal">
             <InputLabel>Doctor</InputLabel>
             <Select
-              value={updatedappointment.doctor_id || ""}
+              value={updatedAppointment.doctor_id || ""}
               onChange={(e) =>
-                setUpdatedappointment({
-                  ...updatedappointment,
+                setUpdatedAppointment({
+                  ...updatedAppointment,
                   doctor_id: e.target.value,
                 })
               }
@@ -307,13 +332,12 @@ const Appointments = () => {
             </Select>
           </FormControl>
 
-          {/* Reason */}
           <TextField
             label="Reason"
-            value={updatedappointment.reason || ""}
+            value={updatedAppointment.reason || ""}
             onChange={(e) =>
-              setUpdatedappointment({
-                ...updatedappointment,
+              setUpdatedAppointment({
+                ...updatedAppointment,
                 reason: e.target.value,
               })
             }
@@ -323,14 +347,13 @@ const Appointments = () => {
             margin="normal"
           />
 
-          {/* Status Dropdown */}
           <FormControl fullWidth margin="normal">
             <InputLabel>Status</InputLabel>
             <Select
-              value={updatedappointment.status || ""}
+              value={updatedAppointment.status || ""}
               onChange={(e) =>
-                setUpdatedappointment({
-                  ...updatedappointment,
+                setUpdatedAppointment({
+                  ...updatedAppointment,
                   status: e.target.value,
                 })
               }
@@ -342,7 +365,6 @@ const Appointments = () => {
             </Select>
           </FormControl>
 
-          {/* Update Button */}
           <Box display="flex" justifyContent="flex-end" mt={2}>
             <Button onClick={handleUpdate} variant="contained" color="primary">
               Update
@@ -356,7 +378,7 @@ const Appointments = () => {
         open={openDeleteModal}
         onClose={() => {
           setOpenDeleteModal(false);
-          setDeletingappointmentId(null);
+          setDeletingAppointmentId(null);
         }}
         aria-labelledby="delete-confirmation-modal"
       >
@@ -384,7 +406,7 @@ const Appointments = () => {
               variant="outlined"
               onClick={() => {
                 setOpenDeleteModal(false);
-                setDeletingappointmentId(null);
+                setDeletingAppointmentId(null);
               }}
             >
               Cancel
