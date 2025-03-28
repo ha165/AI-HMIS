@@ -12,11 +12,18 @@ return new class extends Migration {
     {
         Schema::create('payments', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('bill_id')->constrained('billings')->cascadeOnDelete();
-            $table->foreignId('patient_id')->constrained('patients')->cascadeOnDelete();
-            $table->string('payment_method');
-            $table->decimal('amount', 10, 2);
             $table->string('transaction_id')->nullable();
+            $table->foreignId('patient_id')->constrained('patients')->cascadeOnDelete();
+            $table->foreignId('appointment_id')->constrained('appointments')->cascadeOnDelete();
+            $table->foreignId('service_id')->constrained('services')->cascadeOnDelete();
+            $table->string('phone_number');
+            $table->string('mpesa_reciept')->nullable();
+            $table->string('payment_status');
+            $table->string('merchant_request_id')->nullable();
+            $table->string('checkout_request_id')->nullable();
+            $table->string('result_code')->nullable();
+            $table->string('result_desc')->nullable();
+            $table->decimal('amount', 10, 2);
             $table->date('payment_date')->default(now());
             $table->timestamps();
         });
