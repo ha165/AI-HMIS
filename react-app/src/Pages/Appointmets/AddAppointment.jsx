@@ -30,10 +30,13 @@ const AppointmentBooking = () => {
   const [schedules, setSchedules] = useState([]);
   const [selectedSchedule, setSelectedSchedule] = useState("");
   const [reason, setReason] = useState("");
+  const [paymentStatus, setPaymentStatus] = useState(null);
+  const [paymentInProgress, setPaymentInProgress] = useState(false);
+  const [pollingCount, setPollingCount] = useState(0);
+  const maxPollingAttempts = 20; 
   const [calendarEvents, setCalendarEvents] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-
   // Fetch all active services
   useEffect(() => {
     setIsLoading(true);
@@ -106,6 +109,7 @@ const AppointmentBooking = () => {
     }
   };
 
+
   const handleSubmit = () => {
     if (!selectedDoctor || !selectedSchedule || !reason) {
       toast.warn("Please fill all required fields");
@@ -158,6 +162,172 @@ const AppointmentBooking = () => {
         setIsLoading(false);
       });
   };
+  const handlePaymentSubmit = async () => {
+    if (!phoneNumber.match(/^254[0-9]{9}$/)) {
+      toast.warn("Please enter a valid M-Pesa phone number (format: 2547XXXXXXXX)");
+      return;
+    }
+  
+    setPaymentInProgress(true);
+    setPollingCount(0);
+    const toastId = toast.loading("Initiating M-Pesa payment...");
+  
+    try {
+      // 1. Initiate STK Push
+      const paymentResponse = await fetchWrapper("/payments/mpesa/stk", {
+        method: "POST",
+        body: JSON.stringify({
+          phone: phoneNumber,
+          service_id: selectedService,
+          patient_id: user.id
+        }),
+      });
+  
+      if (!paymentResponse.success) {
+        throw new Error(paymentResponse.message || "Payment initiation failed");
+      }
+  
+      setPaymentId(paymentResponse.payment_id);
+      toast.update(toastId, {
+        render: "Please complete the payment on your phone",
+        type: "info",
+        isLoading: true,
+        autoClose: false
+      });
+  
+      // 2. Start polling for payment status
+      const pollInterval = setInterval(async () => {
+        try {
+          const statusResponse = await fetchWrapper(
+            `/payments/${paymentResponse.payment_id}/status`
+          );
+  
+          setPaymentStatus(statusResponse.payment_status);
+          setPollingCount(prev => prev + 1);
+  
+          if (statusResponse.is_successful) {
+            clearInterval(pollInterval);
+            await createAppointmentAfterPayment(paymentResponse.payment_id, toastId);
+          } else if (
+            statusResponse.payment_status === Payments.STATUS_FAILED || 
+            pollingCount >= maxPollingAttempts
+          ) {
+            clearInterval(pollInterval);
+            throw new Error(
+              statusResponse.result_desc || "Payment failed. Please try again."
+            );
+          }
+        } catch (err) {
+          clearInterval(pollInterval);
+          toast.update(toastId, {
+            render: err.message,
+            type: "error",
+            isLoading: false,
+            autoClose: 5000
+          });
+          setPaymentInProgress(false);
+        }
+      }, 3000); // Poll every 3 seconds
+  
+    } catch (err) {
+      console.error("Payment error:", err);
+      toast.update(toastId, {
+        render: err.message,
+        type: "error",
+        isLoading: false,
+        autoClose: 5000
+      });
+      setPaymentInProgress(false);
+    }
+  };
+  const createAppointmentAfterPayment = async (paymentId, toastId) => {
+    try {
+      const appointmentResponse = await fetchWrapper("/appointments", {
+        method: "POST",
+        body: JSON.stringify({
+          payment_id: paymentId,
+          doctor_id: selectedDoctor,
+          schedule_id: selectedSchedule,
+          reason,
+          appointment_date: schedules.find(s => s.id === selectedSchedule)?.start_time,
+        }),
+      });
+  
+      toast.update(toastId, {
+        render: `Appointment booked successfully! Confirmation #${appointmentResponse.id}`,
+        type: "success",
+        isLoading: false,
+        autoClose: 5000
+      });
+  
+      // Reset form
+      resetForm();
+      setTimeout(() => navigate("/appointments"), 3000);
+    } catch (err) {
+      toast.update(toastId, {
+        render: `Payment successful but appointment creation failed: ${err.message}`,
+        type: "warning",
+        isLoading: false,
+        autoClose: 5000
+      });
+      // Payment was successful but appointment failed - important to handle this case
+      setPaymentInProgress(false);
+    }
+  };
+  {showPaymentForm && (
+    <Box mt={4} p={3} sx={{ backgroundColor: colors.primary.light, borderRadius: '8px' }}>
+      <Typography variant="h6" mb={2}>
+        Complete Payment
+      </Typography>
+      <Typography mb={2}>
+        Service: {services.find(s => s.id === selectedService)?.name}
+      </Typography>
+      <Typography mb={2}>
+        Amount: Ksh {services.find(s => s.id === selectedService)?.price}
+      </Typography>
+      
+      <TextField
+        fullWidth
+        label="M-Pesa Phone Number (2547XXXXXXXX)"
+        value={phoneNumber}
+        onChange={(e) => setPhoneNumber(e.target.value)}
+        disabled={paymentInProgress}
+        sx={{ mb: 2 }}
+      />
+      {paymentStatus && (
+      <Box mt={2} p={2} sx={{ 
+        backgroundColor: paymentStatus === 'completed' ? colors.success.light : 
+                        paymentStatus === 'failed' ? colors.error.light : 
+                        colors.warning.light,
+        borderRadius: '4px'
+      }}>
+        <Typography>
+          Payment Status: <strong>{paymentStatus.toUpperCase()}</strong>
+        </Typography>
+        {paymentStatus === 'processing' && (
+          <Typography variant="body2">
+            Waiting for payment confirmation... ({pollingCount * 3}s elapsed)
+          </Typography>
+        )}
+      <Box display="flex" justifyContent="space-between">
+        <Button
+          variant="outlined"
+          onClick={() => setShowPaymentForm(false)}
+          disabled={paymentInProgress}
+        >
+          Cancel
+        </Button>
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={handlePaymentSubmit}
+          disabled={paymentInProgress || !phoneNumber}
+        >
+          {paymentInProgress ? "Processing Payment..." : "Pay via M-Pesa"}
+        </Button>
+      </Box>
+    </Box>
+  )}
 
   return (
     <Box display="flex" height="100vh">
