@@ -13,12 +13,14 @@ class Payments extends Model
     protected $table = 'payments';
 
     protected $fillable = [
-        'bill_id',
-        'patient_id',
+        'service_id',
+        'patient_id', // patient that initiated the appointment
+        'appointment_id', // linked appointment to this transaction
         'amount',
-        'payment_date',
-        'transaction_id',
-        'payment_method',
+        'phone_number', //phone used to pay
+        'payment_date',//mpesa date
+        'transaction_id', //mpesa transaction
+        ''
 
     ];
 
@@ -26,8 +28,12 @@ class Payments extends Model
     {
         return $this->belongsTo(Patients::class);
     }
-    public function billing()
+    public function service()
     {
-        return $this->belongsTo(Billing::class);
+        return $this->belongsTo(Service::class);
+    }
+    public function appointment()
+    {
+        return $this->belongsTo(Appointments::class);
     }
 }
