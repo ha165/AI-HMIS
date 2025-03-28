@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Service;
 use App\Models\Payments;
+use App\Models\Patients;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
@@ -14,21 +15,32 @@ class PaymentsController extends Controller
     public function initiateSTK(Request $request)
     {
         $request->validate([
-            'phone' => 'required|string|size=12',
+            'phone' => ['required', 'string', 'regex:/^254\d{9}$/'],
             'service_id' => 'required|exists:services,id',
-            'patient_id' => 'required|exists:patients,id'
+            'appointment_id'=> 'required|exists:appointments,id'
         ]);
+
+        $user = auth()->user();
+
+        if (!$user) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+        $patient = Patients::where('user_id', $user->id)->first();
+        if (!$patient) {
+            return response()->json(['message' => 'Patient record not found'], 404);
+        }
 
         $service = Service::find($request->service_id);
 
         try {
             $payment = Payments::create([
                 'service_id' => $service->id,
-                'patient_id' => $request->patient_id,
+                'patient_id' => $patient->id,
                 'amount' => $service->price,
                 'phone_number' => $request->phone,
                 'transaction_id' => 'APP' . time(),
-                'payment_status' => Payments::STATUS_PENDING
+                'payment_status' => Payments::STATUS_PENDING,
+                'appointment_id' => $request->appointment_id
             ]);
 
             $response = Http::withHeaders([
@@ -64,7 +76,7 @@ class PaymentsController extends Controller
                 ]);
             }
 
-            $errorMessage = $responseData['errorMessage'] ?? 'STK push failed';
+            $errorMessage = $responseData['errorMessage'] ?? ($responseData['ResponseDescription'] ?? 'STK push failed');
             $payment->update([
                 'payment_status' => Payments::STATUS_FAILED,
                 'result_desc' => $errorMessage
@@ -129,7 +141,7 @@ class PaymentsController extends Controller
                 $payment->update([
                     'payment_status' => Payments::STATUS_COMPLETED,
                     'mpesa_receipt' => $metadata['MpesaReceiptNumber'] ?? null,
-                    'transaction_id' => $metadata['TransactionDate'] ?? $payment->transaction_id,
+                    'transaction_id' => $metadata['MpesaReceiptNumber'] ?? $payment->transaction_id,
                     'payment_date' => now(),
                     'result_code' => $resultCode,
                     'result_desc' => $resultDesc
@@ -170,6 +182,11 @@ class PaymentsController extends Controller
 
     private function generateAccessToken()
     {
+        $accessToken = $this->generateAccessToken();
+        if (!$accessToken) {
+            return response()->json(['success' => false, 'message' => 'Failed to generate access token'], 500);
+        }
+
         try {
             $response = Http::withBasicAuth(
                 config('services.mpesa.consumer_key'),
