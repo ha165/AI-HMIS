@@ -21,7 +21,7 @@ class AppointmentsController extends Controller
             return response()->json(['message' => 'Unauthorized'], 401);
         }
 
-        // Eager load with all required foreign keys
+        // Eager loading
         $query = Appointments::with([
             'patient.user:id,first_name,last_name,phone,id',
             'doctor.user:id,first_name,last_name,phone,id',

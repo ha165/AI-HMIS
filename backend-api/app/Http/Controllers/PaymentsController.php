@@ -13,6 +13,18 @@ use Illuminate\Support\Str;
 
 class PaymentsController extends Controller
 {
+    public function index()
+    {
+        $user = auth()->user();
+
+        if (!$user) {
+            return response()->json(['message' => 'unauthorized'],403);
+        }
+        //eager loading
+        $query = Appointments::with([
+         
+        ]);
+    }
     public function show($appointmentId)
     {
         try {
