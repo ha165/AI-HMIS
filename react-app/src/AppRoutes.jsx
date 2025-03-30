@@ -6,6 +6,7 @@ const UserDashboard = lazy(() => import("./Scenes/dashboard/UserDashboard"));
 const DiagnosisChat = lazy(() => import("./Pages/AI/DiagnosisChat"));
 const ImageAnalyzer = lazy(() => import("./Pages/AI/ImageAnalyzer"));
 const Billing = lazy(() => import("./Pages/Billing/Billing"));
+const Payment = lazy(() => import("./Pages/Billing/Payment"));
 const CompleteRegistration = lazy(() =>
   import("./Pages/Patients/complete-Registration")
 );
@@ -146,6 +147,10 @@ const AppRoutes = ({ user }) => {
       <Route
         path="/view-medical-records/:id"
         element={<ProtectedRoute element={<ViewmedicalRecord />} user={user} />}
+      />
+      <Route 
+       path="/payments/:appointmentID"
+       element={<ProtectedRoute element={<Payment />} user={user} />}
       />
     </Routes>
   );
