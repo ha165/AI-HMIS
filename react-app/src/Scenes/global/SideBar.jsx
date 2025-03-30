@@ -268,7 +268,7 @@ const Sidebar = () => {
                 setSelected={setSelected}
               />
               <Item
-                title="Billing"
+                title="Payments"
                 to="/billing"
                 icon={<AttachMoneyIcon />}
                 selected={selected}

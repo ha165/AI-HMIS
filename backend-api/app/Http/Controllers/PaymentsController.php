@@ -228,7 +228,7 @@ class PaymentsController extends Controller
             'result_desc' => $callback['ResultDesc']
         ]);
 
-        // Here you could trigger any additional events like sending emails
+        //todo list
 
         return response()->json(['success' => true]);
     }
@@ -236,8 +236,7 @@ class PaymentsController extends Controller
     {
         $payment = Payments::findOrFail($paymentId);
 
-        // Verify the payment belongs to the authenticated user
-        if ($payment->patient_id !== auth()->id()) {
+        if ($payment->patient->user_id !== auth()->id()) {
             abort(403, 'Unauthorized');
         }
 

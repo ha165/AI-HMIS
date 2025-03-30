@@ -5,8 +5,8 @@ import ProtectedRoute from "./ProtectedRoute";
 const UserDashboard = lazy(() => import("./Scenes/dashboard/UserDashboard"));
 const DiagnosisChat = lazy(() => import("./Pages/AI/DiagnosisChat"));
 const ImageAnalyzer = lazy(() => import("./Pages/AI/ImageAnalyzer"));
-const Billing = lazy(() => import("./Pages/Billing/Billing"));
-const Payment = lazy(() => import("./Pages/Billing/Payment"));
+const Billing = lazy(() => import("./Pages/Billing/Payment"));
+const Payment = lazy(() => import("./Pages/Billing/Mpesa"));
 const CompleteRegistration = lazy(() =>
   import("./Pages/Patients/complete-Registration")
 );
