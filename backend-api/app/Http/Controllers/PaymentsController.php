@@ -2,22 +2,51 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use App\Models\Service;
+use App\Models\Appointments;
 use App\Models\Payments;
+use App\Models\Service;
 use App\Models\Patients;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
-use Carbon\Carbon;
+use Illuminate\Support\Str;
 
 class PaymentsController extends Controller
 {
-    public function initiateSTK(Request $request)
+    public function show($appointmentId)
+    {
+        $user = auth()->user();
+
+        if (!$user) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        $patient = Patients::where('user_id', $user->id)->first();
+
+        if (!$patient) {
+            return response()->json(['message' => 'Patient profile not found'], 404);
+        }
+
+        $appointment = Appointments::with('services')->findOrFail($appointmentId);
+
+        if ($appointment->patient_id !== $patient->id) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+
+        return response()->json([
+            'service_id' => $appointment->service_id,
+            'service_name' => $appointment->services->name,
+            'price' => $appointment->services->price,
+            'appointment_id' => $appointment->id
+        ]);
+    }
+    public function initiateMpesaPayment(Request $request)
     {
         $request->validate([
-            'phone' => ['required', 'string', 'regex:/^254\d{9}$/'],
-            'service_id' => 'required|exists:services,id',
-            'appointment_id'=> 'required|exists:appointments,id'
+            'phone_number' => 'required|string',
+            'appointment_id' => 'required|exists:appointments,id',
+            'amount' => 'required|numeric|min:1|max:70000'
         ]);
 
         $user = auth()->user();
@@ -25,189 +54,161 @@ class PaymentsController extends Controller
         if (!$user) {
             return response()->json(['message' => 'Unauthorized'], 401);
         }
+
         $patient = Patients::where('user_id', $user->id)->first();
+
         if (!$patient) {
-            return response()->json(['message' => 'Patient record not found'], 404);
+            return response()->json(['message' => 'Patient profile not found'], 404);
         }
 
-        $service = Service::find($request->service_id);
+        $appointment = Appointments::findOrFail($request->appointment_id);
 
+        // Generate unique transaction IDs
+        $merchantRequestID = 'MPESA-' . Str::uuid();
+        $checkoutRequestID = 'MPESA-' . Str::uuid();
+
+        // Save payment record
+        $payment = Payments::create([
+            'service_id' => $appointment->service_id,
+            'patient_id' => $patient->id,
+            'appointment_id' => $appointment->id,
+            'amount' => $request->amount,
+            'phone_number' => $request->phone_number,
+            'payment_status' => Payments::STATUS_PENDING,
+            'merchant_request_id' => $merchantRequestID,
+            'checkout_request_id' => $checkoutRequestID
+        ]);
+        $amount = (int) round($request->amount); // Round and convert to integer
+    
+        // Validate amount meets M-Pesa requirements (1-70000 for most business accounts)
+        if ($amount < 1 || $amount > 70000) {
+            return response()->json([
+                'error' => 'Invalid amount',
+                'message' => 'Amount must be between KES 1 and KES 70,000'
+            ], 400);
+        }
+
+        // Call M-Pesa STK Push
         try {
-            $payment = Payments::create([
-                'service_id' => $service->id,
-                'patient_id' => $patient->id,
-                'amount' => $service->price,
-                'phone_number' => $request->phone,
-                'transaction_id' => 'APP' . time(),
-                'payment_status' => Payments::STATUS_PENDING,
-                'appointment_id' => $request->appointment_id
+            $response = $this->stkPushRequest(
+                $request->phone_number,
+                $amount,
+                $merchantRequestID,
+                $checkoutRequestID,
+                "Payment for appointment #{$appointment->id}"
+            );
+
+            return response()->json([
+                'message' => 'Payment initiated successfully',
+                'payment_id' => $payment->id,
+                'mpesa_response' => $response
             ]);
-
-            $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $this->generateAccessToken(),
-                'Content-Type' => 'application/json',
-            ])->post(config('services.mpesa.stk_url'), [
-                        'BusinessShortCode' => config('services.mpesa.shortcode'),
-                        'Password' => $this->generatePassword(),
-                        'Timestamp' => Carbon::now()->format('YmdHis'),
-                        'TransactionType' => 'CustomerPayBillOnline',
-                        'Amount' => $service->price,
-                        'PartyA' => $request->phone,
-                        'PartyB' => config('services.mpesa.shortcode'),
-                        'PhoneNumber' => $request->phone,
-                        'CallBackURL' => config('services.mpesa.callback_url'),
-                        'AccountReference' => $payment->transaction_id,
-                        'TransactionDesc' => "Payment for {$service->name}",
-                    ]);
-
-            $responseData = $response->json();
-
-            if ($response->successful() && ($responseData['ResponseCode'] ?? '1') == '0') {
-                $payment->update([
-                    'merchant_request_id' => $responseData['MerchantRequestID'],
-                    'checkout_request_id' => $responseData['CheckoutRequestID'],
-                    'payment_status' => Payments::STATUS_PROCESSING
-                ]);
-
-                return response()->json([
-                    'success' => true,
-                    'payment_id' => $payment->id,
-                    'message' => 'Payment initiated successfully'
-                ]);
-            }
-
-            $errorMessage = $responseData['errorMessage'] ?? ($responseData['ResponseDescription'] ?? 'STK push failed');
+        } catch (\Exception $e) {
             $payment->update([
                 'payment_status' => Payments::STATUS_FAILED,
-                'result_desc' => $errorMessage
-            ]);
-
-            Log::error('STK Push Initiation Failed', [
-                'response' => $responseData,
-                'payment_id' => $payment->id
+                'result_desc' => $e->getMessage()
             ]);
 
             return response()->json([
-                'success' => false,
-                'message' => $errorMessage
-            ], 400);
-
-        } catch (\Exception $e) {
-            Log::error('Payment Processing Error', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Payment processing error'
+                'error' => 'Failed to initiate payment',
+                'message' => $e->getMessage()
             ], 500);
         }
     }
 
-    public function paymentCallback(Request $request)
+    private function stkPushRequest($phoneNumber, $amount, $merchantRequestID, $checkoutRequestID, $description)
     {
-        $callbackData = $request->all();
-        Log::info('M-Pesa Callback Received', $callbackData);
+        $url = config('services.mpesa.stk_push_url');
+        $passkey = config('services.mpesa.passkey');
+        $businessShortCode = config('services.mpesa.business_shortcode');
+        $callbackUrl = config('services.mpesa.callback_url');
+        $timestamp = date('YmdHis');
 
-        try {
-            $stkCallback = $callbackData['Body']['stkCallback'] ?? null;
-            if (!$stkCallback) {
-                throw new \Exception('Invalid callback format');
-            }
+        // Format phone number (2547...)
+        $formattedPhone = '254' . substr($phoneNumber, -9);
 
-            $merchantRequestId = $stkCallback['MerchantRequestID'] ?? null;
-            $checkoutRequestId = $stkCallback['CheckoutRequestID'] ?? null;
+        // Generate password
+        $password = base64_encode($businessShortCode . $passkey . $timestamp);
 
-            $payment = Payments::where('merchant_request_id', $merchantRequestId)
-                ->orWhere('checkout_request_id', $checkoutRequestId)
-                ->first();
-
-            if (!$payment) {
-                throw new \Exception("Payment not found for MerchantRequestID: $merchantRequestId");
-            }
-
-            $resultCode = $stkCallback['ResultCode'] ?? 1;
-            $resultDesc = $stkCallback['ResultDesc'] ?? 'Failed';
-
-            if ($resultCode == 0) {
-                $callbackMetadata = $stkCallback['CallbackMetadata']['Item'] ?? [];
-                $metadata = [];
-
-                foreach ($callbackMetadata as $item) {
-                    $metadata[$item['Name']] = $item['Value'] ?? null;
-                }
-
-                $payment->update([
-                    'payment_status' => Payments::STATUS_COMPLETED,
-                    'mpesa_receipt' => $metadata['MpesaReceiptNumber'] ?? null,
-                    'transaction_id' => $metadata['MpesaReceiptNumber'] ?? $payment->transaction_id,
-                    'payment_date' => now(),
-                    'result_code' => $resultCode,
-                    'result_desc' => $resultDesc
+        $response = Http::withHeaders([
+            'Authorization' => 'Bearer ' . $this->generateAccessToken(),
+            'Content-Type' => 'application/json'
+        ])->post($url, [
+                    'BusinessShortCode' => $businessShortCode,
+                    'Password' => $password,
+                    'Timestamp' => $timestamp,
+                    'TransactionType' => 'CustomerPayBillOnline',
+                    'Amount' => $amount,
+                    'PartyA' => $formattedPhone,
+                    'PartyB' => $businessShortCode,
+                    'PhoneNumber' => $formattedPhone,
+                    'CallBackURL' => $callbackUrl,
+                    'AccountReference' => 'Appt-' . substr($merchantRequestID, 0, 8),
+                    'TransactionDesc' => $description,
+                    'MerchantRequestID' => $merchantRequestID,
+                    'CheckoutRequestID' => $checkoutRequestID
                 ]);
 
-                Log::info('Payment Completed Successfully', [
-                    'payment_id' => $payment->id,
-                    'mpesa_receipt' => $payment->mpesa_receipt
-                ]);
-            } else {
-                $payment->update([
-                    'payment_status' => Payments::STATUS_FAILED,
-                    'result_code' => $resultCode,
-                    'result_desc' => $resultDesc
-                ]);
-
-                Log::error('Payment Failed', [
-                    'payment_id' => $payment->id,
-                    'result_code' => $resultCode,
-                    'result_desc' => $resultDesc
-                ]);
-            }
-
-            return response()->json(['ResultCode' => 0, 'ResultDesc' => 'Success']);
-
-        } catch (\Exception $e) {
-            Log::error('Callback Processing Error', [
-                'error' => $e->getMessage(),
-                'callback_data' => $callbackData
-            ]);
-
-            return response()->json([
-                'ResultCode' => 1,
-                'ResultDesc' => 'Callback processing failed'
-            ]);
+        if ($response->failed()) {
+            throw new \Exception($response->json()['errorMessage'] ?? 'MPesa API request failed');
         }
+
+        return $response->json();
     }
 
     private function generateAccessToken()
     {
-        $accessToken = $this->generateAccessToken();
-        if (!$accessToken) {
-            return response()->json(['success' => false, 'message' => 'Failed to generate access token'], 500);
+        $consumerKey = config('services.mpesa.consumer_key');
+        $consumerSecret = config('services.mpesa.consumer_secret');
+        $url = config('services.mpesa.auth_url');
+
+        $response = Http::withBasicAuth($consumerKey, $consumerSecret)
+            ->get($url);
+
+        if ($response->failed()) {
+            throw new \Exception('Failed to generate M-Pesa access token');
         }
 
-        try {
-            $response = Http::withBasicAuth(
-                config('services.mpesa.consumer_key'),
-                config('services.mpesa.consumer_secret')
-            )->get(config('services.mpesa.auth_url'));
-
-            return $response->json()['access_token'] ?? null;
-        } catch (\Exception $e) {
-            Log::error('Access Token Generation Failed', [
-                'error' => $e->getMessage()
-            ]);
-            return null;
-        }
+        return $response->json('access_token');
     }
 
-    private function generatePassword()
+    public function mpesaCallback(Request $request)
     {
-        $timestamp = Carbon::now()->format('YmdHis');
-        $shortcode = config('services.mpesa.shortcode');
-        $passkey = config('services.mpesa.passkey');
+        $data = $request->all();
 
-        return base64_encode($shortcode . $passkey . $timestamp);
+        \Log::info('MPesa Callback:', $data);
+
+        // Find payment by checkout request ID
+        $payment = Payments::where('checkout_request_id', $data['Body']['stkCallback']['CheckoutRequestID'])->first();
+
+        if (!$payment) {
+            return response()->json(['error' => 'Payment not found'], 404);
+        }
+
+        $callback = $data['Body']['stkCallback'];
+        $resultCode = $callback['ResultCode'];
+
+        if ($resultCode == 0) {
+            // Success
+            $metadata = $callback['CallbackMetadata']['Item'];
+
+            $payment->update([
+                'payment_status' => Payments::STATUS_COMPLETED,
+                'mpesa_receipt' => $metadata[1]['Value'] ?? null,
+                'transaction_id' => $metadata[1]['Value'] ?? null,
+                'payment_date' => now(),
+                'result_code' => $resultCode,
+                'result_desc' => $callback['ResultDesc']
+            ]);
+        } else {
+            // Failed
+            $payment->update([
+                'payment_status' => Payments::STATUS_FAILED,
+                'result_code' => $resultCode,
+                'result_desc' => $callback['ResultDesc']
+            ]);
+        }
+
+        return response()->json(['success' => true]);
     }
 }
