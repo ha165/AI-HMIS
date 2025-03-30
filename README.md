@@ -1,5 +1,5 @@
 # AI-HMIS
- 
+1. Built with Laravel 11 and react with vite
 ## Laravel Backend:API Backend Installation
 
 1. Navigate in your Laravel API project folder: `cd your-backend-api`
@@ -11,7 +11,7 @@
 7. Install Laravel Passport: `php artisan passport:install` and set in the .env file the CLIENT_ID and CLIENT_SECRET that you receive
 8. Add your own mailtrap.io credentials in MAIL_USERNAME and MAIL_PASSWORD in the .env file
 
-## Material React Frontend Installation
+## React Frontend Installation
 
 1. Set up your api for the project
 2. Download and Install NodeJs LTS version from [NodeJs Official Page](https://nodejs.org/en/download/).
