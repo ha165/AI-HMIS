@@ -15,31 +15,61 @@ class PaymentsController extends Controller
 {
     public function show($appointmentId)
     {
-        $user = auth()->user();
+        try {
+            $user = auth()->user();
+            if (!$user) {
+                return response()->json(['message' => 'Unauthorized'], 401);
+            }
 
-        if (!$user) {
-            return response()->json(['message' => 'Unauthorized'], 401);
+            $patient = Patients::where('user_id', $user->id)->first();
+            if (!$patient) {
+                return response()->json(['message' => 'Patient profile not found'], 404);
+            }
+
+            // Use find() instead of findOrFail() for better control
+            $appointment = Appointments::with('services')->find($appointmentId);
+
+            if (!$appointment) {
+                return response()->json([
+                    'message' => 'Appointment not found',
+                    'requested_id' => $appointmentId,
+                    'patient_id' => $patient->id
+                ], 404);
+            }
+
+            if ($appointment->patient_id !== $patient->id) {
+                return response()->json([
+                    'error' => 'Unauthorized',
+                    'message' => 'This appointment belongs to another patient'
+                ], 403);
+            }
+
+            // Add null check for services relationship
+            if (!$appointment->services) {
+                return response()->json([
+                    'message' => 'Service not found for this appointment',
+                    'service_id' => $appointment->service_id
+                ], 404);
+            }
+
+            return response()->json([
+                'service_id' => $appointment->service_id,
+                'service_name' => $appointment->services->name,
+                'price' => $appointment->services->price,
+                'appointment_id' => $appointment->id
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Payment details error:', [
+                'error' => $e->getMessage(),
+                'appointmentId' => $appointmentId,
+                'user_id' => $user->id ?? null
+            ]);
+            return response()->json([
+                'message' => 'Server error',
+                'error' => $e->getMessage()
+            ], 500);
         }
-
-        $patient = Patients::where('user_id', $user->id)->first();
-
-        if (!$patient) {
-            return response()->json(['message' => 'Patient profile not found'], 404);
-        }
-
-        $appointment = Appointments::with('services')->findOrFail($appointmentId);
-
-        if ($appointment->patient_id !== $patient->id) {
-            return response()->json(['error' => 'Unauthorized'], 403);
-        }
-
-
-        return response()->json([
-            'service_id' => $appointment->service_id,
-            'service_name' => $appointment->services->name,
-            'price' => $appointment->services->price,
-            'appointment_id' => $appointment->id
-        ]);
     }
     public function initiateMpesaPayment(Request $request)
     {
@@ -79,7 +109,7 @@ class PaymentsController extends Controller
             'checkout_request_id' => $checkoutRequestID
         ]);
         $amount = (int) round($request->amount); // Round and convert to integer
-    
+
         // Validate amount meets M-Pesa requirements (1-70000 for most business accounts)
         if ($amount < 1 || $amount > 70000) {
             return response()->json([
@@ -178,7 +208,6 @@ class PaymentsController extends Controller
 
         \Log::info('MPesa Callback:', $data);
 
-        // Find payment by checkout request ID
         $payment = Payments::where('checkout_request_id', $data['Body']['stkCallback']['CheckoutRequestID'])->first();
 
         if (!$payment) {
@@ -188,27 +217,34 @@ class PaymentsController extends Controller
         $callback = $data['Body']['stkCallback'];
         $resultCode = $callback['ResultCode'];
 
-        if ($resultCode == 0) {
-            // Success
-            $metadata = $callback['CallbackMetadata']['Item'];
+        $status = $resultCode == 0 ? Payments::STATUS_COMPLETED : Payments::STATUS_FAILED;
 
-            $payment->update([
-                'payment_status' => Payments::STATUS_COMPLETED,
-                'mpesa_receipt' => $metadata[1]['Value'] ?? null,
-                'transaction_id' => $metadata[1]['Value'] ?? null,
-                'payment_date' => now(),
-                'result_code' => $resultCode,
-                'result_desc' => $callback['ResultDesc']
-            ]);
-        } else {
-            // Failed
-            $payment->update([
-                'payment_status' => Payments::STATUS_FAILED,
-                'result_code' => $resultCode,
-                'result_desc' => $callback['ResultDesc']
-            ]);
-        }
+        $payment->update([
+            'payment_status' => $status,
+            'mpesa_receipt' => $resultCode == 0 ? ($callback['CallbackMetadata']['Item'][1]['Value'] ?? null) : null,
+            'transaction_id' => $resultCode == 0 ? ($callback['CallbackMetadata']['Item'][1]['Value'] ?? null) : null,
+            'payment_date' => now(),
+            'result_code' => $resultCode,
+            'result_desc' => $callback['ResultDesc']
+        ]);
+
+        // Here you could trigger any additional events like sending emails
 
         return response()->json(['success' => true]);
+    }
+    public function checkPaymentStatus($paymentId)
+    {
+        $payment = Payments::findOrFail($paymentId);
+
+        // Verify the payment belongs to the authenticated user
+        if ($payment->patient_id !== auth()->id()) {
+            abort(403, 'Unauthorized');
+        }
+
+        return response()->json([
+            'payment_id' => $payment->id,
+            'payment_status' => $payment->payment_status,
+            'updated_at' => $payment->updated_at
+        ]);
     }
 }

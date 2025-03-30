@@ -127,6 +127,7 @@ const AppointmentBooking = () => {
       }),
     })
       .then((data) => {
+        console.log("API Response Data:", data); // Add this line
         toast.update(toastId, {
           render: `Appointment booked successfully! Redirecting to payment...`,
           type: "success",
@@ -140,9 +141,11 @@ const AppointmentBooking = () => {
         setSelectedSchedule("");
         setReason("");
         setCalendarEvents([]);
-        setTimeout(() => {
-          navigate(`/payments/${data.id}`);
-        }, 3000);
+
+        // Navigate immediately (no setTimeout needed)
+        navigate(`/payments/${data.id}`, {
+          state: { appointmentData: data }, // Pass the entire appointment data
+        });
       })
       .catch((err) => {
         console.error("Error:", err);

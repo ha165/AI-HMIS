@@ -95,4 +95,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
         return response()->json(['analysis' => $response->json()]);
     });
+
+    Route::middleware('auth:sanctum')->get('/payments/status/{payment}', [PaymentsController::class, 'checkPaymentStatus']);
 });

@@ -35,6 +35,14 @@ class Payments extends Model
     const STATUS_CANCELLED = 'cancelled';
     const STATUS_REVERSED = 'reversed';
 
+    protected $casts = [
+        'payment_date' => 'datetime',
+    ];
+
+    public function isPending()
+    {
+        return $this->payment_status === self::STATUS_PENDING;
+    }
     public function patient()
     {
         return $this->belongsTo(Patients::class);
