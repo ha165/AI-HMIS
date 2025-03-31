@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Appointments;
+use App\Models\Doctor;
 use App\Models\Payments;
 use App\Models\Service;
 use App\Models\Patients;
@@ -13,16 +14,97 @@ use Illuminate\Support\Str;
 
 class PaymentsController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $user = auth()->user();
 
         if (!$user) {
-            return response()->json(['message' => 'unauthorized'],403);
+            return response()->json(['message' => 'Unauthorized'], 401);
         }
-        //eager loading
-        $query = Appointments::with([
-         
+        $query = Payments::with([
+            'appointment:id,appointment_date,status',
+            'service:id,name,price',
+            'patient.user:id,first_name,last_name'
+        ]);
+        if ($user->role === 'patient') {
+            $patient = Patients::where('user_id', $user->id)->first();
+            if ($patient) {
+                $query->where('patient_id', $patient->id);
+            } else {
+                return response()->json(['message' => 'Patient profile not found'], 400);
+            }
+        } elseif ($user->role === 'doctor') {
+            $doctor = Doctor::where('user_id', $user->id)->first();
+            if ($doctor) {
+                $query->whereHas('appointment', function ($q) use ($doctor) {
+                    $q->where('doctor_id', $doctor->id);
+                });
+            } else {
+                return response()->json(['message' => 'Doctor profile not found'], 400);
+            }
+        }
+
+        // Apply filters
+        $validated = $request->validate([
+            'per_page' => 'sometimes|integer|min:1|max:100',
+            'status' => 'sometimes|string|in:pending,completed,failed,cancelled',
+            'date_from' => 'sometimes|date',
+            'date_to' => 'sometimes|date|after_or_equal:date_from',
+            'appointment_id' => 'sometimes|exists:appointments,id'
+        ]);
+
+        if ($request->has('status')) {
+            $query->where('payment_status', $validated['status']);
+        }
+
+        if ($request->has('date_from') && $request->has('date_to')) {
+            $query->whereBetween('payment_date', [
+                $validated['date_from'],
+                $validated['date_to']
+            ]);
+        }
+
+        if ($request->has('appointment_id')) {
+            $query->where('appointment_id', $validated['appointment_id']);
+        }
+        $perPage = $request->input('per_page', 15);
+        $payments = $query->latest()->paginate($perPage);
+
+        $transformedPayments = $payments->getCollection()->map(function ($payment) {
+            return [
+                'id' => $payment->id,
+                'amount' => $payment->amount,
+                'formatted_amount' => 'KES ' . number_format($payment->amount, 2),
+                'status' => $payment->payment_status,
+                'phone_number' => $payment->phone_number,
+                'mpesa_receipt' => $payment->mpesa_receipt,
+                'payment_date' => $payment->payment_date ? $payment->payment_date->format('Y-m-d H:i:s') : null,
+                'created_at' => $payment->created_at ? $payment->created_at->format('Y-m-d H:i:s') : null,
+                'service' => $payment->service ? [
+                    'id' => $payment->service->id,
+                    'name' => $payment->service->name,
+                    'price' => $payment->service->price
+                ] : null,
+                'appointment' => $payment->appointment ? [
+                    'id' => $payment->appointment->id,
+                    'date' => $payment->appointment->appointment_date,
+                    'status' => $payment->appointment->status
+                ] : null,
+                'patient' => $payment->patient ? [
+                    'id' => $payment->patient->id,
+                    'name' => $payment->patient->user->first_name . ' ' . $payment->patient->user->last_name // Accessing user for patient name
+                ] : null
+            ];
+        });
+
+        return response()->json([
+            'data' => $transformedPayments,
+            'meta' => [
+                'current_page' => $payments->currentPage(),
+                'per_page' => $payments->perPage(),
+                'total' => $payments->total(),
+                'last_page' => $payments->lastPage()
+            ]
         ]);
     }
     public function show($appointmentId)
@@ -38,7 +120,6 @@ class PaymentsController extends Controller
                 return response()->json(['message' => 'Patient profile not found'], 404);
             }
 
-            // Use find() instead of findOrFail() for better control
             $appointment = Appointments::with('services')->find($appointmentId);
 
             if (!$appointment) {
@@ -55,8 +136,6 @@ class PaymentsController extends Controller
                     'message' => 'This appointment belongs to another patient'
                 ], 403);
             }
-
-            // Add null check for services relationship
             if (!$appointment->services) {
                 return response()->json([
                     'message' => 'Service not found for this appointment',
@@ -108,8 +187,6 @@ class PaymentsController extends Controller
         // Generate unique transaction IDs
         $merchantRequestID = 'MPESA-' . Str::uuid();
         $checkoutRequestID = 'MPESA-' . Str::uuid();
-
-        // Save payment record
         $payment = Payments::create([
             'service_id' => $appointment->service_id,
             'patient_id' => $patient->id,
@@ -120,9 +197,7 @@ class PaymentsController extends Controller
             'merchant_request_id' => $merchantRequestID,
             'checkout_request_id' => $checkoutRequestID
         ]);
-        $amount = (int) round($request->amount); // Round and convert to integer
-
-        // Validate amount meets M-Pesa requirements (1-70000 for most business accounts)
+        $amount = (int) round($request->amount);
         if ($amount < 1 || $amount > 70000) {
             return response()->json([
                 'error' => 'Invalid amount',
@@ -166,10 +241,8 @@ class PaymentsController extends Controller
         $callbackUrl = config('services.mpesa.callback_url');
         $timestamp = date('YmdHis');
 
-        // Format phone number (2547...)
         $formattedPhone = '254' . substr($phoneNumber, -9);
 
-        // Generate password
         $password = base64_encode($businessShortCode . $passkey . $timestamp);
 
         $response = Http::withHeaders([
