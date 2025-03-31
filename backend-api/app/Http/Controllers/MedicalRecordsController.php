@@ -262,4 +262,51 @@ class MedicalRecordsController extends Controller
 
         return response()->json(['message' => 'Medical record finalized successfully', 'record' => $record]);
     }
+    /**
+     * Get recent medical records for current patient
+     */
+    public function getRecentRecords()
+    {
+        $user = auth()->user();
+
+        if (!$user) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        $patient = Patients::where('user_id', $user->id)->first();
+
+        if (!$patient) {
+            return response()->json(['message' => 'Patient profile not found'], 400);
+        }
+
+        $records = Medical_Records::with([
+            'doctor.user:id,first_name,last_name',
+            'appointment:id,appointment_date'
+        ])
+            ->where('patient_id', $patient->id)
+            ->orderBy('created_at', 'desc')
+            ->limit(5)
+            ->get();
+
+        return response()->json($records->map(function ($record) {
+            return [
+                'id' => $record->id,
+                'created_at' => $record->created_at?->format('Y-m-d H:i:s'),
+                'doctor' => [
+                    'user' => [
+                        'name' => $record->doctor && $record->doctor->user
+                            ? trim($record->doctor->user->first_name . ' ' . $record->doctor->user->last_name)
+                            : 'N/A'
+                    ]
+                ],
+                'appointment' => [
+                    'appointment_date' => $record->appointment?->appointment_date?->format('Y-m-d H:i:s')
+                ],
+                'diagnosis' => $record->diagnosis,
+                'prescription' => $record->prescription,
+                'vital_signs' => $record->vital_signs ? json_decode($record->vital_signs) : null,
+                'status' => $record->status
+            ];
+        }));
+    }
 }
