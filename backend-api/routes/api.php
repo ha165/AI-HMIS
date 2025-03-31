@@ -53,6 +53,10 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::put('/appointments/{appointment}/reschedule', [AppointmentsController::class, 'reschedule']);
     Route::get('/payments/{appointment}', [PaymentsController::class, 'getPaymentDetails']);
     Route::post('/payments/mpesa', [PaymentsController::class, 'initiateMpesaPayment']);
+    Route::get('/patients/me', [PatientsController::class, 'getCurrentPatient']);
+    Route::get('/appointments/upcoming', [AppointmentsController::class, 'getUpcomingAppointments']);
+    Route::get('/medical-records/recent', [MedicalRecordsController::class, 'getRecentRecords']);
+    Route::get('/payments/recent', [PaymentsController::class, 'getRecentPayments']);
 
     Route::middleware(['admin'])->group(function () {
         Route::put('/users/{user}', [PatientsController::class, 'update']);
