@@ -125,5 +125,37 @@ class PatientsController extends Controller
 
         return response()->json(['message' => 'Profile completed successfully']);
     }
+    /**
+     * Get current authenticated patient
+     */
+    public function getCurrentPatient()
+    {
+        $user = auth()->user();
+
+        if (!$user) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        $patient = Patients::with(['user:id,first_name,last_name,email,phone,profile_photo'])
+            ->where('user_id', $user->id)
+            ->first();
+
+        if (!$patient) {
+            return response()->json(['message' => 'Patient profile not found'], 404);
+        }
+
+        return response()->json([
+            'id' => $patient->id,
+            'user_id' => $patient->user_id,
+            'name' => trim($patient->user->first_name . ' ' . $patient->user->last_name),
+            'email' => $patient->user->email,
+            'phone' => $patient->user->phone,
+            'profile_photo' => $patient->user->profile_photo,
+            'dob' => $patient->dob?->format('Y-m-d'),
+            'gender' => $patient->gender,
+            'address' => $patient->address,
+            'emergency_contact' => $patient->emergency_contact
+        ]);
+    }
 
 }
