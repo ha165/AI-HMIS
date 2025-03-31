@@ -181,25 +181,68 @@ class AppointmentsController extends Controller
         return response()->json(['message' => 'Appointment marked as completed', 'appointment' => $appointment]);
     }
     // app/Http/Controllers/AppointmentController.php
-public function reschedule(Appointments $appointment, Request $request)
-{
-    $validated = $request->validate([
-        'schedule_id' => 'required|exists:schedules,id',
-        'reason' => 'sometimes|string|max:500'
-    ]);
+    public function reschedule(Appointments $appointment, Request $request)
+    {
+        $validated = $request->validate([
+            'schedule_id' => 'required|exists:schedules,id',
+            'reason' => 'sometimes|string|max:500'
+        ]);
 
-    // Check if the appointment belongs to the user (for patients)
-    if (auth()->user()->patients() && $appointment->patient_id !== auth()->id()) {
-        abort(403, 'Unauthorized action.');
+        // Check if the appointment belongs to the user (for patients)
+        if (auth()->user()->patients() && $appointment->patient_id !== auth()->id()) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        // Update the appointment
+        $appointment->update([
+            'schedule_id' => $validated['schedule_id'],
+            'reason' => $validated['reason'] ?? $appointment->reason,
+            'status' => 'rescheduled', // or whatever status you want
+        ]);
+
+        return response()->json($appointment);
     }
+    /**
+     * Get upcoming appointments for current patient
+     */
+    public function getUpcomingAppointments()
+    {
+        $user = auth()->user();
 
-    // Update the appointment
-    $appointment->update([
-        'schedule_id' => $validated['schedule_id'],
-        'reason' => $validated['reason'] ?? $appointment->reason,
-        'status' => 'rescheduled', // or whatever status you want
-    ]);
+        if (!$user) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
 
-    return response()->json($appointment);
-}
+        $patient = Patients::where('user_id', $user->id)->first();
+
+        if (!$patient) {
+            return response()->json(['message' => 'Patient profile not found'], 400);
+        }
+
+        $appointments = Appointments::with([
+            'doctor.user:id,first_name,last_name',
+            'service:id,name'
+        ])
+            ->where('patient_id', $patient->id)
+            ->where('appointment_date', '>=', now())
+            ->whereIn('status', ['pending', 'confirmed'])
+            ->orderBy('appointment_date', 'asc')
+            ->get();
+
+        return response()->json($appointments->map(function ($appointment) {
+            return [
+                'id' => $appointment->id,
+                'appointment_date' => $appointment->appointment_date?->format('Y-m-d H:i:s'),
+                'doctor' => [
+                    'id' => $appointment->doctor->id,
+                    'user' => [
+                        'name' => trim($appointment->doctor->user->first_name . ' ' . $appointment->doctor->user->last_name)
+                    ]
+                ],
+                'service' => $appointment->service,
+                'status' => $appointment->status,
+                'reason' => $appointment->reason
+            ];
+        }));
+    }
 }
