@@ -29,6 +29,8 @@ const Line = lazy(() => import("./Scenes/line"));
 const Pie = lazy(() => import("./Scenes/pie"));
 const Geography = lazy(() => import("./Scenes/geography"));
 const Doctors = lazy(() => import("./Pages/Doctor/Doctor"));
+const AddPatient = lazy(() => import("./Pages/Patients/addPatient"));
+const AddDoctor = lazy(() => import("./Pages/Doctor/addDoctor"));
 const AddMedicalRecords = lazy(() =>
   import("./Pages/Medical_records/add_medicalRecord")
 );
@@ -69,6 +71,7 @@ const AppRoutes = ({ user }) => {
       <Route path="/add-appointment" element={<AddAppointment />} />
       <Route path="/add-medicalrecords" element={<AddMedicalRecords />} />
       <Route path="/medical-records" element={<Medical />} />
+      <Route path="/add-doctor" element={<AddDoctor />} />
       <Route
         path="/appointments/:appointmentId/medical-record"
         element={<Medical />}

@@ -1,5 +1,6 @@
 import { useContext, useState, useEffect } from "react";
 import { AppContext } from "../../Context/AppContext";
+import { useNavigate } from "react-router-dom";
 import {
   Box,
   Typography,
@@ -18,6 +19,7 @@ import Header from "../../Components/Header";
 
 const Doctors = () => {
   const theme = useTheme();
+  const navigate = useNavigate();
   const colors = tokens(theme.palette.mode);
   const { userRole } = useContext(AppContext);
   const [doctors, setdoctors] = useState([]);
@@ -168,8 +170,24 @@ const Doctors = () => {
       <Sidebar />
       <Box flex="1" display="flex" flexDirection="column">
         <Topbar />
-        <Box m="20px">
-          <Header title="Doctors" subtitle="Managing the doctors" />
+        <Box display="flex" justifyContent="space-between" alignItems="center">
+            <Header title="Doctors" subtitle="Managing the doctors" />
+            {userRole === "admin" && (
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={() => navigate('/add-doctor')}
+                sx={{
+                  backgroundColor: colors.greenAccent[500],
+                  '&:hover': {
+                    backgroundColor: colors.greenAccent[600],
+                  }
+                }}
+              >
+                Add New Doctor
+              </Button>
+            )}
+          </Box>
           <Box
             m="40px 0 0 0"
             height="75vh"
@@ -206,7 +224,7 @@ const Doctors = () => {
             )}
           </Box>
         </Box>
-      </Box>
+    
 
       {/* Edit Modal */}
       <Modal
