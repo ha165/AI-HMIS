@@ -1,43 +1,46 @@
-import React, { useState, useEffect } from "react";
 import {
   Box,
   Button,
-  IconButton,
-  Typography,
-  useTheme,
   Card,
   CardContent,
+  Chip,
+  CircularProgress,
   Grid,
-  Avatar,
+  IconButton,
   List,
   ListItem,
   ListItemAvatar,
   ListItemText,
-  Divider,
-  Chip,
-  CircularProgress,
+  Typography,
+  useTheme,
+  Avatar,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
 } from "@mui/material";
-import {
-  CalendarToday,
-  MedicalServices,
-  Medication,
-  MonitorHeart,
-  Scale,
-  EmergencyShare,
-  VideoCall,
-  Chat,
-  LocalHospital,
-  Receipt,
-  Assignment,
-  History,
-  Insights,
-} from "@mui/icons-material";
 import { tokens } from "../../../themes";
 import Header from "../../components/Header";
 import Sidebar from "../global/SideBar";
 import Topbar from "../global/TopBar";
-import fetchWrapper from "../../Context/fetchWrapper";
+import {
+  CalendarToday,
+  Medication,
+  MonitorHeart,
+  MedicalServices,
+  Scale,
+  Receipt,
+  EmergencyShare,
+  VideoCall,
+  Chat,
+  LocalHospital,
+} from "@mui/icons-material";
+import { useEffect, useState } from "react";
 import { format } from "date-fns";
+import fetchWrapper from "../../Context/fetchWrapper";
 
 const UserDashboard = () => {
   const theme = useTheme();
@@ -46,167 +49,130 @@ const UserDashboard = () => {
   const [dashboardData, setDashboardData] = useState({
     patient: null,
     upcomingAppointments: [],
-    medicalRecords: [],
-    payments: [],
-    healthMetrics: {},
+    recentMedicalRecords: [],
     activePrescriptions: [],
+    paymentHistory: [],
+    healthMetrics: {},
   });
 
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
         setLoading(true);
-        const [patient, appointments, medicalRecords, payments] =
-          await Promise.all([
-            fetchWrapper("/patients/me"),
-            fetchWrapper("/appointments/upcoming"),
-            fetchWrapper("/medical-records/recent").catch(() => ({ data: [] })),
-            fetchWrapper("/payments?per_page=5"),
-            
-          ]);
-          
-        // Process health metrics
-        const healthMetrics = (medicalRecords.data || []).reduce(
-          (acc, record) => {
-            if (record.vital_signs) {
-              return {
-                ...acc,
-                bloodPressure:
-                  record.vital_signs.blood_pressure || acc.bloodPressure,
-                weight: record.vital_signs.weight || acc.weight,
-                height: record.vital_signs.height || acc.height,
-                bmi: record.vital_signs.bmi || acc.bmi,
-              };
-            }
-            return acc;
-          },
-          {}
-        );
-
-        setDashboardData({
-          patient,
-          upcomingAppointments: appointments.data || [],
-          medicalRecords: medicalRecords.data || [],
-          payments: payments.data || [],
-          healthMetrics,
-          activePrescriptions: [],
-        });
+        const data = await fetchWrapper("/patient-dashboard",);
+        setDashboardData(data);
       } catch (error) {
-        console.error("Failed to fetch dashboard data:", error);
-        setDashboardData((prev) => ({
-          ...prev,
-          medicalRecords: [],
-          upcomingAppointments: [],
-          payments: [],
-        }));
+        console.error("Error fetching dashboard data:", error);
       } finally {
         setLoading(false);
       }
     };
+
     fetchDashboardData();
   }, []);
 
   if (loading) {
     return (
-      <Box display="flex" height="100vh">
-        <Sidebar />
-        <Box
-          flex="1"
-          display="flex"
-          justifyContent="center"
-          alignItems="center"
-        >
-          <CircularProgress color="secondary" />
-        </Box>
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        height="100vh"
+      >
+        <CircularProgress color="secondary" />
       </Box>
     );
   }
 
   return (
-    <Box display="flex" height="100vh">
+    <Box display="flex">
       {/* SIDEBAR */}
       <Sidebar />
 
-      <Box flex="1" display="flex" flexDirection="column">
+      <Box flex="1">
         {/* TOPBAR */}
         <Topbar />
 
-        {/* MAIN CONTENT */}
-        <Box m="20px" sx={{ overflowY: "auto", height: "calc(100vh - 64px)" }}>
+        {/* CONTENT */}
+        <Box m="20px">
           {/* HEADER */}
           <Box
             display="flex"
             justifyContent="space-between"
             alignItems="center"
-            mb={4}
+            mb="20px"
           >
             <Header
-              title={`Welcome, ${
+              title="DASHBOARD"
+              subtitle={`Welcome back, ${
                 dashboardData.patient?.user?.name || "Patient"
               }`}
-              subtitle="Your personal health dashboard"
             />
-            <Box display="flex" gap={2}>
-              <Button
-                variant="contained"
-                color="secondary"
-                startIcon={<EmergencyShare />}
-              >
-                Emergency
+            <Box>
+              <Button variant="contained" color="secondary" sx={{ mr: 2 }}>
+                Book Appointment
               </Button>
-              <Button variant="outlined" startIcon={<VideoCall />}>
-                Start Telemedicine
-              </Button>
+              <Button variant="outlined">Emergency Help</Button>
             </Box>
           </Box>
 
-          {/* QUICK STATS GRID */}
-          <Grid container spacing={3} mb={4}>
+          {/* QUICK STATS */}
+          <Grid container spacing={3} mb={3}>
             <Grid item xs={12} sm={6} md={3}>
-              <StatCard
-                icon={<CalendarToday sx={{ color: colors.greenAccent[500] }} />}
-                title="Upcoming Appointments"
-                value={dashboardData.upcomingAppointments.length}
-                color={colors.greenAccent[500]}
-              />
+              <Card>
+                <CardContent>
+                  <Typography variant="h6" color="textSecondary" gutterBottom>
+                    Upcoming Appointments
+                  </Typography>
+                  <Typography variant="h4">
+                    {dashboardData.upcomingAppointments.length}
+                  </Typography>
+                </CardContent>
+              </Card>
             </Grid>
             <Grid item xs={12} sm={6} md={3}>
-              <StatCard
-                icon={
-                  <MedicalServices sx={{ color: colors.blueAccent[500] }} />
-                }
-                title="Active Prescriptions"
-                value={dashboardData.activePrescriptions.length}
-                color={colors.blueAccent[500]}
-              />
+              <Card>
+                <CardContent>
+                  <Typography variant="h6" color="textSecondary" gutterBottom>
+                    Active Prescriptions
+                  </Typography>
+                  <Typography variant="h4">
+                    {dashboardData.activePrescriptions.length}
+                  </Typography>
+                </CardContent>
+              </Card>
             </Grid>
             <Grid item xs={12} sm={6} md={3}>
-              <StatCard
-                icon={<Assignment sx={{ color: colors.redAccent[500] }} />}
-                title="Medical Records"
-                value={dashboardData.medicalRecords.length}
-                color={colors.redAccent[500]}
-              />
+              <Card>
+                <CardContent>
+                  <Typography variant="h6" color="textSecondary" gutterBottom>
+                    Recent Payments
+                  </Typography>
+                  <Typography variant="h4">
+                    {dashboardData.paymentHistory.length}
+                  </Typography>
+                </CardContent>
+              </Card>
             </Grid>
             <Grid item xs={12} sm={6} md={3}>
-              <StatCard
-                icon={<Receipt sx={{ color: colors.yellowAccent[500] }} />}
-                title="Pending Payments"
-                value={
-                  dashboardData.paymentHistory.filter(
-                    (p) => p.payment_status === "pending"
-                  ).length
-                }
-                color={colors.yellowAccent[500]}
-              />
+              <Card>
+                <CardContent>
+                  <Typography variant="h6" color="textSecondary" gutterBottom>
+                    Medical Records
+                  </Typography>
+                  <Typography variant="h4">
+                    {dashboardData.recentMedicalRecords.length}
+                  </Typography>
+                </CardContent>
+              </Card>
             </Grid>
           </Grid>
 
-          {/* MAIN CONTENT GRID */}
+          {/* MAIN CONTENT */}
           <Grid container spacing={3}>
             {/* UPCOMING APPOINTMENTS */}
             <Grid item xs={12} md={6}>
-              <Card sx={{ height: "100%" }}>
+              <Card>
                 <CardContent>
                   <Box
                     display="flex"
@@ -214,58 +180,42 @@ const UserDashboard = () => {
                     alignItems="center"
                     mb={2}
                   >
-                    <Typography variant="h5" fontWeight="bold">
-                      Upcoming Appointments
-                    </Typography>
-                    <Button size="small" color="primary">
-                      View All
-                    </Button>
+                    <Typography variant="h6">Upcoming Appointments</Typography>
+                    <Button size="small">View All</Button>
                   </Box>
                   {dashboardData.upcomingAppointments.length > 0 ? (
                     <List>
                       {dashboardData.upcomingAppointments
                         .slice(0, 3)
                         .map((appointment) => (
-                          <React.Fragment key={appointment.id}>
-                            <ListItem>
-                              <ListItemAvatar>
-                                <Avatar
-                                  sx={{ bgcolor: colors.blueAccent[500] }}
-                                >
-                                  <CalendarToday />
-                                </Avatar>
-                              </ListItemAvatar>
-                              <ListItemText
-                                primary={format(
-                                  new Date(appointment.appointment_date),
-                                  "PPPP p"
-                                )}
-                                secondary={`Dr. ${appointment.doctor?.user?.name} - ${appointment.service?.name}`}
-                              />
-                              <Chip
-                                label={appointment.status}
-                                color={
-                                  appointment.status === "confirmed"
-                                    ? "success"
-                                    : appointment.status === "pending"
-                                    ? "warning"
-                                    : "default"
-                                }
-                              />
-                            </ListItem>
-                            <Divider variant="inset" component="li" />
-                          </React.Fragment>
+                          <ListItem key={appointment.id}>
+                            <ListItemAvatar>
+                              <Avatar sx={{ bgcolor: colors.primary[500] }}>
+                                <CalendarToday />
+                              </Avatar>
+                            </ListItemAvatar>
+                            <ListItemText
+                              primary={format(
+                                new Date(appointment.appointment_date),
+                                "PPPP p"
+                              )}
+                              secondary={`Dr. ${appointment.doctor?.user?.name} - ${appointment.service?.name}`}
+                            />
+                            <Chip
+                              label={appointment.status}
+                              color={
+                                appointment.status === "confirmed"
+                                  ? "success"
+                                  : appointment.status === "pending"
+                                  ? "warning"
+                                  : "default"
+                              }
+                            />
+                          </ListItem>
                         ))}
                     </List>
                   ) : (
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      textAlign="center"
-                      py={4}
-                    >
-                      No upcoming appointments
-                    </Typography>
+                    <Typography>No upcoming appointments</Typography>
                   )}
                 </CardContent>
               </Card>
@@ -273,65 +223,53 @@ const UserDashboard = () => {
 
             {/* HEALTH METRICS */}
             <Grid item xs={12} md={6}>
-              <Card sx={{ height: "100%" }}>
+              <Card>
                 <CardContent>
-                  <Typography variant="h5" fontWeight="bold" mb={2}>
+                  <Typography variant="h6" mb={2}>
                     Health Metrics
                   </Typography>
                   <Grid container spacing={2}>
-                    <Grid item xs={6}>
-                      <MetricItem
-                        icon={<MonitorHeart />}
-                        title="Blood Pressure"
-                        value={
-                          dashboardData.healthMetrics.bloodPressure || "--/--"
-                        }
-                        unit="mmHg"
-                        color={colors.greenAccent[500]}
-                      />
-                    </Grid>
-                    <Grid item xs={6}>
-                      <MetricItem
-                        icon={<Scale />}
-                        title="Weight"
-                        value={dashboardData.healthMetrics.weight || "--"}
-                        unit="kg"
-                        color={colors.blueAccent[500]}
-                      />
-                    </Grid>
-                    <Grid item xs={6}>
-                      <MetricItem
-                        icon={<Insights />}
-                        title="BMI"
-                        value={dashboardData.healthMetrics.bmi || "--"}
-                        unit=""
-                        color={
-                          dashboardData.healthMetrics.bmi > 25
-                            ? colors.redAccent[500]
-                            : dashboardData.healthMetrics.bmi > 18.5
-                            ? colors.greenAccent[500]
-                            : colors.yellowAccent[500]
-                        }
-                      />
-                    </Grid>
-                    <Grid item xs={6}>
-                      <MetricItem
-                        icon={<MedicalServices />}
-                        title="Last Checkup"
-                        value={
-                          dashboardData.recentMedicalRecords[0]
-                            ? format(
-                                new Date(
-                                  dashboardData.recentMedicalRecords[0].created_at
-                                ),
-                                "MMM d"
-                              )
-                            : "Never"
-                        }
-                        unit=""
-                        color={colors.purpleAccent[500]}
-                      />
-                    </Grid>
+                    {dashboardData.healthMetrics &&
+                      Object.entries(dashboardData.healthMetrics).map(
+                        ([metric, value]) => (
+                          <Grid item xs={6} key={metric}>
+                            <Card variant="outlined">
+                              <CardContent>
+                                <Typography
+                                  variant="subtitle2"
+                                  color="textSecondary"
+                                >
+                                  {metric.replace(/_/g, " ").toUpperCase()}
+                                </Typography>
+                                <Typography variant="h5">
+                                  {value.value}
+                                  {value.unit && (
+                                    <span
+                                      style={{
+                                        fontSize: "0.8rem",
+                                        marginLeft: "4px",
+                                      }}
+                                    >
+                                      {value.unit}
+                                    </span>
+                                  )}
+                                </Typography>
+                                {value.trend && (
+                                  <Typography
+                                    variant="caption"
+                                    color={
+                                      value.trend === "up" ? "error" : "success"
+                                    }
+                                  >
+                                    {value.trend === "up" ? "↑" : "↓"}{" "}
+                                    {value.change}
+                                  </Typography>
+                                )}
+                              </CardContent>
+                            </Card>
+                          </Grid>
+                        )
+                      )}
                   </Grid>
                 </CardContent>
               </Card>
@@ -339,7 +277,7 @@ const UserDashboard = () => {
 
             {/* ACTIVE PRESCRIPTIONS */}
             <Grid item xs={12} md={6}>
-              <Card sx={{ height: "100%" }}>
+              <Card>
                 <CardContent>
                   <Box
                     display="flex"
@@ -347,128 +285,56 @@ const UserDashboard = () => {
                     alignItems="center"
                     mb={2}
                   >
-                    <Typography variant="h5" fontWeight="bold">
-                      Active Prescriptions
-                    </Typography>
-                    <Button size="small" color="primary">
-                      View All
-                    </Button>
+                    <Typography variant="h6">Active Prescriptions</Typography>
+                    <Button size="small">View All</Button>
                   </Box>
                   {dashboardData.activePrescriptions.length > 0 ? (
-                    <List>
-                      {dashboardData.activePrescriptions
-                        .slice(0, 3)
-                        .map((prescription, index) => (
-                          <React.Fragment key={index}>
-                            <ListItem>
-                              <ListItemAvatar>
-                                <Avatar sx={{ bgcolor: colors.redAccent[500] }}>
-                                  <Medication />
-                                </Avatar>
-                              </ListItemAvatar>
-                              <ListItemText
-                                primary={prescription.medication}
-                                secondary={`${prescription.dosage} - ${prescription.frequency}`}
-                              />
-                              <Chip
-                                label={`Refills: ${prescription.refills_left}`}
-                                variant="outlined"
-                              />
-                            </ListItem>
-                            {index <
-                              dashboardData.activePrescriptions.length - 1 && (
-                              <Divider variant="inset" component="li" />
-                            )}
-                          </React.Fragment>
-                        ))}
-                    </List>
+                    <TableContainer>
+                      <Table size="small">
+                        <TableHead>
+                          <TableRow>
+                            <TableCell>Medication</TableCell>
+                            <TableCell>Dosage</TableCell>
+                            <TableCell>Refills</TableCell>
+                            <TableCell>Status</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {dashboardData.activePrescriptions
+                            .slice(0, 3)
+                            .map((prescription) => (
+                              <TableRow key={prescription.id}>
+                                <TableCell>{prescription.medication}</TableCell>
+                                <TableCell>{prescription.dosage}</TableCell>
+                                <TableCell>
+                                  {prescription.refills_left}
+                                </TableCell>
+                                <TableCell>
+                                  <Chip
+                                    label={prescription.status}
+                                    size="small"
+                                    color={
+                                      prescription.status === "active"
+                                        ? "success"
+                                        : "default"
+                                    }
+                                  />
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
                   ) : (
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      textAlign="center"
-                      py={4}
-                    >
-                      No active prescriptions
-                    </Typography>
-                  )}
-                </CardContent>
-              </Card>
-            </Grid>
-            {/* RECENT MEDICAL RECORDS */}
-            <Grid item xs={12} md={6}>
-              <Card sx={{ height: "100%" }}>
-                <CardContent>
-                  <Box
-                    display="flex"
-                    justifyContent="space-between"
-                    alignItems="center"
-                    mb={2}
-                  >
-                    <Typography variant="h5" fontWeight="bold">
-                      Medical Records
-                    </Typography>
-                    <Button size="small" color="primary">
-                      View All
-                    </Button>
-                  </Box>
-                  {dashboardData.medicalRecords.length > 0 ? (
-                    <List>
-                      {dashboardData.medicalRecords
-                        .slice(0, 3)
-                        .map((record) => (
-                          <React.Fragment key={record.id}>
-                            <ListItem>
-                              <ListItemAvatar>
-                                <Avatar sx={{ bgcolor: colors.redAccent[500] }}>
-                                  <Assignment />
-                                </Avatar>
-                              </ListItemAvatar>
-                              <ListItemText
-                                primary={format(
-                                  new Date(record.created_at),
-                                  "PP"
-                                )}
-                                secondary={`${record.diagnosis?.substring(
-                                  0,
-                                  30
-                                )}...`}
-                              />
-                              <Chip
-                                label={record.status}
-                                color={
-                                  record.status === "finalized"
-                                    ? "success"
-                                    : "warning"
-                                }
-                              />
-                            </ListItem>
-                            <Divider variant="inset" component="li" />
-                          </React.Fragment>
-                        ))}
-                    </List>
-                  ) : (
-                    <Box
-                      display="flex"
-                      flexDirection="column"
-                      alignItems="center"
-                      justifyContent="center"
-                      py={4}
-                      textAlign="center"
-                    >
-                      <Assignment fontSize="large" color="disabled" />
-                      <Typography variant="body1" color="text.secondary" mt={2}>
-                        No medical records found
-                      </Typography>
-                    </Box>
+                    <Typography>No active prescriptions</Typography>
                   )}
                 </CardContent>
               </Card>
             </Grid>
 
-            {/* RECENT PAYMENTS */}
+            {/* PAYMENT HISTORY */}
             <Grid item xs={12} md={6}>
-              <Card sx={{ height: "100%" }}>
+              <Card>
                 <CardContent>
                   <Box
                     display="flex"
@@ -476,21 +342,23 @@ const UserDashboard = () => {
                     alignItems="center"
                     mb={2}
                   >
-                    <Typography variant="h5" fontWeight="bold">
-                      Recent Payments
-                    </Typography>
-                    <Button size="small" color="primary">
-                      View All
-                    </Button>
+                    <Typography variant="h6">Recent Payments</Typography>
+                    <Button size="small">View All</Button>
                   </Box>
                   {dashboardData.paymentHistory.length > 0 ? (
                     <List>
-                      {dashboardData.paymentHistory.map((payment) => (
-                        <React.Fragment key={payment.id}>
-                          <ListItem>
+                      {dashboardData.paymentHistory
+                        .slice(0, 3)
+                        .map((payment) => (
+                          <ListItem key={payment.id}>
                             <ListItemAvatar>
                               <Avatar
-                                sx={{ bgcolor: colors.yellowAccent[500] }}
+                                sx={{
+                                  bgcolor:
+                                    payment.payment_status === "completed"
+                                      ? colors.greenAccent[500]
+                                      : colors.redAccent[500],
+                                }}
                               >
                                 <Receipt />
                               </Avatar>
@@ -509,97 +377,83 @@ const UserDashboard = () => {
                                   ? "success"
                                   : payment.payment_status === "pending"
                                   ? "warning"
-                                  : payment.payment_status === "failed"
-                                  ? "error"
-                                  : "default"
+                                  : "error"
                               }
-                              size="small"
                             />
                           </ListItem>
-                          <Divider variant="inset" component="li" />
-                        </React.Fragment>
-                      ))}
+                        ))}
                     </List>
                   ) : (
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      textAlign="center"
-                      py={4}
-                    >
-                      No payment history
-                    </Typography>
+                    <Typography>No payment history</Typography>
+                  )}
+                </CardContent>
+              </Card>
+            </Grid>
+
+            {/* MEDICAL RECORDS */}
+            <Grid item xs={12}>
+              <Card>
+                <CardContent>
+                  <Box
+                    display="flex"
+                    justifyContent="space-between"
+                    alignItems="center"
+                    mb={2}
+                  >
+                    <Typography variant="h6">Recent Medical Records</Typography>
+                    <Button size="small">View All</Button>
+                  </Box>
+                  {dashboardData.recentMedicalRecords.length > 0 ? (
+                    <TableContainer component={Paper}>
+                      <Table>
+                        <TableHead>
+                          <TableRow>
+                            <TableCell>Date</TableCell>
+                            <TableCell>Doctor</TableCell>
+                            <TableCell>Diagnosis</TableCell>
+                            <TableCell>Treatment</TableCell>
+                            <TableCell>Actions</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {dashboardData.recentMedicalRecords
+                            .slice(0, 3)
+                            .map((record) => (
+                              <TableRow key={record.id}>
+                                <TableCell>
+                                  {format(new Date(record.created_at), "PP")}
+                                </TableCell>
+                                <TableCell>
+                                  Dr. {record.doctor?.user?.name}
+                                </TableCell>
+                                <TableCell>
+                                  {record.diagnosis || "N/A"}
+                                </TableCell>
+                                <TableCell>
+                                  {record.treatment_plan
+                                    ? record.treatment_plan.substring(0, 50) +
+                                      "..."
+                                    : "N/A"}
+                                </TableCell>
+                                <TableCell>
+                                  <Button size="small">View Details</Button>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  ) : (
+                    <Typography>No medical records found</Typography>
                   )}
                 </CardContent>
               </Card>
             </Grid>
           </Grid>
-
-          {/* QUICK ACTIONS FAB */}
-          <Box sx={{ position: "fixed", bottom: 32, right: 32 }}>
-            <Button
-              variant="contained"
-              color="primary"
-              startIcon={<VideoCall />}
-              sx={{
-                borderRadius: "50px",
-                padding: "12px 24px",
-                boxShadow: 3,
-              }}
-            >
-              Quick Consult
-            </Button>
-          </Box>
         </Box>
       </Box>
     </Box>
   );
 };
-
-// Reusable Stat Card Component
-const StatCard = ({ icon, title, value, color }) => (
-  <Card sx={{ height: "100%" }}>
-    <CardContent>
-      <Box display="flex" alignItems="center" mb={1}>
-        <Box mr={2} color={color}>
-          {icon}
-        </Box>
-        <Typography variant="h6" color="text.secondary">
-          {title}
-        </Typography>
-      </Box>
-      <Typography variant="h3" fontWeight="bold" color={color}>
-        {value}
-      </Typography>
-    </CardContent>
-  </Card>
-);
-
-// Reusable Metric Item Component
-const MetricItem = ({ icon, title, value, unit, color }) => (
-  <Box
-    display="flex"
-    alignItems="center"
-    p={2}
-    sx={{ bgcolor: `${color}10`, borderRadius: 2 }}
-  >
-    <Box mr={2} color={color}>
-      {icon}
-    </Box>
-    <Box>
-      <Typography variant="body2" color="text.secondary">
-        {title}
-      </Typography>
-      <Typography variant="h5" fontWeight="bold">
-        {value}{" "}
-        {unit && (
-          <Typography component="span" variant="body2" color="text.secondary">
-            {unit}
-          </Typography>
-        )}
-      </Typography>
-    </Box>
-  </Box>
-);
 
 export default UserDashboard;
