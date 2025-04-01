@@ -17,6 +17,7 @@ use App\Http\Controllers\{
     PatientDashboardController,
     PatientsController,
     ServiceController,
+    DoctorDashboardController,
     SchedulesController,
     UserController
 };
@@ -55,6 +56,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/payments/{appointment}', [PaymentsController::class, 'getPaymentDetails']);
     Route::post('/payments/mpesa', [PaymentsController::class, 'initiateMpesaPayment']);
     Route::get('/patient-dashboard', [PatientDashboardController::class, 'index']);
+    Route::get('/doctor-dashboard', [DoctorDashboardController::class, 'index']);
 
     Route::middleware(['admin'])->group(function () {
         Route::put('/users/{user}', [PatientsController::class, 'update']);

@@ -79,7 +79,20 @@ export default function Login() {
       setToken(data.token);
       toast.success("Login Successful");
 
-      navigate(data.role === "admin" ? "/" : "/dashboard");
+      // Redirect based on role
+      switch (data.role) {
+        case "admin":
+          navigate("/");
+          break;
+        case "patient":
+          navigate("/dashboard");
+          break;
+        case "doctor":
+          navigate("/doctor-dashboard");
+          break;
+        default:
+          navigate("/login");
+      }
     } catch (error) {
       if (error.errors) {
         setErrors(error.errors);
