@@ -331,44 +331,4 @@ class PaymentsController extends Controller
             'updated_at' => $payment->updated_at
         ]);
     }
-    /**
-     * Get recent payments for current patient
-     */
-    public function getRecentPayments()
-    {
-        $user = auth()->user();
-
-        if (!$user) {
-            return response()->json(['message' => 'Unauthorized'], 401);
-        }
-
-        $patient = Patients::where('user_id', $user->id)->first();
-
-        if (!$patient) {
-            return response()->json(['message' => 'Patient profile not found'], 400);
-        }
-
-        $payments = Payments::with([
-            'service:id,name',
-            'appointment:id,appointment_date'
-        ])
-            ->where('patient_id', $patient->id)
-            ->orderBy('payment_date', 'desc')
-            ->limit(5)
-            ->get();
-
-        return response()->json($payments->map(function ($payment) {
-            return [
-                'id' => $payment->id,
-                'amount' => $payment->amount,
-                'payment_date' => $payment->payment_date?->format('Y-m-d H:i:s'),
-                'service' => $payment->service,
-                'appointment' => [
-                    'appointment_date' => $payment->appointment?->appointment_date?->format('Y-m-d H:i:s')
-                ],
-                'payment_status' => $payment->payment_status,
-                'mpesa_receipt' => $payment->mpesa_receipt
-            ];
-        }));
-    }
 }
