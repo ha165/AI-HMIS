@@ -288,6 +288,11 @@ class MedicalRecordsController extends Controller
             ->limit(5)
             ->get();
 
+        // Return empty array with 200 status if no records found
+        if ($records->isEmpty()) {
+            return response()->json([], 200);
+        }
+
         return response()->json($records->map(function ($record) {
             return [
                 'id' => $record->id,
