@@ -114,7 +114,6 @@ const AddDoctor = () => {
       const response = await fetchWrapper("/doctors", {
         method: "POST",
         body: formDataToSend,
-        // Don't set Content-Type header - the browser will set it automatically with the correct boundary
       });
 
       if (response) {
