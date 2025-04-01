@@ -15,7 +15,7 @@ import {
   ListItemText,
   Divider,
   Chip,
-  CircularProgress
+  CircularProgress,
 } from "@mui/material";
 import {
   CalendarToday,
@@ -30,7 +30,7 @@ import {
   Receipt,
   Assignment,
   History,
-  Insights
+  Insights,
 } from "@mui/icons-material";
 import { tokens } from "../../../themes";
 import Header from "../../components/Header";
@@ -46,59 +46,63 @@ const UserDashboard = () => {
   const [dashboardData, setDashboardData] = useState({
     patient: null,
     upcomingAppointments: [],
-    recentMedicalRecords: [],
+    medicalRecords: [],
+    payments: [],
+    healthMetrics: {},
     activePrescriptions: [],
-    paymentHistory: [],
-    healthMetrics: {}
   });
 
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
         setLoading(true);
-        // Fetch all dashboard data in parallel
-        const [patient, appointments, medicalRecords, payments] = await Promise.all([
-          fetchWrapper('/patients/me'),
-          fetchWrapper('/appointments/upcoming'),
-          fetchWrapper('/medical-records/recent'),
-          fetchWrapper('/payments/history')
-        ]);
-
-        // Extract prescriptions from medical records
-        const activePrescriptions = medicalRecords
-          .flatMap(record => record.prescription ? JSON.parse(record.prescription) : [])
-          .filter(prescription => prescription.status === 'active');
-
-        // Process health metrics from medical records
-        const healthMetrics = medicalRecords.reduce((acc, record) => {
-          if (record.vital_signs) {
-            const vitals = JSON.parse(record.vital_signs);
-            return {
-              ...acc,
-              bloodPressure: vitals.blood_pressure || acc.bloodPressure,
-              weight: vitals.weight || acc.weight,
-              height: vitals.height || acc.height,
-              bmi: vitals.bmi || acc.bmi
-            };
-          }
-          return acc;
-        }, {});
+        const [patient, appointments, medicalRecords, payments] =
+          await Promise.all([
+            fetchWrapper("/patients/me"),
+            fetchWrapper("/appointments/upcoming"),
+            fetchWrapper("/medical-records/recent").catch(() => ({ data: [] })),
+            fetchWrapper("/payments?per_page=5"),
+            
+          ]);
+          
+        // Process health metrics
+        const healthMetrics = (medicalRecords.data || []).reduce(
+          (acc, record) => {
+            if (record.vital_signs) {
+              return {
+                ...acc,
+                bloodPressure:
+                  record.vital_signs.blood_pressure || acc.bloodPressure,
+                weight: record.vital_signs.weight || acc.weight,
+                height: record.vital_signs.height || acc.height,
+                bmi: record.vital_signs.bmi || acc.bmi,
+              };
+            }
+            return acc;
+          },
+          {}
+        );
 
         setDashboardData({
           patient,
-          upcomingAppointments: appointments,
-          recentMedicalRecords: medicalRecords.slice(0, 3),
-          activePrescriptions,
-          paymentHistory: payments.slice(0, 5),
-          healthMetrics
+          upcomingAppointments: appointments.data || [],
+          medicalRecords: medicalRecords.data || [],
+          payments: payments.data || [],
+          healthMetrics,
+          activePrescriptions: [],
         });
       } catch (error) {
         console.error("Failed to fetch dashboard data:", error);
+        setDashboardData((prev) => ({
+          ...prev,
+          medicalRecords: [],
+          upcomingAppointments: [],
+          payments: [],
+        }));
       } finally {
         setLoading(false);
       }
     };
-
     fetchDashboardData();
   }, []);
 
@@ -106,7 +110,12 @@ const UserDashboard = () => {
     return (
       <Box display="flex" height="100vh">
         <Sidebar />
-        <Box flex="1" display="flex" justifyContent="center" alignItems="center">
+        <Box
+          flex="1"
+          display="flex"
+          justifyContent="center"
+          alignItems="center"
+        >
           <CircularProgress color="secondary" />
         </Box>
       </Box>
@@ -123,15 +132,26 @@ const UserDashboard = () => {
         <Topbar />
 
         {/* MAIN CONTENT */}
-        <Box m="20px" sx={{ overflowY: 'auto', height: 'calc(100vh - 64px)' }}>
+        <Box m="20px" sx={{ overflowY: "auto", height: "calc(100vh - 64px)" }}>
           {/* HEADER */}
-          <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
-            <Header 
-              title={`Welcome, ${dashboardData.patient?.user?.name || 'Patient'}`} 
-              subtitle="Your personal health dashboard" 
+          <Box
+            display="flex"
+            justifyContent="space-between"
+            alignItems="center"
+            mb={4}
+          >
+            <Header
+              title={`Welcome, ${
+                dashboardData.patient?.user?.name || "Patient"
+              }`}
+              subtitle="Your personal health dashboard"
             />
             <Box display="flex" gap={2}>
-              <Button variant="contained" color="secondary" startIcon={<EmergencyShare />}>
+              <Button
+                variant="contained"
+                color="secondary"
+                startIcon={<EmergencyShare />}
+              >
                 Emergency
               </Button>
               <Button variant="outlined" startIcon={<VideoCall />}>
@@ -152,7 +172,9 @@ const UserDashboard = () => {
             </Grid>
             <Grid item xs={12} sm={6} md={3}>
               <StatCard
-                icon={<MedicalServices sx={{ color: colors.blueAccent[500] }} />}
+                icon={
+                  <MedicalServices sx={{ color: colors.blueAccent[500] }} />
+                }
                 title="Active Prescriptions"
                 value={dashboardData.activePrescriptions.length}
                 color={colors.blueAccent[500]}
@@ -162,7 +184,7 @@ const UserDashboard = () => {
               <StatCard
                 icon={<Assignment sx={{ color: colors.redAccent[500] }} />}
                 title="Medical Records"
-                value={dashboardData.recentMedicalRecords.length}
+                value={dashboardData.medicalRecords.length}
                 color={colors.redAccent[500]}
               />
             </Grid>
@@ -170,7 +192,11 @@ const UserDashboard = () => {
               <StatCard
                 icon={<Receipt sx={{ color: colors.yellowAccent[500] }} />}
                 title="Pending Payments"
-                value={dashboardData.paymentHistory.filter(p => p.payment_status === 'pending').length}
+                value={
+                  dashboardData.paymentHistory.filter(
+                    (p) => p.payment_status === "pending"
+                  ).length
+                }
                 color={colors.yellowAccent[500]}
               />
             </Grid>
@@ -180,42 +206,64 @@ const UserDashboard = () => {
           <Grid container spacing={3}>
             {/* UPCOMING APPOINTMENTS */}
             <Grid item xs={12} md={6}>
-              <Card sx={{ height: '100%' }}>
+              <Card sx={{ height: "100%" }}>
                 <CardContent>
-                  <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+                  <Box
+                    display="flex"
+                    justifyContent="space-between"
+                    alignItems="center"
+                    mb={2}
+                  >
                     <Typography variant="h5" fontWeight="bold">
                       Upcoming Appointments
                     </Typography>
-                    <Button size="small" color="primary">View All</Button>
+                    <Button size="small" color="primary">
+                      View All
+                    </Button>
                   </Box>
                   {dashboardData.upcomingAppointments.length > 0 ? (
                     <List>
-                      {dashboardData.upcomingAppointments.slice(0, 3).map(appointment => (
-                        <React.Fragment key={appointment.id}>
-                          <ListItem>
-                            <ListItemAvatar>
-                              <Avatar sx={{ bgcolor: colors.blueAccent[500] }}>
-                                <CalendarToday />
-                              </Avatar>
-                            </ListItemAvatar>
-                            <ListItemText
-                              primary={format(new Date(appointment.appointment_date), 'PPPP p')}
-                              secondary={`Dr. ${appointment.doctor?.user?.name} - ${appointment.service?.name}`}
-                            />
-                            <Chip 
-                              label={appointment.status} 
-                              color={
-                                appointment.status === 'confirmed' ? 'success' : 
-                                appointment.status === 'pending' ? 'warning' : 'default'
-                              }
-                            />
-                          </ListItem>
-                          <Divider variant="inset" component="li" />
-                        </React.Fragment>
-                      ))}
+                      {dashboardData.upcomingAppointments
+                        .slice(0, 3)
+                        .map((appointment) => (
+                          <React.Fragment key={appointment.id}>
+                            <ListItem>
+                              <ListItemAvatar>
+                                <Avatar
+                                  sx={{ bgcolor: colors.blueAccent[500] }}
+                                >
+                                  <CalendarToday />
+                                </Avatar>
+                              </ListItemAvatar>
+                              <ListItemText
+                                primary={format(
+                                  new Date(appointment.appointment_date),
+                                  "PPPP p"
+                                )}
+                                secondary={`Dr. ${appointment.doctor?.user?.name} - ${appointment.service?.name}`}
+                              />
+                              <Chip
+                                label={appointment.status}
+                                color={
+                                  appointment.status === "confirmed"
+                                    ? "success"
+                                    : appointment.status === "pending"
+                                    ? "warning"
+                                    : "default"
+                                }
+                              />
+                            </ListItem>
+                            <Divider variant="inset" component="li" />
+                          </React.Fragment>
+                        ))}
                     </List>
                   ) : (
-                    <Typography variant="body2" color="text.secondary" textAlign="center" py={4}>
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      textAlign="center"
+                      py={4}
+                    >
                       No upcoming appointments
                     </Typography>
                   )}
@@ -225,7 +273,7 @@ const UserDashboard = () => {
 
             {/* HEALTH METRICS */}
             <Grid item xs={12} md={6}>
-              <Card sx={{ height: '100%' }}>
+              <Card sx={{ height: "100%" }}>
                 <CardContent>
                   <Typography variant="h5" fontWeight="bold" mb={2}>
                     Health Metrics
@@ -235,7 +283,9 @@ const UserDashboard = () => {
                       <MetricItem
                         icon={<MonitorHeart />}
                         title="Blood Pressure"
-                        value={dashboardData.healthMetrics.bloodPressure || '--/--'}
+                        value={
+                          dashboardData.healthMetrics.bloodPressure || "--/--"
+                        }
                         unit="mmHg"
                         color={colors.greenAccent[500]}
                       />
@@ -244,7 +294,7 @@ const UserDashboard = () => {
                       <MetricItem
                         icon={<Scale />}
                         title="Weight"
-                        value={dashboardData.healthMetrics.weight || '--'}
+                        value={dashboardData.healthMetrics.weight || "--"}
                         unit="kg"
                         color={colors.blueAccent[500]}
                       />
@@ -253,12 +303,14 @@ const UserDashboard = () => {
                       <MetricItem
                         icon={<Insights />}
                         title="BMI"
-                        value={dashboardData.healthMetrics.bmi || '--'}
+                        value={dashboardData.healthMetrics.bmi || "--"}
                         unit=""
                         color={
-                          dashboardData.healthMetrics.bmi > 25 ? colors.redAccent[500] : 
-                          dashboardData.healthMetrics.bmi > 18.5 ? colors.greenAccent[500] : 
-                          colors.yellowAccent[500]
+                          dashboardData.healthMetrics.bmi > 25
+                            ? colors.redAccent[500]
+                            : dashboardData.healthMetrics.bmi > 18.5
+                            ? colors.greenAccent[500]
+                            : colors.yellowAccent[500]
                         }
                       />
                     </Grid>
@@ -267,9 +319,14 @@ const UserDashboard = () => {
                         icon={<MedicalServices />}
                         title="Last Checkup"
                         value={
-                          dashboardData.recentMedicalRecords[0] ? 
-                          format(new Date(dashboardData.recentMedicalRecords[0].created_at), 'MMM d') : 
-                          'Never'
+                          dashboardData.recentMedicalRecords[0]
+                            ? format(
+                                new Date(
+                                  dashboardData.recentMedicalRecords[0].created_at
+                                ),
+                                "MMM d"
+                              )
+                            : "Never"
                         }
                         unit=""
                         color={colors.purpleAccent[500]}
@@ -282,43 +339,128 @@ const UserDashboard = () => {
 
             {/* ACTIVE PRESCRIPTIONS */}
             <Grid item xs={12} md={6}>
-              <Card sx={{ height: '100%' }}>
+              <Card sx={{ height: "100%" }}>
                 <CardContent>
-                  <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+                  <Box
+                    display="flex"
+                    justifyContent="space-between"
+                    alignItems="center"
+                    mb={2}
+                  >
                     <Typography variant="h5" fontWeight="bold">
                       Active Prescriptions
                     </Typography>
-                    <Button size="small" color="primary">View All</Button>
+                    <Button size="small" color="primary">
+                      View All
+                    </Button>
                   </Box>
                   {dashboardData.activePrescriptions.length > 0 ? (
                     <List>
-                      {dashboardData.activePrescriptions.slice(0, 3).map((prescription, index) => (
-                        <React.Fragment key={index}>
-                          <ListItem>
-                            <ListItemAvatar>
-                              <Avatar sx={{ bgcolor: colors.redAccent[500] }}>
-                                <Medication />
-                              </Avatar>
-                            </ListItemAvatar>
-                            <ListItemText
-                              primary={prescription.medication}
-                              secondary={`${prescription.dosage} - ${prescription.frequency}`}
-                            />
-                            <Chip 
-                              label={`Refills: ${prescription.refills_left}`} 
-                              variant="outlined"
-                            />
-                          </ListItem>
-                          {index < dashboardData.activePrescriptions.length - 1 && (
-                            <Divider variant="inset" component="li" />
-                          )}
-                        </React.Fragment>
-                      ))}
+                      {dashboardData.activePrescriptions
+                        .slice(0, 3)
+                        .map((prescription, index) => (
+                          <React.Fragment key={index}>
+                            <ListItem>
+                              <ListItemAvatar>
+                                <Avatar sx={{ bgcolor: colors.redAccent[500] }}>
+                                  <Medication />
+                                </Avatar>
+                              </ListItemAvatar>
+                              <ListItemText
+                                primary={prescription.medication}
+                                secondary={`${prescription.dosage} - ${prescription.frequency}`}
+                              />
+                              <Chip
+                                label={`Refills: ${prescription.refills_left}`}
+                                variant="outlined"
+                              />
+                            </ListItem>
+                            {index <
+                              dashboardData.activePrescriptions.length - 1 && (
+                              <Divider variant="inset" component="li" />
+                            )}
+                          </React.Fragment>
+                        ))}
                     </List>
                   ) : (
-                    <Typography variant="body2" color="text.secondary" textAlign="center" py={4}>
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      textAlign="center"
+                      py={4}
+                    >
                       No active prescriptions
                     </Typography>
+                  )}
+                </CardContent>
+              </Card>
+            </Grid>
+            {/* RECENT MEDICAL RECORDS */}
+            <Grid item xs={12} md={6}>
+              <Card sx={{ height: "100%" }}>
+                <CardContent>
+                  <Box
+                    display="flex"
+                    justifyContent="space-between"
+                    alignItems="center"
+                    mb={2}
+                  >
+                    <Typography variant="h5" fontWeight="bold">
+                      Medical Records
+                    </Typography>
+                    <Button size="small" color="primary">
+                      View All
+                    </Button>
+                  </Box>
+                  {dashboardData.medicalRecords.length > 0 ? (
+                    <List>
+                      {dashboardData.medicalRecords
+                        .slice(0, 3)
+                        .map((record) => (
+                          <React.Fragment key={record.id}>
+                            <ListItem>
+                              <ListItemAvatar>
+                                <Avatar sx={{ bgcolor: colors.redAccent[500] }}>
+                                  <Assignment />
+                                </Avatar>
+                              </ListItemAvatar>
+                              <ListItemText
+                                primary={format(
+                                  new Date(record.created_at),
+                                  "PP"
+                                )}
+                                secondary={`${record.diagnosis?.substring(
+                                  0,
+                                  30
+                                )}...`}
+                              />
+                              <Chip
+                                label={record.status}
+                                color={
+                                  record.status === "finalized"
+                                    ? "success"
+                                    : "warning"
+                                }
+                              />
+                            </ListItem>
+                            <Divider variant="inset" component="li" />
+                          </React.Fragment>
+                        ))}
+                    </List>
+                  ) : (
+                    <Box
+                      display="flex"
+                      flexDirection="column"
+                      alignItems="center"
+                      justifyContent="center"
+                      py={4}
+                      textAlign="center"
+                    >
+                      <Assignment fontSize="large" color="disabled" />
+                      <Typography variant="body1" color="text.secondary" mt={2}>
+                        No medical records found
+                      </Typography>
+                    </Box>
                   )}
                 </CardContent>
               </Card>
@@ -326,34 +468,50 @@ const UserDashboard = () => {
 
             {/* RECENT PAYMENTS */}
             <Grid item xs={12} md={6}>
-              <Card sx={{ height: '100%' }}>
+              <Card sx={{ height: "100%" }}>
                 <CardContent>
-                  <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+                  <Box
+                    display="flex"
+                    justifyContent="space-between"
+                    alignItems="center"
+                    mb={2}
+                  >
                     <Typography variant="h5" fontWeight="bold">
                       Recent Payments
                     </Typography>
-                    <Button size="small" color="primary">View All</Button>
+                    <Button size="small" color="primary">
+                      View All
+                    </Button>
                   </Box>
                   {dashboardData.paymentHistory.length > 0 ? (
                     <List>
-                      {dashboardData.paymentHistory.map(payment => (
+                      {dashboardData.paymentHistory.map((payment) => (
                         <React.Fragment key={payment.id}>
                           <ListItem>
                             <ListItemAvatar>
-                              <Avatar sx={{ bgcolor: colors.yellowAccent[500] }}>
+                              <Avatar
+                                sx={{ bgcolor: colors.yellowAccent[500] }}
+                              >
                                 <Receipt />
                               </Avatar>
                             </ListItemAvatar>
                             <ListItemText
                               primary={`KES ${payment.amount}`}
-                              secondary={`${payment.service?.name} - ${format(new Date(payment.payment_date), 'PP')}`}
+                              secondary={`${payment.service?.name} - ${format(
+                                new Date(payment.payment_date),
+                                "PP"
+                              )}`}
                             />
-                            <Chip 
-                              label={payment.payment_status} 
+                            <Chip
+                              label={payment.payment_status}
                               color={
-                                payment.payment_status === 'completed' ? 'success' :
-                                payment.payment_status === 'pending' ? 'warning' :
-                                payment.payment_status === 'failed' ? 'error' : 'default'
+                                payment.payment_status === "completed"
+                                  ? "success"
+                                  : payment.payment_status === "pending"
+                                  ? "warning"
+                                  : payment.payment_status === "failed"
+                                  ? "error"
+                                  : "default"
                               }
                               size="small"
                             />
@@ -363,7 +521,12 @@ const UserDashboard = () => {
                       ))}
                     </List>
                   ) : (
-                    <Typography variant="body2" color="text.secondary" textAlign="center" py={4}>
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      textAlign="center"
+                      py={4}
+                    >
                       No payment history
                     </Typography>
                   )}
@@ -373,15 +536,15 @@ const UserDashboard = () => {
           </Grid>
 
           {/* QUICK ACTIONS FAB */}
-          <Box sx={{ position: 'fixed', bottom: 32, right: 32 }}>
+          <Box sx={{ position: "fixed", bottom: 32, right: 32 }}>
             <Button
               variant="contained"
               color="primary"
               startIcon={<VideoCall />}
               sx={{
-                borderRadius: '50px',
-                padding: '12px 24px',
-                boxShadow: 3
+                borderRadius: "50px",
+                padding: "12px 24px",
+                boxShadow: 3,
               }}
             >
               Quick Consult
@@ -395,7 +558,7 @@ const UserDashboard = () => {
 
 // Reusable Stat Card Component
 const StatCard = ({ icon, title, value, color }) => (
-  <Card sx={{ height: '100%' }}>
+  <Card sx={{ height: "100%" }}>
     <CardContent>
       <Box display="flex" alignItems="center" mb={1}>
         <Box mr={2} color={color}>
@@ -414,7 +577,12 @@ const StatCard = ({ icon, title, value, color }) => (
 
 // Reusable Metric Item Component
 const MetricItem = ({ icon, title, value, unit, color }) => (
-  <Box display="flex" alignItems="center" p={2} sx={{ bgcolor: `${color}10`, borderRadius: 2 }}>
+  <Box
+    display="flex"
+    alignItems="center"
+    p={2}
+    sx={{ bgcolor: `${color}10`, borderRadius: 2 }}
+  >
     <Box mr={2} color={color}>
       {icon}
     </Box>
@@ -423,7 +591,12 @@ const MetricItem = ({ icon, title, value, unit, color }) => (
         {title}
       </Typography>
       <Typography variant="h5" fontWeight="bold">
-        {value} {unit && <Typography component="span" variant="body2" color="text.secondary">{unit}</Typography>}
+        {value}{" "}
+        {unit && (
+          <Typography component="span" variant="body2" color="text.secondary">
+            {unit}
+          </Typography>
+        )}
       </Typography>
     </Box>
   </Box>
