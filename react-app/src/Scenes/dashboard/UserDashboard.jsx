@@ -6,7 +6,6 @@ import {
   Chip,
   CircularProgress,
   Grid,
-  IconButton,
   List,
   ListItem,
   ListItemAvatar,
@@ -21,6 +20,8 @@ import {
   TableHead,
   TableRow,
   Paper,
+  Divider,
+  LinearProgress,
 } from "@mui/material";
 import { tokens } from "../../../themes";
 import Header from "../../components/Header";
@@ -34,17 +35,61 @@ import {
   Scale,
   Receipt,
   EmergencyShare,
-  VideoCall,
-  Chat,
-  LocalHospital,
+  ArrowUpward,
+  ArrowDownward,
+  TrendingFlat,
 } from "@mui/icons-material";
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { format } from "date-fns";
 import fetchWrapper from "../../Context/fetchWrapper";
 
 const UserDashboard = () => {
   const theme = useTheme();
-  const colors = tokens(theme.palette.mode);
+
+  // Safely get colors with fallbacks
+  const getColor = (colorPath, fallback) => {
+    try {
+      const path = colorPath.split(".");
+      let result = tokens(theme.palette.mode);
+      for (const part of path) {
+        result = result[part];
+        if (result === undefined) return fallback;
+      }
+      return result || fallback;
+    } catch {
+      return fallback;
+    }
+  };
+
+  // Define color variables with fallbacks
+  const colors = {
+    primary: {
+      400: getColor("primary.400", "#1976d2"),
+      600: getColor("primary.600", "#115293"),
+      700: getColor("primary.700", "#0d3c61"),
+    },
+    blueAccent: {
+      500: getColor("blueAccent.500", "#2196f3"),
+      600: getColor("blueAccent.600", "#0b7dda"),
+      700: getColor("blueAccent.700", "#0a6fc9"),
+    },
+    greenAccent: {
+      400: getColor("greenAccent.400", "#4caf50"),
+      500: getColor("greenAccent.500", "#3d8b40"),
+    },
+    redAccent: {
+      500: getColor("redAccent.500", "#f44336"),
+      600: getColor("redAccent.600", "#d32f2f"),
+    },
+    yellowAccent: {
+      500: getColor("yellowAccent.500", "#ffeb3b"),
+    },
+    grey: {
+      400: getColor("grey.400", "#9e9e9e"),
+    },
+  };
+
   const [loading, setLoading] = useState(true);
   const [dashboardData, setDashboardData] = useState({
     patient: null,
@@ -59,7 +104,7 @@ const UserDashboard = () => {
     const fetchDashboardData = async () => {
       try {
         setLoading(true);
-        const data = await fetchWrapper("/patient-dashboard",);
+        const data = await fetchWrapper("/patient-dashboard");
         setDashboardData(data);
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
@@ -70,6 +115,33 @@ const UserDashboard = () => {
 
     fetchDashboardData();
   }, []);
+
+  const getStatusColor = (status) => {
+    switch (status?.toLowerCase()) {
+      case "completed":
+      case "active":
+      case "confirmed":
+        return colors.greenAccent[500];
+      case "pending":
+        return colors.yellowAccent[500];
+      case "cancelled":
+      case "failed":
+        return colors.redAccent[500];
+      default:
+        return colors.blueAccent[500];
+    }
+  };
+
+  const renderTrendIcon = (trend) => {
+    switch (trend) {
+      case "up":
+        return <ArrowUpward color="error" fontSize="small" />;
+      case "down":
+        return <ArrowDownward color="success" fontSize="small" />;
+      default:
+        return <TrendingFlat color="info" fontSize="small" />;
+    }
+  };
 
   if (loading) {
     return (
@@ -85,94 +157,125 @@ const UserDashboard = () => {
   }
 
   return (
-    <Box display="flex">
-      {/* SIDEBAR */}
+    <Box display="flex" bgcolor={colors.primary[400]}>
       <Sidebar />
-
-      <Box flex="1">
-        {/* TOPBAR */}
+      <Box flex="1" overflow="auto" height="100vh">
         <Topbar />
-
-        {/* CONTENT */}
         <Box m="20px">
-          {/* HEADER */}
+          {/* Header Section */}
           <Box
             display="flex"
             justifyContent="space-between"
             alignItems="center"
             mb="20px"
+            p="15px"
+            borderRadius="4px"
+            bgcolor={colors.primary[600]}
           >
             <Header
-              title="DASHBOARD"
+              title="MY HEALTH DASHBOARD"
               subtitle={`Welcome back, ${
-                dashboardData.patient?.user?.name || "Patient"
+                dashboardData.patient?.user?.first_name || "Patient"
               }`}
+              subtitleColor={colors.greenAccent[400]}
             />
             <Box>
-              <Button variant="contained" color="secondary" sx={{ mr: 2 }}>
-                Book Appointment
+              <Button
+                variant="contained"
+                sx={{
+                  mr: 2,
+                  bgcolor: colors.blueAccent[500],
+                  "&:hover": { bgcolor: colors.blueAccent[600] },
+                }}
+              >
+                <Link to="/add-appointment"> Book Appointment</Link>
               </Button>
-              <Button variant="outlined">Emergency Help</Button>
+              <Button
+                variant="contained"
+                sx={{
+                  bgcolor: colors.redAccent[500],
+                  "&:hover": { bgcolor: colors.redAccent[600] },
+                }}
+              >
+                <EmergencyShare sx={{ mr: 1 }} />
+                <Link to="/emergency-contact">Emergency Help</Link>
+              </Button>
             </Box>
           </Box>
 
-          {/* QUICK STATS */}
+          {/* Quick Stats Cards */}
           <Grid container spacing={3} mb={3}>
-            <Grid item xs={12} sm={6} md={3}>
-              <Card>
-                <CardContent>
-                  <Typography variant="h6" color="textSecondary" gutterBottom>
-                    Upcoming Appointments
-                  </Typography>
-                  <Typography variant="h4">
-                    {dashboardData.upcomingAppointments.length}
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <Card>
-                <CardContent>
-                  <Typography variant="h6" color="textSecondary" gutterBottom>
-                    Active Prescriptions
-                  </Typography>
-                  <Typography variant="h4">
-                    {dashboardData.activePrescriptions.length}
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <Card>
-                <CardContent>
-                  <Typography variant="h6" color="textSecondary" gutterBottom>
-                    Recent Payments
-                  </Typography>
-                  <Typography variant="h4">
-                    {dashboardData.paymentHistory.length}
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <Card>
-                <CardContent>
-                  <Typography variant="h6" color="textSecondary" gutterBottom>
-                    Medical Records
-                  </Typography>
-                  <Typography variant="h4">
-                    {dashboardData.recentMedicalRecords.length}
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
+            {[
+              {
+                title: "Upcoming Appointments",
+                value: dashboardData.upcomingAppointments.length,
+                icon: <CalendarToday sx={{ color: colors.blueAccent[500] }} />,
+                color: colors.blueAccent[500],
+              },
+              {
+                title: "Active Prescriptions",
+                value: dashboardData.activePrescriptions.length,
+                icon: <Medication sx={{ color: colors.greenAccent[500] }} />,
+                color: colors.greenAccent[500],
+              },
+              {
+                title: "Recent Payments",
+                value: dashboardData.paymentHistory.length,
+                icon: <Receipt sx={{ color: colors.yellowAccent[500] }} />,
+                color: colors.yellowAccent[500],
+              },
+              {
+                title: "Medical Records",
+                value: dashboardData.recentMedicalRecords.length,
+                icon: <MedicalServices sx={{ color: colors.redAccent[500] }} />,
+                color: colors.redAccent[500],
+              },
+            ].map((stat, index) => (
+              <Grid item xs={12} sm={6} md={3} key={index}>
+                <Card
+                  sx={{
+                    borderLeft: `4px solid ${stat.color}`,
+                    boxShadow: 3,
+                    transition: "transform 0.3s",
+                    "&:hover": { transform: "translateY(-5px)" },
+                  }}
+                >
+                  <CardContent>
+                    <Box display="flex" justifyContent="space-between">
+                      <Box>
+                        <Typography
+                          variant="h6"
+                          color="textSecondary"
+                          gutterBottom
+                          sx={{ fontWeight: 600 }}
+                        >
+                          {stat.title}
+                        </Typography>
+                        <Typography variant="h3" sx={{ fontWeight: 700 }}>
+                          {stat.value}
+                        </Typography>
+                      </Box>
+                      <Avatar
+                        sx={{
+                          bgcolor: `${stat.color}20`,
+                          width: 56,
+                          height: 56,
+                        }}
+                      >
+                        {stat.icon}
+                      </Avatar>
+                    </Box>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
           </Grid>
 
-          {/* MAIN CONTENT */}
+          {/* Main Content Sections */}
           <Grid container spacing={3}>
-            {/* UPCOMING APPOINTMENTS */}
+            {/* Upcoming Appointments */}
             <Grid item xs={12} md={6}>
-              <Card>
+              <Card sx={{ boxShadow: 3 }}>
                 <CardContent>
                   <Box
                     display="flex"
@@ -180,90 +283,180 @@ const UserDashboard = () => {
                     alignItems="center"
                     mb={2}
                   >
-                    <Typography variant="h6">Upcoming Appointments</Typography>
-                    <Button size="small">View All</Button>
+                    <Typography variant="h5" sx={{ fontWeight: 600 }}>
+                      Upcoming Appointments
+                    </Typography>
+                    <Button
+                      size="small"
+                      sx={{
+                        color: colors.blueAccent[500],
+                        textTransform: "none",
+                        fontWeight: 600,
+                      }}
+                    >
+                      View All
+                    </Button>
                   </Box>
+                  <Divider sx={{ mb: 2, bgcolor: colors.primary[700] }} />
                   {dashboardData.upcomingAppointments.length > 0 ? (
-                    <List>
+                    <List sx={{ p: 0 }}>
                       {dashboardData.upcomingAppointments
                         .slice(0, 3)
                         .map((appointment) => (
-                          <ListItem key={appointment.id}>
-                            <ListItemAvatar>
-                              <Avatar sx={{ bgcolor: colors.primary[500] }}>
-                                <CalendarToday />
-                              </Avatar>
-                            </ListItemAvatar>
-                            <ListItemText
-                              primary={format(
-                                new Date(appointment.appointment_date),
-                                "PPPP p"
-                              )}
-                              secondary={`Dr. ${appointment.doctor?.user?.name} - ${appointment.service?.name}`}
-                            />
-                            <Chip
-                              label={appointment.status}
-                              color={
-                                appointment.status === "confirmed"
-                                  ? "success"
-                                  : appointment.status === "pending"
-                                  ? "warning"
-                                  : "default"
-                              }
-                            />
-                          </ListItem>
+                          <Card
+                            key={appointment.id}
+                            sx={{
+                              mb: 2,
+                              borderLeft: `3px solid ${getStatusColor(
+                                appointment.status
+                              )}`,
+                              boxShadow: "none",
+                            }}
+                          >
+                            <ListItem>
+                              <ListItemAvatar>
+                                <Avatar
+                                  sx={{
+                                    bgcolor: `${colors.blueAccent[500]}20`,
+                                  }}
+                                >
+                                  <CalendarToday
+                                    sx={{ color: colors.blueAccent[500] }}
+                                  />
+                                </Avatar>
+                              </ListItemAvatar>
+                              <ListItemText
+                                primary={
+                                  <Typography sx={{ fontWeight: 600 }}>
+                                    {format(
+                                      new Date(appointment.appointment_date),
+                                      "PPPP p"
+                                    )}
+                                  </Typography>
+                                }
+                                secondary={
+                                  <>
+                                    <Typography
+                                      component="span"
+                                      display="block"
+                                    >
+                                      Dr. {appointment.doctor?.user?.first_name}{" "}
+                                      {appointment.doctor?.user.last_name}
+                                    </Typography>
+                                    <Typography component="span">
+                                      {appointment.service?.name}
+                                    </Typography>
+                                  </>
+                                }
+                              />
+                              <Chip
+                                label={appointment.status}
+                                sx={{
+                                  bgcolor: `${getStatusColor(
+                                    appointment.status
+                                  )}20`,
+                                  color: getStatusColor(appointment.status),
+                                  fontWeight: 600,
+                                }}
+                              />
+                            </ListItem>
+                          </Card>
                         ))}
                     </List>
                   ) : (
-                    <Typography>No upcoming appointments</Typography>
+                    <Box
+                      display="flex"
+                      flexDirection="column"
+                      alignItems="center"
+                      p={3}
+                    >
+                      <CalendarToday
+                        sx={{ fontSize: 60, color: colors.grey[400], mb: 1 }}
+                      />
+                      <Typography color="textSecondary">
+                        No upcoming appointments
+                      </Typography>
+                    </Box>
                   )}
                 </CardContent>
               </Card>
             </Grid>
 
-            {/* HEALTH METRICS */}
+            {/* Health Metrics */}
             <Grid item xs={12} md={6}>
-              <Card>
+              <Card sx={{ boxShadow: 3 }}>
                 <CardContent>
-                  <Typography variant="h6" mb={2}>
+                  <Typography variant="h5" sx={{ fontWeight: 600, mb: 2 }}>
                     Health Metrics
                   </Typography>
+                  <Divider sx={{ mb: 2, bgcolor: colors.primary[700] }} />
                   <Grid container spacing={2}>
                     {dashboardData.healthMetrics &&
                       Object.entries(dashboardData.healthMetrics).map(
-                        ([metric, value]) => (
-                          <Grid item xs={6} key={metric}>
-                            <Card variant="outlined">
+                        ([metric, data]) => (
+                          <Grid item xs={12} sm={6} key={metric}>
+                            <Card
+                              variant="outlined"
+                              sx={{ borderColor: colors.primary[700] }}
+                            >
                               <CardContent>
-                                <Typography
-                                  variant="subtitle2"
-                                  color="textSecondary"
+                                <Box
+                                  display="flex"
+                                  justifyContent="space-between"
                                 >
-                                  {metric.replace(/_/g, " ").toUpperCase()}
-                                </Typography>
-                                <Typography variant="h5">
-                                  {value.value}
-                                  {value.unit && (
-                                    <span
-                                      style={{
-                                        fontSize: "0.8rem",
-                                        marginLeft: "4px",
-                                      }}
+                                  <Box>
+                                    <Typography
+                                      variant="subtitle1"
+                                      sx={{ fontWeight: 600 }}
                                     >
-                                      {value.unit}
-                                    </span>
-                                  )}
-                                </Typography>
-                                {value.trend && (
-                                  <Typography
-                                    variant="caption"
-                                    color={
-                                      value.trend === "up" ? "error" : "success"
-                                    }
-                                  >
-                                    {value.trend === "up" ? "↑" : "↓"}{" "}
-                                    {value.change}
-                                  </Typography>
+                                      {metric.replace(/_/g, " ")}
+                                    </Typography>
+                                    <Typography
+                                      variant="h4"
+                                      sx={{ fontWeight: 700 }}
+                                    >
+                                      {data.value}
+                                      <Typography
+                                        component="span"
+                                        sx={{
+                                          fontSize: "0.8rem",
+                                          ml: "4px",
+                                          color: colors.grey[400],
+                                        }}
+                                      >
+                                        {data.unit}
+                                      </Typography>
+                                    </Typography>
+                                  </Box>
+                                  <Box>
+                                    {data.trend && renderTrendIcon(data.trend)}
+                                  </Box>
+                                </Box>
+                                {data.trend && (
+                                  <Box mt={1}>
+                                    <LinearProgress
+                                      variant="determinate"
+                                      value={data.trend === "up" ? 75 : 25}
+                                      sx={{
+                                        height: 6,
+                                        borderRadius: 3,
+                                        bgcolor: colors.primary[700],
+                                        "& .MuiLinearProgress-bar": {
+                                          bgcolor:
+                                            data.trend === "up"
+                                              ? colors.redAccent[500]
+                                              : colors.greenAccent[500],
+                                        },
+                                      }}
+                                    />
+                                    <Typography
+                                      variant="caption"
+                                      sx={{ fontWeight: 600 }}
+                                    >
+                                      {data.trend === "up" ? "↑" : "↓"}{" "}
+                                      {data.change} {data.unit} from last visit
+                                    </Typography>
+                                  </Box>
                                 )}
                               </CardContent>
                             </Card>
@@ -275,9 +468,9 @@ const UserDashboard = () => {
               </Card>
             </Grid>
 
-            {/* ACTIVE PRESCRIPTIONS */}
+            {/* Active Prescriptions */}
             <Grid item xs={12} md={6}>
-              <Card>
+              <Card sx={{ boxShadow: 3 }}>
                 <CardContent>
                   <Box
                     display="flex"
@@ -285,18 +478,38 @@ const UserDashboard = () => {
                     alignItems="center"
                     mb={2}
                   >
-                    <Typography variant="h6">Active Prescriptions</Typography>
-                    <Button size="small">View All</Button>
+                    <Typography variant="h5" sx={{ fontWeight: 600 }}>
+                      Active Prescriptions
+                    </Typography>
+                    <Button
+                      size="small"
+                      sx={{
+                        color: colors.blueAccent[500],
+                        textTransform: "none",
+                        fontWeight: 600,
+                      }}
+                    >
+                      View All
+                    </Button>
                   </Box>
+                  <Divider sx={{ mb: 2, bgcolor: colors.primary[700] }} />
                   {dashboardData.activePrescriptions.length > 0 ? (
                     <TableContainer>
                       <Table size="small">
                         <TableHead>
                           <TableRow>
-                            <TableCell>Medication</TableCell>
-                            <TableCell>Dosage</TableCell>
-                            <TableCell>Refills</TableCell>
-                            <TableCell>Status</TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>
+                              Medication
+                            </TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>
+                              Dosage
+                            </TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>
+                              Refills
+                            </TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>
+                              Status
+                            </TableCell>
                           </TableRow>
                         </TableHead>
                         <TableBody>
@@ -304,20 +517,60 @@ const UserDashboard = () => {
                             .slice(0, 3)
                             .map((prescription) => (
                               <TableRow key={prescription.id}>
-                                <TableCell>{prescription.medication}</TableCell>
+                                <TableCell>
+                                  <Box display="flex" alignItems="center">
+                                    <Medication
+                                      sx={{
+                                        color: colors.greenAccent[500],
+                                        mr: 1,
+                                      }}
+                                    />
+                                    {prescription.medication}
+                                  </Box>
+                                </TableCell>
                                 <TableCell>{prescription.dosage}</TableCell>
                                 <TableCell>
-                                  {prescription.refills_left}
+                                  <Box display="flex" alignItems="center">
+                                    <Box
+                                      sx={{
+                                        width: "100%",
+                                        maxWidth: "60px",
+                                        bgcolor: colors.primary[700],
+                                        borderRadius: "4px",
+                                      }}
+                                    >
+                                      <LinearProgress
+                                        variant="determinate"
+                                        value={
+                                          (prescription.refills_left / 5) * 100
+                                        }
+                                        sx={{
+                                          height: 8,
+                                          bgcolor: colors.primary[600],
+                                          "& .MuiLinearProgress-bar": {
+                                            bgcolor: colors.greenAccent[500],
+                                          },
+                                        }}
+                                      />
+                                    </Box>
+                                    <Typography sx={{ ml: 1 }}>
+                                      {prescription.refills_left}
+                                    </Typography>
+                                  </Box>
                                 </TableCell>
                                 <TableCell>
                                   <Chip
                                     label={prescription.status}
                                     size="small"
-                                    color={
-                                      prescription.status === "active"
-                                        ? "success"
-                                        : "default"
-                                    }
+                                    sx={{
+                                      bgcolor: `${getStatusColor(
+                                        prescription.status
+                                      )}20`,
+                                      color: getStatusColor(
+                                        prescription.status
+                                      ),
+                                      fontWeight: 600,
+                                    }}
                                   />
                                 </TableCell>
                               </TableRow>
@@ -326,15 +579,27 @@ const UserDashboard = () => {
                       </Table>
                     </TableContainer>
                   ) : (
-                    <Typography>No active prescriptions</Typography>
+                    <Box
+                      display="flex"
+                      flexDirection="column"
+                      alignItems="center"
+                      p={3}
+                    >
+                      <Medication
+                        sx={{ fontSize: 60, color: colors.grey[400], mb: 1 }}
+                      />
+                      <Typography color="textSecondary">
+                        No active prescriptions
+                      </Typography>
+                    </Box>
                   )}
                 </CardContent>
               </Card>
             </Grid>
 
-            {/* PAYMENT HISTORY */}
+            {/* Payment History */}
             <Grid item xs={12} md={6}>
-              <Card>
+              <Card sx={{ boxShadow: 3 }}>
                 <CardContent>
                   <Box
                     display="flex"
@@ -342,57 +607,108 @@ const UserDashboard = () => {
                     alignItems="center"
                     mb={2}
                   >
-                    <Typography variant="h6">Recent Payments</Typography>
-                    <Button size="small">View All</Button>
+                    <Typography variant="h5" sx={{ fontWeight: 600 }}>
+                      Payment History
+                    </Typography>
+                    <Button
+                      size="small"
+                      sx={{
+                        color: colors.blueAccent[500],
+                        textTransform: "none",
+                        fontWeight: 600,
+                      }}
+                    >
+                      View All
+                    </Button>
                   </Box>
+                  <Divider sx={{ mb: 2, bgcolor: colors.primary[700] }} />
                   {dashboardData.paymentHistory.length > 0 ? (
-                    <List>
+                    <List sx={{ p: 0 }}>
                       {dashboardData.paymentHistory
                         .slice(0, 3)
                         .map((payment) => (
-                          <ListItem key={payment.id}>
-                            <ListItemAvatar>
-                              <Avatar
+                          <Card
+                            key={payment.id}
+                            sx={{
+                              mb: 2,
+                              bgcolor: colors.primary[700],
+                              boxShadow: "none",
+                            }}
+                          >
+                            <ListItem>
+                              <ListItemAvatar>
+                                <Avatar
+                                  sx={{
+                                    bgcolor: `${getStatusColor(
+                                      payment.payment_status
+                                    )}20`,
+                                    color: getStatusColor(
+                                      payment.payment_status
+                                    ),
+                                  }}
+                                >
+                                  <Receipt />
+                                </Avatar>
+                              </ListItemAvatar>
+                              <ListItemText
+                                primary={
+                                  <Typography sx={{ fontWeight: 600 }}>
+                                    KES {payment.amount}
+                                  </Typography>
+                                }
+                                secondary={
+                                  <>
+                                    <Typography
+                                      component="span"
+                                      display="block"
+                                    >
+                                      {payment.service?.name}
+                                    </Typography>
+                                    <Typography component="span">
+                                      {format(
+                                        new Date(payment.payment_date),
+                                        "PP"
+                                      )}
+                                    </Typography>
+                                  </>
+                                }
+                              />
+                              <Chip
+                                label={payment.payment_status}
                                 sx={{
-                                  bgcolor:
-                                    payment.payment_status === "completed"
-                                      ? colors.greenAccent[500]
-                                      : colors.redAccent[500],
+                                  bgcolor: `${getStatusColor(
+                                    payment.payment_status
+                                  )}20`,
+                                  color: getStatusColor(payment.payment_status),
+                                  fontWeight: 600,
                                 }}
-                              >
-                                <Receipt />
-                              </Avatar>
-                            </ListItemAvatar>
-                            <ListItemText
-                              primary={`KES ${payment.amount}`}
-                              secondary={`${payment.service?.name} - ${format(
-                                new Date(payment.payment_date),
-                                "PP"
-                              )}`}
-                            />
-                            <Chip
-                              label={payment.payment_status}
-                              color={
-                                payment.payment_status === "completed"
-                                  ? "success"
-                                  : payment.payment_status === "pending"
-                                  ? "warning"
-                                  : "error"
-                              }
-                            />
-                          </ListItem>
+                              />
+                            </ListItem>
+                          </Card>
                         ))}
                     </List>
                   ) : (
-                    <Typography>No payment history</Typography>
+                    <Box
+                      display="flex"
+                      flexDirection="column"
+                      alignItems="center"
+                      p={3}
+                    >
+                      <Receipt
+                        sx={{ fontSize: 60, color: colors.grey[400], mb: 1 }}
+                      />
+                      <Typography color="textSecondary">
+                        No payment history
+                      </Typography>
+                    </Box>
                   )}
                 </CardContent>
               </Card>
             </Grid>
 
-            {/* MEDICAL RECORDS */}
+            {/* Medical Records */}
             <Grid item xs={12}>
-              <Card>
+              <Card sx={{ boxShadow: 3 }}>
                 <CardContent>
                   <Box
                     display="flex"
@@ -400,19 +716,39 @@ const UserDashboard = () => {
                     alignItems="center"
                     mb={2}
                   >
-                    <Typography variant="h6">Recent Medical Records</Typography>
-                    <Button size="small">View All</Button>
+                    <Typography variant="h5" sx={{ fontWeight: 600 }}>
+                      Recent Medical Records
+                    </Typography>
+                    <Button
+                      size="medium"
+                      sx={{
+                        color: colors.blueAccent[500],
+                        textTransform: "none",
+                        fontWeight: 600,
+                      }}
+                    >
+                      View All
+                    </Button>
                   </Box>
+                  <Divider sx={{ mb: 2, bgcolor: colors.primary[700] }} />
                   {dashboardData.recentMedicalRecords.length > 0 ? (
-                    <TableContainer component={Paper}>
+                    <TableContainer
+                      component={Paper}
+                      sx={{ bgcolor: colors.primary[700] }}
+                    >
                       <Table>
                         <TableHead>
                           <TableRow>
-                            <TableCell>Date</TableCell>
-                            <TableCell>Doctor</TableCell>
-                            <TableCell>Diagnosis</TableCell>
-                            <TableCell>Treatment</TableCell>
-                            <TableCell>Actions</TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>Date</TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>
+                              Doctor
+                            </TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>
+                              Diagnosis
+                            </TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>
+                              Actions
+                            </TableCell>
                           </TableRow>
                         </TableHead>
                         <TableBody>
@@ -424,19 +760,33 @@ const UserDashboard = () => {
                                   {format(new Date(record.created_at), "PP")}
                                 </TableCell>
                                 <TableCell>
-                                  Dr. {record.doctor?.user?.name}
+                                  <Box display="flex" alignItems="center">
+                                    <Avatar
+                                      sx={{
+                                        width: 30,
+                                        height: 30,
+                                        mr: 1,
+                                        bgcolor: colors.blueAccent[500],
+                                      }}
+                                    >
+                                      {record.doctor?.user?.name?.charAt(0)}
+                                    </Avatar>
+                                    Dr. {record.doctor?.user?.name}
+                                  </Box>
                                 </TableCell>
-                                <TableCell>
+                                <TableCell sx={{ fontWeight: 500 }}>
                                   {record.diagnosis || "N/A"}
                                 </TableCell>
                                 <TableCell>
-                                  {record.treatment_plan
-                                    ? record.treatment_plan.substring(0, 50) +
-                                      "..."
-                                    : "N/A"}
-                                </TableCell>
-                                <TableCell>
-                                  <Button size="small">View Details</Button>
+                                  <Button
+                                    size="small"
+                                    sx={{
+                                      color: colors.blueAccent[500],
+                                      fontWeight: 600,
+                                    }}
+                                  >
+                                    View Details
+                                  </Button>
                                 </TableCell>
                               </TableRow>
                             ))}
@@ -444,7 +794,19 @@ const UserDashboard = () => {
                       </Table>
                     </TableContainer>
                   ) : (
-                    <Typography>No medical records found</Typography>
+                    <Box
+                      display="flex"
+                      flexDirection="column"
+                      alignItems="center"
+                      p={3}
+                    >
+                      <MedicalServices
+                        sx={{ fontSize: 60, color: colors.grey[400], mb: 1 }}
+                      />
+                      <Typography color="textSecondary">
+                        No medical records found
+                      </Typography>
+                    </Box>
                   )}
                 </CardContent>
               </Card>

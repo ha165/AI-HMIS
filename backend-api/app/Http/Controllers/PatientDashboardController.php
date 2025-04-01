@@ -18,7 +18,7 @@ class PatientDashboardController extends Controller
 
         return response()->json([
             'patient' => $patient,
-            'upcomingAppointments' => Appointments::with(['doctor.user', 'service'])
+            'upcomingAppointments' => Appointments::with(['doctor.user', 'services'])
                 ->where('patient_id', $patient->id)
                 ->where('status', '!=', 'Completed')
                 ->where('appointment_date', '>=', now())
