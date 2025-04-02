@@ -26,6 +26,7 @@ use App\Http\Controllers\{
 // Public authentication routes
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
+Route::get('/dashboard/stats', [DashBoardController::class, 'getDashboardStats']);
 Route::post('/payments/mpesa-callback', [PaymentsController::class, 'mpesaCallback']);
 // **Protected Routes
 Route::middleware(['auth:sanctum'])->group(function () {
@@ -58,8 +59,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/payments/mpesa', [PaymentsController::class, 'initiateMpesaPayment']);
     Route::get('/patient-dashboard', [PatientDashboardController::class, 'index']);
     Route::get('/doctor-dashboard', [DoctorDashboardController::class, 'index']);
-
-    Route::get('/dashboard/stats', [DashBoardController::class, 'getDashboardStats']);
     Route::middleware(['admin'])->group(function () {
         Route::put('/users/{user}', [PatientsController::class, 'update']);
         Route::delete('/users/{user}', [PatientsController::class, 'destroy']);

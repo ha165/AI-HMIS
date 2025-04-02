@@ -43,17 +43,22 @@ const Dashboard = () => {
     const fetchDashboardData = async () => {
       try {
         setLoading(true);
-        const response = fetchWrapper("/dashboard/stats");
-        setDashboardData(response.data);
+        const response = await fetchWrapper("/dashboard/stats");
+        if (response) {
+          setDashboardData(response);
+        } else {
+          setDashboardData(defaultDashboardData);
+        }
         setError(null);
       } catch (err) {
         console.error("Error fetching dashboard data:", err);
         setError("Failed to load dashboard data");
+        setDashboardData(defaultDashboardData);
       } finally {
         setLoading(false);
       }
     };
-
+  
     fetchDashboardData();
   }, []);
 

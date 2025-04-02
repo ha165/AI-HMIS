@@ -302,7 +302,7 @@ const Sidebar = () => {
                 selected={selected}
                 setSelected={setSelected}
               />
-              {user?.role == "admin" && (
+              {user?.role == "addmin" && (
                 <>
                   <Item
                     title="FAQ Page"
