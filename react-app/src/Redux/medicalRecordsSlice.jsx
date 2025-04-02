@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import fetchWrapper from '../Context/fetchwrapper'; // Adjust the path as necessary
+import fetchWrapper from '../Context/fetchwrapper'; 
 
 export const fetchMedicalRecords = createAsyncThunk('medicalRecords/fetchMedicalRecords', async () => {
   const data = await fetchWrapper("/medical-records");

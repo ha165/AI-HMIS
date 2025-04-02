@@ -206,6 +206,13 @@ const Sidebar = () => {
                     setSelected={setSelected}
                   />
                   <Item
+                    title="Manage Service"
+                    to="/service"
+                    icon={<PeopleOutlinedIcon />}
+                    selected={selected}
+                    setSelected={setSelected}
+                  />
+                  <Item
                     title="Manage Doctors"
                     to="/doctors"
                     icon={<GroupIcon />}

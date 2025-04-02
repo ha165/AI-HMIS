@@ -114,8 +114,8 @@ const MedicalRecords = () => {
 
   const columns = [
     { field: "id", headerName: "ID", width: 90 },
-    { field: "patient_name", headerName: "Patient ID", flex: 1 },
-    { field: "doctor_name", headerName: "Doctor ID", flex: 1 },
+    { field: "patient_name", headerName: "Patient Name", flex: 1 },
+    { field: "doctor_name", headerName: "Doctor Name", flex: 1 },
     { field: "diagnosis", headerName: "Diagnosis", flex: 1 },
     { field: "status", headerName: "Status", flex: 1 },
     { field: "created_at", headerName: "Created At", flex: 1 },
@@ -168,16 +168,18 @@ const MedicalRecords = () => {
         <Topbar />
         <Box m="20px">
           <Header title="Medical Records" subtitle="Managing medical records" />
-          <Box display="flex" justifyContent="flex-end" mb={2}>
-            <Button
-              component={Link}
-              to="/add-medicalrecords"
-              variant="contained"
-              color="success"
-            >
-              Add New Record
-            </Button>
-          </Box>
+          {(userRole === "doctor" || userRole === "admin") && (
+            <Box display="flex" justifyContent="flex-end" mb={2}>
+              <Button
+                component={Link}
+                to="/add-medicalrecords"
+                variant="contained"
+                color="success"
+              >
+                Add New Record
+              </Button>
+            </Box>
+          )}
           <Box
             m="40px 0 0 0"
             height="75vh"

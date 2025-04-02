@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Box,
@@ -10,6 +10,12 @@ import {
   CircularProgress,
   Avatar,
   IconButton,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Chip,
+  OutlinedInput,
 } from "@mui/material";
 import { tokens } from "../../../themes";
 import Header from "../../Components/Header";
@@ -18,6 +24,17 @@ import Topbar from "../../Scenes/global/TopBar";
 import PhotoCamera from "@mui/icons-material/PhotoCamera";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+
+const ITEM_HEIGHT = 48;
+const ITEM_PADDING_TOP = 8;
+const MenuProps = {
+  PaperProps: {
+    style: {
+      maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
+      width: 250,
+    },
+  },
+};
 
 const AddDoctor = () => {
   const theme = useTheme();
@@ -33,10 +50,40 @@ const AddDoctor = () => {
     license_number: "",
     password: "",
     profile_photo: null,
+    services: [],
   });
+  const [servicesList, setServicesList] = useState([]);
   const [previewImage, setPreviewImage] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [fetchingServices, setFetchingServices] = useState(false);
   const [errors, setErrors] = useState({});
+
+  useEffect(() => {
+    const fetchServices = async () => {
+      try {
+        setFetchingServices(true);
+        const response = await fetch("/api/services", {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch services");
+        }
+
+        const data = await response.json();
+        setServicesList(data);
+      } catch (error) {
+        toast.error("Error loading services");
+        console.error("Fetch services error:", error);
+      } finally {
+        setFetchingServices(false);
+      }
+    };
+
+    fetchServices();
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -48,6 +95,16 @@ const AddDoctor = () => {
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: "" }));
     }
+  };
+
+  const handleServiceChange = (event) => {
+    const {
+      target: { value },
+    } = event;
+    setFormData((prev) => ({
+      ...prev,
+      services: typeof value === "string" ? value.split(",") : value,
+    }));
   };
 
   const handleImageChange = (e) => {
@@ -92,16 +149,17 @@ const AddDoctor = () => {
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
+
     if (!validateForm()) {
       toast.error("Please fix the errors in the form");
       return;
     }
-  
+
     setLoading(true);
-  
+
     const formDataToSend = new FormData();
     formDataToSend.append("first_name", formData.first_name);
     formDataToSend.append("last_name", formData.last_name);
@@ -111,11 +169,16 @@ const AddDoctor = () => {
     formDataToSend.append("specialization", formData.specialization);
     formDataToSend.append("license_number", formData.license_number);
     formDataToSend.append("password", formData.password);
-    
+
+    // Append each service individually
+    formData.services.forEach((serviceId) => {
+      formDataToSend.append("services[]", serviceId);
+    });
+
     if (formData.profile_photo) {
       formDataToSend.append("profile_photo", formData.profile_photo);
     }
-  
+
     try {
       const res = await fetch("/api/doctors", {
         method: "POST",
@@ -124,12 +187,12 @@ const AddDoctor = () => {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
       });
-  
+
       if (!res.ok) {
         const errorData = await res.json();
         throw errorData.errors || new Error("Failed to add doctor");
       }
-  
+
       const data = await res.json();
       toast.success("Doctor added successfully");
       navigate("/doctors");
@@ -145,6 +208,7 @@ const AddDoctor = () => {
       setLoading(false);
     }
   };
+
   return (
     <Box display="flex" height="100vh">
       <Sidebar />
@@ -320,6 +384,55 @@ const AddDoctor = () => {
                   required
                 />
               </Grid>
+
+              {/* Services Selection */}
+              <Grid item xs={12}>
+                <FormControl fullWidth>
+                  <InputLabel id="services-label">Services</InputLabel>
+                  <Select
+                    labelId="services-label"
+                    id="services-select"
+                    multiple
+                    value={formData.services}
+                    onChange={handleServiceChange}
+                    input={<OutlinedInput label="Services" />}
+                    renderValue={(selected) => (
+                      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                        {selected.map((value) => {
+                          const service = servicesList.find(
+                            (s) => s.id === value
+                          );
+                          return (
+                            <Chip
+                              key={value}
+                              label={service ? service.name : value}
+                              sx={{
+                                backgroundColor: colors.blueAccent[500],
+                                color: "white",
+                              }}
+                            />
+                          );
+                        })}
+                      </Box>
+                    )}
+                    MenuProps={MenuProps}
+                    disabled={fetchingServices}
+                  >
+                    {fetchingServices ? (
+                      <MenuItem disabled>
+                        <CircularProgress size={24} />
+                      </MenuItem>
+                    ) : (
+                      servicesList.map((service) => (
+                        <MenuItem key={service.id} value={service.id}>
+                          {service.name} - {service.duration_minutes} mins
+                        </MenuItem>
+                      ))
+                    )}
+                  </Select>
+                </FormControl>
+              </Grid>
+
               <Grid item xs={12}>
                 <Box display="flex" justifyContent="flex-end" gap={2} mt={3}>
                   <Button
@@ -335,7 +448,7 @@ const AddDoctor = () => {
                   <Button
                     type="submit"
                     variant="contained"
-                    disabled={loading}
+                    disabled={loading || fetchingServices}
                     sx={{
                       backgroundColor: colors.greenAccent[500],
                       "&:hover": {

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Doctor;
+use App\Models\Service;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -15,22 +16,37 @@ class DoctorsController extends Controller
      */
     public function index()
     {
-        $doctors = Doctor::with('user')->get();
+        $doctors = Doctor::with(['user', 'services'])->get();
 
-        $formatdata = $doctors->map(function ($doctors) {
+        $formatdata = $doctors->map(function ($doctor) {
             return [
-                "id" => $doctors->id,
-                "first_name" => $doctors->user->first_name,
-                "last_name" => $doctors->user->last_name,
-                "email" => $doctors->user->email,
-                "phone" => $doctors->user->phone,
-                "specialization" => $doctors->specialization,
-                "address" => $doctors->address,
-                "license_number" => $doctors->license_number
+                "id" => $doctor->id,
+                "first_name" => $doctor->user->first_name,
+                "last_name" => $doctor->user->last_name,
+                "email" => $doctor->user->email,
+                "phone" => $doctor->user->phone,
+                "specialization" => $doctor->specialization,
+                "address" => $doctor->address,
+                "license_number" => $doctor->license_number,
+                "services" => $doctor->services->map(function ($service) {
+                    return [
+                        'id' => $service->id,
+                        'name' => $service->name,
+                        'description' => $service->description,
+                        'price' => $service->price,
+                        'duration_minutes' => $service->duration_minutes
+                    ];
+                })
             ];
         });
 
         return response()->json($formatdata);
+    }
+
+    public function create()
+    {
+        $services = Service::all();
+        return response()->json(['services' => $services]);
     }
 
     public function store(Request $request)
@@ -45,6 +61,8 @@ class DoctorsController extends Controller
             'address' => 'nullable|string',
             'specialization' => 'required|string',
             'license_number' => 'required|string|unique:doctors,license_number',
+            'services' => 'nullable|array',
+            'services.*' => 'exists:services,id'
         ]);
 
         // Handle profile photo upload
@@ -72,25 +90,39 @@ class DoctorsController extends Controller
             'license_number' => $validatedData['license_number'],
         ]);
 
+        // Attach services if provided
+        if (!empty($validatedData['services'])) {
+            $doctor->services()->attach($validatedData['services']);
+        }
+
         return response()->json([
             'success' => true,
             'message' => 'Doctor created successfully',
-            'doctor' => $doctor,
+            'doctor' => $doctor->load('services'),
         ], 201);
     }
 
-
-    /**
-     * Display the specified resource.
-     */
     public function show(string $id)
     {
-        //
+        $doctor = Doctor::with(['user', 'services'])->find($id);
+
+        if (!$doctor) {
+            return response()->json(['message' => 'Doctor not found'], 404);
+        }
+
+        return response()->json([
+            'id' => $doctor->id,
+            'first_name' => $doctor->user->first_name,
+            'last_name' => $doctor->user->last_name,
+            'email' => $doctor->user->email,
+            'phone' => $doctor->user->phone,
+            'specialization' => $doctor->specialization,
+            'address' => $doctor->address,
+            'license_number' => $doctor->license_number,
+            'services' => $doctor->services
+        ]);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request, string $id)
     {
         $doctor = Doctor::find($id);
@@ -103,11 +135,13 @@ class DoctorsController extends Controller
         $validatedData = $request->validate([
             'first_name' => 'required|string',
             'last_name' => 'required|string',
-            'email' => 'required|email',
+            'email' => 'required|email|unique:users,email,' . $doctor->user_id,
             'phone' => 'required|string',
             'specialization' => 'nullable|string',
             'address' => 'nullable|string',
-            'license_number' => 'nullable|string'
+            'license_number' => 'nullable|string|unique:doctors,license_number,' . $doctor->id,
+            'services' => 'nullable|array',
+            'services.*' => 'exists:services,id'
         ]);
 
         // Update the related User model
@@ -125,6 +159,11 @@ class DoctorsController extends Controller
             'license_number' => $validatedData['license_number']
         ]);
 
+        // Sync services if provided
+        if (isset($validatedData['services'])) {
+            $doctor->services()->sync($validatedData['services']);
+        }
+
         // Return updated doctor data
         return response()->json([
             'id' => $doctor->id,
@@ -134,13 +173,11 @@ class DoctorsController extends Controller
             'phone' => $doctor->user->phone,
             'specialization' => $doctor->specialization,
             'address' => $doctor->address,
-            'license_number' => $doctor->license_number
+            'license_number' => $doctor->license_number,
+            'services' => $doctor->services
         ]);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(string $id)
     {
         $doctor = Doctor::find($id);
@@ -153,15 +190,11 @@ class DoctorsController extends Controller
         }
 
         try {
-            // Get the user associated with the doctor
+
+            $doctor->services()->detach();
             $user = $doctor->user;
-
-            // Delete the doctor record first
             $doctor->delete();
-
-            // Then delete the associated user
             $user->delete();
-
             return response()->json([
                 'success' => true,
                 'message' => 'Doctor and associated user deleted successfully'
@@ -175,6 +208,7 @@ class DoctorsController extends Controller
             ], 500);
         }
     }
+
     public function getAvailableDoctors(Request $request)
     {
         $specialization = $request->query('specialization');
@@ -189,6 +223,7 @@ class DoctorsController extends Controller
 
         return response()->json($doctors);
     }
+
     public function getSchedules(Doctor $doctor)
     {
         return $doctor->schedules()
@@ -204,5 +239,4 @@ class DoctorsController extends Controller
                 ];
             });
     }
-
 }

@@ -11,7 +11,9 @@ const CompleteRegistration = lazy(() =>
   import("./Pages/Patients/complete-Registration")
 );
 const Home = lazy(() => import("./Pages/Home"));
-const DoctorDashboard = lazy(() => import("./Scenes/dashboard/DoctorDashboard"));
+const DoctorDashboard = lazy(() =>
+  import("./Scenes/dashboard/DoctorDashboard")
+);
 const Register = lazy(() => import("./Pages/Auth/Register"));
 const Login = lazy(() => import("./Pages/Auth/Login"));
 const Appointments = lazy(() => import("./Pages/Appointmets/Appointments"));
@@ -29,6 +31,8 @@ const Line = lazy(() => import("./Scenes/line"));
 const Pie = lazy(() => import("./Scenes/pie"));
 const Geography = lazy(() => import("./Scenes/geography"));
 const Doctors = lazy(() => import("./Pages/Doctor/Doctor"));
+const Service = lazy(() => import("./Pages/Service/Service"));
+const AddService = lazy(() => import("./Pages/Service/addservice"));
 const AddPatient = lazy(() => import("./Pages/Patients/addPatient"));
 const AddDoctor = lazy(() => import("./Pages/Doctor/addDoctor"));
 const AddMedicalRecords = lazy(() =>
@@ -72,6 +76,9 @@ const AppRoutes = ({ user }) => {
       <Route path="/add-medicalrecords" element={<AddMedicalRecords />} />
       <Route path="/medical-records" element={<Medical />} />
       <Route path="/add-doctor" element={<AddDoctor />} />
+      <Route path="/add-patient" element={<AddPatient />} />
+      <Route path="/service" element={<Service />} />
+      <Route path="/add-service" element={<AddService />} />
       <Route
         path="/appointments/:appointmentId/medical-record"
         element={<Medical />}
