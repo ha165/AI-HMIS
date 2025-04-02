@@ -91,49 +91,37 @@ const AddDoctor = () => {
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     if (!validateForm()) return;
 
     setLoading(true);
+    setErrors({});
+
+    const formDataToSend = new FormData();
+    Object.keys(formData).forEach((key) => {
+      formDataToSend.append(key, formData[key]);
+    });
+
     try {
-      const formDataToSend = new FormData();
-      formDataToSend.append("first_name", formData.first_name);
-      formDataToSend.append("last_name", formData.last_name);
-      formDataToSend.append("email", formData.email);
-      formDataToSend.append("phone", formData.phone);
-      formDataToSend.append("address", formData.address);
-      formDataToSend.append("specialization", formData.specialization);
-      formDataToSend.append("license_number", formData.license_number);
-      formDataToSend.append("password", formData.password);
-
-      if (formData.profile_photo) {
-        formDataToSend.append("profile_photo", formData.profile_photo);
-      }
-
       const response = await fetchWrapper("/doctors", {
         method: "POST",
         body: formDataToSend,
       });
 
-      if (response) {
-        navigate("/doctors", {
-          state: { success: "Doctor added successfully!" },
-        });
+      if (response.success) {
+        navigate("/doctors");
+      } else {
+        setErrors(response.errors || { general: "Something went wrong" });
       }
     } catch (error) {
-      console.error("Error adding doctor:", error);
-      if (error.response) {
-        const apiErrors = await error.response.json();
-        setErrors(apiErrors.errors || { general: "Failed to add doctor" });
-      } else {
-        setErrors({ general: "Network error. Please try again." });
-      }
+      setErrors({ general: "Failed to submit. Please try again.", error });
     } finally {
       setLoading(false);
     }
   };
+
   return (
     <Box display="flex" height="100vh">
       <Sidebar />

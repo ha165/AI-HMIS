@@ -6,6 +6,7 @@ use App\Models\Doctor;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 
 class DoctorsController extends Controller
 {
@@ -32,73 +33,49 @@ class DoctorsController extends Controller
         return response()->json($formatdata);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        // Validate incoming data
-        $validatedData = $request->validate([
+        $request->validate([
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
+            'password' => 'required|min:8',
+            'profile_photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'phone' => 'required|string|max:20',
-            'password' => 'required|string|min:8',
-            'specialization' => 'required|string|max:255',
             'address' => 'nullable|string',
+            'specialization' => 'required|string',
             'license_number' => 'required|string|unique:doctors,license_number',
-            'profile_photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
         ]);
 
-        try {
-            // Start transaction in case of failures
-            \DB::beginTransaction();
 
-            // Create the User first
-            $user = User::create([
-                'first_name' => $validatedData['first_name'],
-                'last_name' => $validatedData['last_name'],
-                'email' => $validatedData['email'],
-                'phone' => $validatedData['phone'],
-                'password' => bcrypt($validatedData['password']),
-                'role' => 'doctor',
-                'profile_photo' => $this->handleProfilePhoto($request)
-            ]);
-
-            // Create the Doctor profile
-            $doctor = Doctor::create([
-                'user_id' => $user->id,
-                'specialization' => $validatedData['specialization'],
-                'address' => $validatedData['address'],
-                'license_number' => $validatedData['license_number']
-            ]);
-
-            // Commit transaction
-            \DB::commit();
-
-            // Return the created doctor with user data
-            return response()->json([
-                'id' => $doctor->id,
-                'first_name' => $user->first_name,
-                'last_name' => $user->last_name,
-                'email' => $user->email,
-                'phone' => $user->phone,
-                'specialization' => $doctor->specialization,
-                'address' => $doctor->address,
-                'license_number' => $doctor->license_number,
-                'profile_photo' => $user->profile_photo
-            ], 201);
-
-        } catch (\Exception $e) {
-            // Rollback transaction on error
-            \DB::rollBack();
-
-            return response()->json([
-                'message' => 'Failed to create doctor',
-                'error' => $e->getMessage()
-            ], 500);
+        $profilePhotoPath = null;
+        if ($request->hasFile('profile_photo')) {
+            $profilePhotoPath = $request->file('profile_photo')->store('profile_photos', 'public');
         }
+
+        $user = User::create([
+            'first_name' => $request->first_name,
+            'last_name' => $request->last_name,
+            'email' => $request->email,
+            'password' => Hash::make($request->password),
+            'profile_photo' => $profilePhotoPath,
+        ]);
+
+        $doctor = Doctor::create([
+            'user_id' => $user->id,
+            'phone' => $request->phone,
+            'address' => $request->address,
+            'specialization' => $request->specialization,
+            'license_number' => $request->license_number,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Doctor created successfully',
+            'doctor' => $doctor,
+        ], 201);
     }
+
 
     /**
      * Handle profile photo upload
