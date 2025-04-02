@@ -18,6 +18,7 @@ use App\Http\Controllers\{
     PatientsController,
     ServiceController,
     DoctorDashboardController,
+    DashBoardController,
     SchedulesController,
     UserController
 };
@@ -58,6 +59,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/patient-dashboard', [PatientDashboardController::class, 'index']);
     Route::get('/doctor-dashboard', [DoctorDashboardController::class, 'index']);
 
+    Route::get('/dashboard/stats', [DashBoardController::class, 'getDashboardStats']);
     Route::middleware(['admin'])->group(function () {
         Route::put('/users/{user}', [PatientsController::class, 'update']);
         Route::delete('/users/{user}', [PatientsController::class, 'destroy']);

@@ -1,6 +1,5 @@
 import { Box, Button, IconButton, Typography, useTheme } from "@mui/material";
 import { tokens } from "../../../themes";
-import { mockTransactions } from "../../data/mockData";
 import DownloadOutlinedIcon from "@mui/icons-material/DownloadOutlined";
 import EmailIcon from "@mui/icons-material/Email";
 import PointOfSaleIcon from "@mui/icons-material/PointOfSale";
@@ -14,10 +13,75 @@ import StatBox from "../../components/StatBox";
 import ProgressCircle from "../../components/ProgressCircle";
 import Sidebar from "../global/SideBar";
 import Topbar from "../global/TopBar";
+import { useEffect, useState } from "react";
+import CircularProgress from "@mui/material/CircularProgress";
+import fetchWrapper from "../../Context/fetchwrapper";
+
+// Default data structure to prevent undefined errors
+const defaultDashboardData = {
+  stats: {
+    total_patients: 0,
+    total_appointments: 0,
+    today_appointments: 0,
+    completed_payments: 0,
+    monthly_revenue: 0,
+  },
+  recent_appointments: [],
+  revenue_data: Array(12).fill({ month: "", revenue: 0 }),
+  appointment_statuses: {},
+  payment_statuses: {},
+};
 
 const Dashboard = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
+  const [dashboardData, setDashboardData] = useState(defaultDashboardData);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true);
+        const response = fetchWrapper("/dashboard/stats");
+        setDashboardData(response.data);
+        setError(null);
+      } catch (err) {
+        console.error("Error fetching dashboard data:", err);
+        setError("Failed to load dashboard data");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
+
+  if (loading) {
+    return (
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        height="100vh"
+      >
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        height="100vh"
+      >
+        <Typography color="error">{error}</Typography>
+      </Box>
+    );
+  }
 
   return (
     <Box display="flex">
@@ -55,7 +119,7 @@ const Dashboard = () => {
           gridAutoRows="140px"
           gap="20px"
         >
-          {/* ROW 1 */}
+          {/* ROW 1 - STATS */}
           <Box
             gridColumn="span 3"
             backgroundColor={colors.primary[400]}
@@ -64,12 +128,12 @@ const Dashboard = () => {
             justifyContent="center"
           >
             <StatBox
-              title="12,361"
-              subtitle="Emails Sent"
-              progress="0.75"
+              title={dashboardData.stats.total_patients}
+              subtitle="Total Patients"
+              progress={0.75}
               increase="+14%"
               icon={
-                <EmailIcon
+                <PersonAddIcon
                   sx={{ color: colors.greenAccent[600], fontSize: "26px" }}
                 />
               }
@@ -83,9 +147,9 @@ const Dashboard = () => {
             justifyContent="center"
           >
             <StatBox
-              title="431,225"
-              subtitle="Sales Obtained"
-              progress="0.50"
+              title={dashboardData.stats.total_appointments}
+              subtitle="Total Appointments"
+              progress={0.5}
               increase="+21%"
               icon={
                 <PointOfSaleIcon
@@ -102,12 +166,12 @@ const Dashboard = () => {
             justifyContent="center"
           >
             <StatBox
-              title="32,441"
-              subtitle="New Clients"
-              progress="0.30"
+              title={dashboardData.stats.today_appointments}
+              subtitle="Today's Appointments"
+              progress={0.3}
               increase="+5%"
               icon={
-                <PersonAddIcon
+                <EmailIcon
                   sx={{ color: colors.greenAccent[600], fontSize: "26px" }}
                 />
               }
@@ -121,9 +185,9 @@ const Dashboard = () => {
             justifyContent="center"
           >
             <StatBox
-              title="1,325,134"
-              subtitle="Traffic Received"
-              progress="0.80"
+              title={`$${dashboardData.stats.monthly_revenue}`}
+              subtitle="Monthly Revenue"
+              progress={0.8}
               increase="+43%"
               icon={
                 <TrafficIcon
@@ -133,7 +197,7 @@ const Dashboard = () => {
             />
           </Box>
 
-          {/* ROW 2 */}
+          {/* ROW 2 - REVENUE AND APPOINTMENTS */}
           <Box
             gridColumn="span 8"
             gridRow="span 2"
@@ -159,7 +223,7 @@ const Dashboard = () => {
                   fontWeight="bold"
                   color={colors.greenAccent[500]}
                 >
-                  $59,342.32
+                  ${dashboardData.stats.monthly_revenue}
                 </Typography>
               </Box>
               <Box>
@@ -171,7 +235,11 @@ const Dashboard = () => {
               </Box>
             </Box>
             <Box height="250px" m="-20px 0 0 0">
-              <LineChart isDashboard={true} />
+              <LineChart
+                isDashboard={true}
+                data={dashboardData.revenue_data.map((item) => item.revenue)}
+                labels={dashboardData.revenue_data.map((item) => item.month)}
+              />
             </Box>
           </Box>
           <Box
@@ -188,13 +256,17 @@ const Dashboard = () => {
               colors={colors.grey[100]}
               p="15px"
             >
-              <Typography color={colors.grey[100]} variant="h5" fontWeight="600">
-                Recent Transactions
+              <Typography
+                color={colors.grey[100]}
+                variant="h5"
+                fontWeight="600"
+              >
+                Recent Appointments
               </Typography>
             </Box>
-            {mockTransactions.map((transaction, i) => (
+            {dashboardData.recent_appointments.map((appointment, i) => (
               <Box
-                key={`${transaction.txId}-${i}`}
+                key={`${appointment.id}-${i}`}
                 display="flex"
                 justifyContent="space-between"
                 alignItems="center"
@@ -207,25 +279,25 @@ const Dashboard = () => {
                     variant="h5"
                     fontWeight="600"
                   >
-                    {transaction.txId}
+                    {appointment.patient_name}
                   </Typography>
                   <Typography color={colors.grey[100]}>
-                    {transaction.user}
+                    Dr. {appointment.doctor_name}
                   </Typography>
                 </Box>
-                <Box color={colors.grey[100]}>{transaction.date}</Box>
+                <Box color={colors.grey[100]}>{appointment.date}</Box>
                 <Box
                   backgroundColor={colors.greenAccent[500]}
                   p="5px 10px"
                   borderRadius="4px"
                 >
-                  ${transaction.cost}
+                  {appointment.status}
                 </Box>
               </Box>
             ))}
           </Box>
 
-          {/* ROW 3 */}
+          {/* ROW 3 - CHARTS */}
           <Box
             gridColumn="span 4"
             gridRow="span 2"
@@ -233,7 +305,7 @@ const Dashboard = () => {
             p="30px"
           >
             <Typography variant="h5" fontWeight="600">
-              Campaign
+              Appointment Status
             </Typography>
             <Box
               display="flex"
@@ -241,15 +313,18 @@ const Dashboard = () => {
               alignItems="center"
               mt="25px"
             >
-              <ProgressCircle size="125" />
+              <ProgressCircle
+                size="125"
+                data={Object.values(dashboardData.appointment_statuses)}
+                labels={Object.keys(dashboardData.appointment_statuses)}
+              />
               <Typography
                 variant="h5"
                 color={colors.greenAccent[500]}
                 sx={{ mt: "15px" }}
               >
-                $48,352 revenue generated
+                {dashboardData.stats.total_appointments} total appointments
               </Typography>
-              <Typography>Includes extra misc expenditures and costs</Typography>
             </Box>
           </Box>
           <Box
@@ -262,10 +337,14 @@ const Dashboard = () => {
               fontWeight="600"
               sx={{ padding: "30px 30px 0 30px" }}
             >
-              Sales Quantity
+              Payment Status
             </Typography>
             <Box height="250px" mt="-20px">
-              <BarChart isDashboard={true} />
+              <BarChart
+                isDashboard={true}
+                data={Object.values(dashboardData.payment_statuses)}
+                labels={Object.keys(dashboardData.payment_statuses)}
+              />
             </Box>
           </Box>
           <Box
@@ -279,7 +358,7 @@ const Dashboard = () => {
               fontWeight="600"
               sx={{ marginBottom: "15px" }}
             >
-              Geography Based Traffic
+              Revenue Sources
             </Typography>
             <Box height="200px">
               <GeographyChart isDashboard={true} />
