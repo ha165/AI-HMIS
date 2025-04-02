@@ -21,20 +21,28 @@ class ServiceController extends Controller
      */
     public function store(Request $request)
     {
+        // Validate the incoming request
         $request->validate([
             'name' => 'required|string|unique:services,name',
             'description' => 'nullable|string',
-            'department_id' => 'nullable|exists:departments,id',
-            'specialization' => 'required|string',
             'price' => 'required|numeric|min:0',
-            'status' => 'required|in:active,inactive',
+            'duration_minutes' => 'required|numeric|min:0',
+            'is_active' => 'boolean',
         ]);
+        $service = Service::create($request->only([
+            'name',
+            'description',
+            'price',
+            'duration_minutes',
+            'is_active',
+        ]));
 
-        $service = Service::create($request->all());
 
-        return response()->json(['message' => 'Service created successfully', 'service' => $service], 201);
+        return response()->json([
+            'message' => 'Service created successfully',
+            'service' => $service,
+        ], 201);
     }
-
     /**
      * Get a single service.
      */
