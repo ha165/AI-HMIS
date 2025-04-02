@@ -14,7 +14,7 @@ import fetchWrapper from "../../Context/fetchwrapper";
 import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
 import ScheduleIcon from "@mui/icons-material/Schedule";
 import PeopleOutlinedIcon from "@mui/icons-material/PeopleOutlined";
-import MedicalInformationIcon from '@mui/icons-material/MedicalInformation';
+import MedicalInformationIcon from "@mui/icons-material/MedicalInformation";
 import ContactsOutlinedIcon from "@mui/icons-material/ContactsOutlined";
 import BusinessIcon from "@mui/icons-material/Business";
 import ReceiptOutlinedIcon from "@mui/icons-material/ReceiptOutlined";
@@ -143,9 +143,10 @@ const Sidebar = () => {
               <Box mb="25px">
                 <Box display="flex" justifyContent="center" alignItems="center">
                   {loading ? (
-                    <Typography variant="h6" color={colors.grey[100]}>
-                   
-                    </Typography>
+                    <Typography
+                      variant="h6"
+                      color={colors.grey[100]}
+                    ></Typography>
                   ) : (
                     <img
                       alt="profile-user"
@@ -188,16 +189,15 @@ const Sidebar = () => {
                 selected={selected}
                 setSelected={setSelected}
               />
-
-              <Typography
-                variant="h6"
-                color={colors.grey[300]}
-                sx={{ m: "15px 0 5px 20px" }}
-              >
-                Data
-              </Typography>
-              {user?.role !== "patient" && (
+              {user?.role == "admin" && (
                 <>
+                  <Typography
+                    variant="h6"
+                    color={colors.grey[300]}
+                    sx={{ m: "15px 0 5px 20px" }}
+                  >
+                    Data
+                  </Typography>
                   <Item
                     title="Manage Patients"
                     to="/patients"
@@ -214,19 +214,12 @@ const Sidebar = () => {
                   />
                 </>
               )}
-              {user?.role !== "patient" && (
+              {user?.role == "admin" && (
                 <>
                   <Item
                     title="Contacts Information"
                     to="/contacts"
                     icon={<ContactsOutlinedIcon />}
-                    selected={selected}
-                    setSelected={setSelected}
-                  />
-                  <Item
-                    title="Invoices Balances"
-                    to="/invoices"
-                    icon={<ReceiptOutlinedIcon />}
                     selected={selected}
                     setSelected={setSelected}
                   />
@@ -239,6 +232,27 @@ const Sidebar = () => {
                   />
                 </>
               )}
+              <Typography
+                variant="h6"
+                color={colors.grey[300]}
+                sx={{ m: "15px 0 5px 20px" }}
+              >
+                AI
+              </Typography>
+              <Item
+                title="Diagnosis"
+                to="/diagnosis-chat"
+                icon={<ChatIcon />}
+                selected={selected}
+                setSelected={setSelected}
+              />
+              <Item
+                title="Image Analyzer"
+                to="/image-analyzer"
+                icon={<ChatIcon />}
+                selected={selected}
+                setSelected={setSelected}
+              />
               <Typography
                 variant="h6"
                 color={colors.grey[300]}
@@ -281,33 +295,12 @@ const Sidebar = () => {
                 selected={selected}
                 setSelected={setSelected}
               />
-              {user?.role !== "patient" && (
+              {user?.role == "admin" && (
                 <>
                   <Item
                     title="FAQ Page"
                     to="/faq"
                     icon={<HelpOutlineOutlinedIcon />}
-                    selected={selected}
-                    setSelected={setSelected}
-                  />
-                  <Typography
-                    variant="h6"
-                    color={colors.grey[300]}
-                    sx={{ m: "15px 0 5px 20px" }}
-                  >
-                    AI
-                  </Typography>
-                  <Item
-                    title="Diagnosis"
-                    to="/diagnosis-chat"
-                    icon={<ChatIcon />}
-                    selected={selected}
-                    setSelected={setSelected}
-                  />
-                  <Item
-                    title="Image Analyzer"
-                    to="/image-analyzer"
-                    icon={<ChatIcon />}
                     selected={selected}
                     setSelected={setSelected}
                   />
@@ -350,22 +343,20 @@ const Sidebar = () => {
                     selected={selected}
                     setSelected={setSelected}
                   />
-                 
                 </>
-                
               )}
-               <MenuItem
-                    onClick={handleLogout}
-                    icon={<LogoutIcon />}
-                    style={{
-                      color: colors.grey[100],
-                      marginTop: "20px",
-                      borderTop: `1px solid ${colors.grey[700]}`,
-                      paddingTop: "15px",
-                    }}
-                  >
-                    <Typography>Logout</Typography>
-                  </MenuItem>
+              <MenuItem
+                onClick={handleLogout}
+                icon={<LogoutIcon />}
+                style={{
+                  color: colors.grey[100],
+                  marginTop: "20px",
+                  borderTop: `1px solid ${colors.grey[700]}`,
+                  paddingTop: "15px",
+                }}
+              >
+                <Typography>Logout</Typography>
+              </MenuItem>
             </Box>
           </Menu>
         )}
