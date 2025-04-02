@@ -107,6 +107,7 @@ const AddDoctor = () => {
       formDataToSend.append("specialization", formData.specialization);
       formDataToSend.append("license_number", formData.license_number);
       formDataToSend.append("password", formData.password);
+
       if (formData.profile_photo) {
         formDataToSend.append("profile_photo", formData.profile_photo);
       }
@@ -133,7 +134,6 @@ const AddDoctor = () => {
       setLoading(false);
     }
   };
-
   return (
     <Box display="flex" height="100vh">
       <Sidebar />
