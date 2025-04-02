@@ -13,14 +13,11 @@ class DoctorDashboardController extends Controller
 {
     public function index(Request $request)
     {
-        // First ensure the user is actually a doctor
         $user = $request->user();
 
         if (!$user) {
             return response()->json(['error' => 'Unauthorized'], 401);
         }
-
-        // Find doctor by user_id with proper error handling
         $doctor = Doctor::with('user')
             ->where('user_id', $user->id)
             ->first();
@@ -31,8 +28,6 @@ class DoctorDashboardController extends Controller
                 'message' => 'The authenticated user does not have a doctor profile'
             ], 404);
         }
-
-        // Get today's date at start of day
         $todayStart = Carbon::today()->startOfDay();
         $todayEnd = Carbon::today()->endOfDay();
 
@@ -53,7 +48,7 @@ class DoctorDashboardController extends Controller
             'id' => $doctor->id,
             'user' => [
                 'id' => $doctor->user->id,
-                'name' => $doctor->user->name,
+                'first_name' => $doctor->user->first_name,
                 'email' => $doctor->user->email
             ],
             'specialization' => $doctor->specialization,
@@ -74,7 +69,7 @@ class DoctorDashboardController extends Controller
                     'appointment_date' => $appointment->appointment_date,
                     'patient' => $appointment->patient ? [
                         'id' => $appointment->patient->id,
-                        'name' => $appointment->patient->user->name
+                        'name' => $appointment->patient->user->first_name
                     ] : null,
                     'service' => $appointment->service,
                     'reason' => $appointment->reason,
@@ -97,7 +92,7 @@ class DoctorDashboardController extends Controller
                     'appointment_date' => $appointment->appointment_date,
                     'patient' => $appointment->patient ? [
                         'id' => $appointment->patient->id,
-                        'name' => $appointment->patient->user->name
+                        'name' => $appointment->patient->user->first_name
                     ] : null,
                     'service' => $appointment->service,
                     'status' => $appointment->status
@@ -118,7 +113,7 @@ class DoctorDashboardController extends Controller
                 return [
                     'id' => $patient->id,
                     'name' => $patient->user->name,
-                    'avatar' => null, // Add avatar logic if available
+                    'avatar' => null,
                     'lastVisit' => $patient->appointments->max('appointment_date'),
                     'isNew' => $patient->created_at > now()->subDays(30),
                     'status' => 'Active'
@@ -128,7 +123,6 @@ class DoctorDashboardController extends Controller
 
     private function getPendingTasks($doctorId)
     {
-        // Replace with actual task query logic
         return [
             [
                 'id' => 1,
@@ -149,7 +143,6 @@ class DoctorDashboardController extends Controller
 
     private function getPerformanceMetrics($doctorId)
     {
-        // Replace with actual metrics calculation
         return [
             'satisfaction' => rand(85, 98),
             'appointmentsCompleted' => rand(30, 50),
