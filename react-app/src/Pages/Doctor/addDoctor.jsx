@@ -15,8 +15,9 @@ import { tokens } from "../../../themes";
 import Header from "../../Components/Header";
 import Sidebar from "../../Scenes/global/SideBar";
 import Topbar from "../../Scenes/global/TopBar";
-import fetchWrapper from "../../Context/fetchWrapper";
 import PhotoCamera from "@mui/icons-material/PhotoCamera";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const AddDoctor = () => {
   const theme = useTheme();
@@ -93,35 +94,57 @@ const AddDoctor = () => {
   };
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (!validateForm()) return;
-
+  
+    if (!validateForm()) {
+      toast.error("Please fix the errors in the form");
+      return;
+    }
+  
     setLoading(true);
-    setErrors({});
-
+  
     const formDataToSend = new FormData();
-    Object.keys(formData).forEach((key) => {
-      formDataToSend.append(key, formData[key]);
-    });
-
+    formDataToSend.append("first_name", formData.first_name);
+    formDataToSend.append("last_name", formData.last_name);
+    formDataToSend.append("email", formData.email);
+    formDataToSend.append("phone", formData.phone);
+    formDataToSend.append("address", formData.address);
+    formDataToSend.append("specialization", formData.specialization);
+    formDataToSend.append("license_number", formData.license_number);
+    formDataToSend.append("password", formData.password);
+    
+    if (formData.profile_photo) {
+      formDataToSend.append("profile_photo", formData.profile_photo);
+    }
+  
     try {
-      const response = await fetchWrapper("/doctors", {
+      const res = await fetch("/api/doctors", {
         method: "POST",
         body: formDataToSend,
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
       });
-
-      if (response.success) {
-        navigate("/doctors");
-      } else {
-        setErrors(response.errors || { general: "Something went wrong" });
+  
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw errorData.errors || new Error("Failed to add doctor");
       }
+  
+      const data = await res.json();
+      toast.success("Doctor added successfully");
+      navigate("/doctors");
     } catch (error) {
-      setErrors({ general: "Failed to submit. Please try again.", error });
+      if (error.errors) {
+        setErrors(error.errors);
+        toast.error("Failed to add doctor. Please check your inputs.");
+      } else {
+        toast.error("Something went wrong. Please try again.");
+        console.error("Add doctor error:", error);
+      }
     } finally {
       setLoading(false);
     }
   };
-
   return (
     <Box display="flex" height="100vh">
       <Sidebar />

@@ -16,6 +16,8 @@ import { tokens } from "../../../themes";
 import Sidebar from "../../Scenes/global/SideBar";
 import Topbar from "../../Scenes/global/TopBar";
 import Header from "../../Components/Header";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const Doctors = () => {
   const theme = useTheme();
@@ -41,6 +43,7 @@ const Doctors = () => {
         }
       } catch (error) {
         console.error("Error fetching doctors:", error);
+        toast.error("Error fetching doctors");
       } finally {
         if (isMounted) {
           setLoading(false);
@@ -88,8 +91,10 @@ const Doctors = () => {
       if (response.ok) {
         setdoctors(doctors.filter((doctor) => doctor.id !== deletingdoctorId));
       }
+      toast.success("Doctor deleted successfully");
     } catch (error) {
       console.error("Error deleting doctor", error);
+      toast.error("Error deleting doctor");
     } finally {
       setOpenDeleteModal(false);
       setDeletingdoctorId(null);
@@ -118,8 +123,10 @@ const Doctors = () => {
         );
         setOpenEditModal(false);
       }
+      toast.success("Doctor updated successfully");
     } catch (error) {
       console.error("Error updating doctor", error);
+      toast.error("Error updating doctor");
     }
   };
 

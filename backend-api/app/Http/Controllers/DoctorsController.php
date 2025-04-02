@@ -35,7 +35,7 @@ class DoctorsController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
+        $validatedData = $request->validate([
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
@@ -47,26 +47,29 @@ class DoctorsController extends Controller
             'license_number' => 'required|string|unique:doctors,license_number',
         ]);
 
-
-        $profilePhotoPath = null;
+        // Handle profile photo upload
         if ($request->hasFile('profile_photo')) {
-            $profilePhotoPath = $request->file('profile_photo')->store('profile_photos', 'public');
+            $validatedData['profile_photo'] = $request->file('profile_photo')->store('profile_photos', 'public');
+        } else {
+            $validatedData['profile_photo'] = null;
         }
 
+        // Create the User
         $user = User::create([
-            'first_name' => $request->first_name,
-            'last_name' => $request->last_name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'profile_photo' => $profilePhotoPath,
+            'first_name' => $validatedData['first_name'],
+            'last_name' => $validatedData['last_name'],
+            'phone' => $validatedData['phone'],
+            'role' => 'doctor',
+            'email' => $validatedData['email'],
+            'password' => Hash::make($validatedData['password']),
+            'profile_photo' => $validatedData['profile_photo'],
         ]);
 
         $doctor = Doctor::create([
             'user_id' => $user->id,
-            'phone' => $request->phone,
-            'address' => $request->address,
-            'specialization' => $request->specialization,
-            'license_number' => $request->license_number,
+            'address' => $validatedData['address'],
+            'specialization' => $validatedData['specialization'],
+            'license_number' => $validatedData['license_number'],
         ]);
 
         return response()->json([
@@ -76,22 +79,6 @@ class DoctorsController extends Controller
         ], 201);
     }
 
-
-    /**
-     * Handle profile photo upload
-     */
-    private function handleProfilePhoto(Request $request)
-    {
-        if (!$request->hasFile('profile_photo')) {
-            return null;
-        }
-
-        $file = $request->file('profile_photo');
-        $filename = time() . '_' . $file->getClientOriginalName();
-        $path = $file->storeAs('profile_photos', $filename, 'public');
-
-        return '/storage/' . $path;
-    }
 
     /**
      * Display the specified resource.
@@ -156,7 +143,37 @@ class DoctorsController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        $doctor = Doctor::find($id);
+
+        if (!$doctor) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Doctor not found'
+            ], 404);
+        }
+
+        try {
+            // Get the user associated with the doctor
+            $user = $doctor->user;
+
+            // Delete the doctor record first
+            $doctor->delete();
+
+            // Then delete the associated user
+            $user->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Doctor and associated user deleted successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete doctor',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
     public function getAvailableDoctors(Request $request)
     {
