@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class Medical_Records extends Model
+class Medical_records extends Model
 {
     use HasFactory, SoftDeletes;
     protected $table = 'medical_records';
