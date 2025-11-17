@@ -46,7 +46,7 @@ class UserFactory extends Factory
             static::$adminCreated = true;
             return [
                 'role' => 'admin',
-                'email' => 'admin@example.com', // Fixed email for easy access
+                'email' => 'admin@example.com', 
                 'first_name' => 'System',
                 'last_name' => 'Admin',
             ];
