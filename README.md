@@ -10,6 +10,7 @@
 6. Generate application key: `php artisan key:generate`
 7. Install Laravel Passport: `php artisan passport:install` and set in the .env file the CLIENT_ID and CLIENT_SECRET that you receive
 8. Add your own mailtrap.io credentials in MAIL_USERNAME and MAIL_PASSWORD in the .env file
+9. Allow photo storage using `php artisan storage:link`
 
 ## React Frontend Installation
 
