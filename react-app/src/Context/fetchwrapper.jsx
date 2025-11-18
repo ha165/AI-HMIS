@@ -28,7 +28,8 @@ const fetchWrapper = async (url, options = {}) => {
   };
 
   try {
-    const response = await fetch(`/api${url}`, options);
+    const response = await fetch(`http://localhost:8000/api${url}`, options);
+    const data = await response.json();
 
     if (response.status === 401) {
       console.log("Token expired. Logging out...");
@@ -36,15 +37,10 @@ const fetchWrapper = async (url, options = {}) => {
       return;
     }
 
-    if (!response.ok) {
-      throw new Error(`Request failed with status ${response.status}`);
-    }
-
-    return response.json();
+    return data;
   } catch (error) {
     console.error("Fetch error:", error);
     throw error;
   }
 };
-
 export default fetchWrapper;

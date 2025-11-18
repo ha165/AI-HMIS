@@ -6,7 +6,7 @@ use App\Services\OpenAIService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 
-class AIChatController extends Controller
+class AiDiagnosticsController extends Controller
 {
     protected OpenAIService $openAI;
 
