@@ -40,7 +40,7 @@ const ImageAnalyzer = () => {
       // Create a promise for each image
       const promises = selectedImages.map(async (image) => {
         const formData = new FormData();
-        formData.append("image", image);
+        formData.append("file", image);
 
         // fetchWrapper automatically attaches auth headers and returns parsed JSON
         const result = await fetchWrapper("/image-analyzer", {

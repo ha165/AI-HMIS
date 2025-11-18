@@ -2,6 +2,8 @@
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+
 use Illuminate\Support\Facades\Http;
 use Illuminate\Http\JsonResponse;
 use App\Http\Controllers\{
@@ -44,8 +46,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
     ]);
 
     Route::get('/user', fn(Request $request) => $request->user());
-     Route::post('/diagnosis-chat', [AiDiagnosticsController::class, 'chat']);
-     Route::get('/chat-history', [AiDiagnosticsController::class, 'history']);
+    Route::post('/diagnosis-chat', [AiDiagnosticsController::class, 'chat']);
+    Route::get('/chat-history', [AiDiagnosticsController::class, 'history']);
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/user/role', [UserController::class, 'getRole']);
     Route::post("/complete-registration", [PatientsController::class, "completeRegistration"]);
@@ -63,24 +65,54 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::put('/users/{user}', [PatientsController::class, 'update']);
         Route::delete('/users/{user}', [PatientsController::class, 'destroy']);
     });
-    Route::post('/image-analyzer', function (Request $request) {
-        $image = $request->file('image');
 
-        if (!$image) {
-            return response()->json(['error' => 'No image provided'], 400);
-        }
+Route::post('/image-analyzer', function (Request $request) {
+    if (!$request->hasFile('file')) {
+        Log::error("No file received in request");
+        return response()->json(['error' => 'No image provided'], 400);
+    }
 
-        $apiKey = env('HF_TOKEN');
-        $endpoint = 'https://api-inference.huggingface.co/models/microsoft/resnet-50';
+    $image = $request->file('file');
+    $apiKey = env('HF_TOKEN');
 
+    Log::info("Image received", [
+        'name' => $image->getClientOriginalName(),
+        'size' => $image->getSize(),
+    ]);
+    $endpoint = "https://router.huggingface.co/hf-inference/models/google/vit-base-patch16-224";
+
+    try {
         $response = Http::withHeaders([
             'Authorization' => 'Bearer ' . $apiKey,
-            'Content-Type' => 'multipart/form-data',
-        ])->attach('image', file_get_contents($image->path()), $image->getClientOriginalName())
-            ->post($endpoint);
+        ])
+        ->attach('image', file_get_contents($image->path()), $image->getClientOriginalName())
+        ->post($endpoint);
+
+        Log::info("HF response status", ['status' => $response->status()]);
+        Log::info("HF response body", ['body' => $response->body()]);
+
+        if ($response->failed()) {
+            return response()->json([
+                'error' => 'HuggingFace API error',
+                'details' => $response->body()
+            ], 500);
+        }
 
         return response()->json(['analysis' => $response->json()]);
-    });
+
+    } catch (\Exception $e) {
+        Log::error("Image analyzer crashed", [
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ]);
+
+        return response()->json([
+            'error' => 'Server error',
+            'message' => $e->getMessage()
+        ], 500);
+    }
+});
+
 
     Route::middleware('auth:sanctum')->get('/payments/status/{payment}', [PaymentsController::class, 'checkPaymentStatus']);
 });
