@@ -70,7 +70,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
             return response()->json(['error' => 'No image provided'], 400);
         }
 
-        $apiKey = env('HUGGINGFACE_API_KEY');
+        $apiKey = env('HF_TOKEN');
         $endpoint = 'https://api-inference.huggingface.co/models/microsoft/resnet-50';
 
         $response = Http::withHeaders([
