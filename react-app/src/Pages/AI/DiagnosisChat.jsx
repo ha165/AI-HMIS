@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Box,
   TextField,
   IconButton,
   Typography,
   Paper,
+  CircularProgress,
   useTheme,
 } from "@mui/material";
 import SendIcon from "@mui/icons-material/Send";
@@ -23,33 +24,50 @@ const DiagnosisChat = () => {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // Load chat history on mount
+  useEffect(() => {
+    const loadHistory = async () => {
+      try {
+        const data = await fetchWrapper("/chat-history");
+        setMessages(
+          data.map((msg) => ({
+            sender: msg.role === "user" ? "user" : "bot",
+            text: msg.content,
+          }))
+        );
+      } catch (err) {
+        toast.error("Failed to load chat history");
+      }
+    };
+    loadHistory();
+  }, []);
+
   const sendMessage = async () => {
     if (!input.trim() || loading) return;
-    setLoading(true);
 
     const newMessage = { sender: "user", text: input };
-    setMessages((prev) => [...prev, newMessage]);
+    setMessages([...messages, newMessage]);
     setInput("");
+    setLoading(true);
 
     try {
-      const data = await fetchWrapper("/diagnosis-chat", {
+      const result = await fetchWrapper("/diagnosis-chat", {
         method: "POST",
         body: JSON.stringify({ message: input }),
       });
 
-      // Handle errors
-      if (data?.error) {
-        if (data.error.toLowerCase().includes("quota") || data.error.toLowerCase().includes("too many requests")) {
-          toast.warn("OpenAI quota exceeded. Please wait a few seconds before sending more messages.");
-        } else {
-          toast.error(data.error);
-        }
+      if (!result) throw new Error("No response from server");
+
+      // Handle rate-limit
+      if (result.status === 429) {
+        toast.error("Rate limit exceeded. Please wait a moment.");
         return;
       }
 
-      const botReply = { sender: "bot", text: data.response };
-      setMessages((prev) => [...prev, botReply]);
+      if (result.error) throw new Error(result.error);
 
+      const botReply = { sender: "bot", text: result.response };
+      setMessages((prev) => [...prev, newMessage, botReply]);
     } catch (error) {
       console.error("Error fetching AI response:", error);
       toast.error(error.message || "Something went wrong!");
@@ -57,22 +75,19 @@ const DiagnosisChat = () => {
       setLoading(false);
     }
   };
+
   return (
     <Box display="flex" height="100vh" bgcolor={colors.primary[900]}>
-      {/* Sidebar */}
       <Sidebar />
 
-      {/* Main Content */}
       <Box flex={1} display="flex" flexDirection="column">
-        {/* Topbar */}
         <Topbar />
 
-        {/* Chat Container */}
         <Box
           display="flex"
           flexDirection="column"
           justifyContent="space-between"
-          height="calc(100vh - 64px)" // Adjust for Topbar height
+          height="calc(100vh - 64px)"
           width="100%"
           p={2}
           component={Paper}
@@ -131,12 +146,16 @@ const DiagnosisChat = () => {
                   },
                 },
               }}
+              onKeyPress={(e) => {
+                if (e.key === "Enter") sendMessage();
+              }}
             />
             <IconButton
               onClick={sendMessage}
               sx={{ color: colors.blueAccent[500] }}
+              disabled={loading}
             >
-              <SendIcon />
+              {loading ? <CircularProgress size={24} /> : <SendIcon />}
             </IconButton>
           </Box>
         </Box>

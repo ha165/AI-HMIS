@@ -31,7 +31,6 @@ Route::post('/payments/mpesa-callback', [PaymentsController::class, 'mpesaCallba
 // **Protected Routes
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::resources([
-        
         'appointments' => AppointmentsController::class,
         'billing' => BillingController::class,
         'departments' => DepartmentsController::class,
@@ -45,6 +44,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     ]);
 
     Route::get('/user', fn(Request $request) => $request->user());
+     Route::post('/diagnosis-chat', [AiDiagnosticsController::class, 'chat']);
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/user/role', [UserController::class, 'getRole']);
     Route::post("/complete-registration", [PatientsController::class, "completeRegistration"]);
@@ -62,8 +62,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::put('/users/{user}', [PatientsController::class, 'update']);
         Route::delete('/users/{user}', [PatientsController::class, 'destroy']);
     });
-
-    Route::post('/diagnosis-chat', [AiDiagnosticsController::class, 'chat']);
     Route::post('/image-analyzer', function (Request $request) {
         $image = $request->file('image');
 
