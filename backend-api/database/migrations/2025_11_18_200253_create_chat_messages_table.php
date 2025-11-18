@@ -13,6 +13,9 @@ return new class extends Migration
     {
         Schema::create('chat_messages', function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger('user_id');
+            $table->enum('role', ['user', 'assistant']);
+            $table->text('content');
             $table->timestamps();
         });
     }
