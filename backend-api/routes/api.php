@@ -45,6 +45,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     Route::get('/user', fn(Request $request) => $request->user());
      Route::post('/diagnosis-chat', [AiDiagnosticsController::class, 'chat']);
+     Route::get('/chat-history', [AiDiagnosticsController::class, 'history']);
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/user/role', [UserController::class, 'getRole']);
     Route::post("/complete-registration", [PatientsController::class, "completeRegistration"]);
