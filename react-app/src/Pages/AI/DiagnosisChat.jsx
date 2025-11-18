@@ -37,19 +37,19 @@ const DiagnosisChat = () => {
         body: JSON.stringify({ message: input }),
       });
 
-      // If data contains an error (e.g., 429), show toast
+      // Handle errors
       if (data?.error) {
         if (data.error.toLowerCase().includes("quota") || data.error.toLowerCase().includes("too many requests")) {
           toast.warn("OpenAI quota exceeded. Please wait a few seconds before sending more messages.");
         } else {
           toast.error(data.error);
         }
-        setLoading(false);
         return;
       }
 
       const botReply = { sender: "bot", text: data.response };
       setMessages((prev) => [...prev, botReply]);
+
     } catch (error) {
       console.error("Error fetching AI response:", error);
       toast.error(error.message || "Something went wrong!");
