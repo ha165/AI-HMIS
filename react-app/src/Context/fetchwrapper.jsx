@@ -1,6 +1,6 @@
 const logoutUser = async () => {
   try {
-    await fetch("/api/logout", {
+    await fetch("http://localhost:8000/api/logout", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -20,16 +20,25 @@ const logoutUser = async () => {
 const fetchWrapper = async (url, options = {}) => {
   const token = localStorage.getItem("token");
 
-  options.headers = {
-    ...options.headers,
-    Authorization: `Bearer ${token}`,
-    Accept: "application/json",
-    "Content-Type": "application/json",
-  };
+  // If body is FormData (file upload), don't set Content-Type
+  if (!(options.body instanceof FormData)) {
+    options.headers = {
+      ...options.headers,
+      Authorization: `Bearer ${token}`,
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    };
+  } else {
+    // For FormData, only attach Authorization and Accept
+    options.headers = {
+      ...options.headers,
+      Authorization: `Bearer ${token}`,
+      Accept: "application/json",
+    };
+  }
 
   try {
     const response = await fetch(`http://localhost:8000/api${url}`, options);
-    const data = await response.json();
 
     if (response.status === 401) {
       console.log("Token expired. Logging out...");
@@ -37,10 +46,17 @@ const fetchWrapper = async (url, options = {}) => {
       return;
     }
 
-    return data;
+    // Try to parse JSON, fallback to text
+    const contentType = response.headers.get("content-type");
+    if (contentType && contentType.includes("application/json")) {
+      return response.json();
+    } else {
+      return response.text();
+    }
   } catch (error) {
     console.error("Fetch error:", error);
     throw error;
   }
 };
+
 export default fetchWrapper;
