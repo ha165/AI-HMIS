@@ -34,7 +34,7 @@ class HuggingFaceService
             ]);
 
             // Log raw response
-            Log::info('Hugging Face Raw Response: ' . json_encode($response->json()));
+            // Log::info('Hugging Face Raw Response: ' . json_encode($response->json()));
 
             $data = $response->json();
 
