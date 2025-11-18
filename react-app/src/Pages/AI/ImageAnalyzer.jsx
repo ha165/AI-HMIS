@@ -1,14 +1,12 @@
 import { useState } from "react";
 import {
   Box,
-  TextField,
-  IconButton,
   Typography,
   Paper,
   useTheme,
   Button,
+  CircularProgress,
 } from "@mui/material";
-import SendIcon from "@mui/icons-material/Send";
 import Sidebar from "../../Scenes/global/SideBar";
 import Topbar from "../../Scenes/global/TopBar";
 import { tokens } from "../../../themes";
@@ -19,54 +17,63 @@ const ImageAnalyzer = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
 
-  const [selectedImage, setSelectedImage] = useState(null);
-  const [result, setResult] = useState("");
+  const [selectedImages, setSelectedImages] = useState([]);
+  const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
 
   const handleImageUpload = (event) => {
-    const file = event.target.files[0];
-    if (file) {
-      setSelectedImage(file);
-    }
+    const files = Array.from(event.target.files);
+    setSelectedImages(files);
   };
 
-  const analyzeImage = async () => {
-    if (!selectedImage) {
-      toast.warning("Please select an image first.");
+  const analyzeImages = async () => {
+    if (!selectedImages.length) {
+      toast.warning("Please select images first.");
       return;
     }
 
-    const formData = new FormData();
-    formData.append("image", selectedImage);
-
     setLoading(true);
+    setResults([]); // clear previous results
 
     try {
-      const response = await fetch("/api/image-analyzer", {
-        method: "POST",
-        body: formData,
-      });
+      const analysisResults = [];
 
-      const data = await response.json();
+      for (const image of selectedImages) {
+        const formData = new FormData();
+        formData.append("image", image);
 
-      if (!response.ok) {
-        throw new Error(data.error || "Analysis failed");
+        const response = await fetch("/api/image-analyzer", {
+          method: "POST",
+          body: formData,
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || "Analysis failed");
+        }
+
+        let formattedResult = "";
+        if (Array.isArray(data.analysis)) {
+          formattedResult = data.analysis
+            .map((item) => `${item.label}: ${item.score.toFixed(3)}`)
+            .join("\n");
+        } else if (typeof data.analysis === "object") {
+          formattedResult = JSON.stringify(data.analysis, null, 2);
+        } else {
+          formattedResult = data.analysis || "No analysis available";
+        }
+
+        analysisResults.push({
+          image,
+          result: formattedResult,
+        });
       }
-      let formattedResult = "";
-      if (typeof data.analysis === "string") {
-        formattedResult = data.analysis;
-      } else if (typeof data.analysis === "object") {
-        formattedResult = Object.entries(data.analysis)
-          .map(([key, value]) => `${key}: ${value}`)
-          .join("\n");
-      } else {
-        formattedResult = "Analysis complete, but no details available.";
-      }
 
-      setResult(formattedResult);
+      setResults(analysisResults);
       toast.success("AI Analysis Complete!");
     } catch (error) {
-      console.error("Error analyzing image:", error);
+      console.error("Error analyzing images:", error);
       toast.error(error.message);
     } finally {
       setLoading(false);
@@ -75,19 +82,14 @@ const ImageAnalyzer = () => {
 
   return (
     <Box display="flex" height="100vh" bgcolor={colors.primary[900]}>
-      {/* Sidebar */}
       <Sidebar />
-
-      {/* Main Content */}
       <Box flex={1} display="flex" flexDirection="column">
-        {/* Topbar */}
         <Topbar />
 
-        {/* Analyzer Container */}
         <Box
           display="flex"
           flexDirection="column"
-          justifyContent="space-between"
+          justifyContent="flex-start"
           height="calc(100vh - 64px)"
           width="100%"
           p={2}
@@ -100,48 +102,46 @@ const ImageAnalyzer = () => {
             <input
               type="file"
               accept="image/*"
+              multiple
               onChange={handleImageUpload}
               style={{ marginBottom: "10px" }}
             />
             <Button
               variant="contained"
-              onClick={analyzeImage}
+              onClick={analyzeImages}
               disabled={loading}
               sx={{ bgcolor: colors.blueAccent[500], color: "white" }}
             >
-              {loading ? "Analyzing..." : "Analyze Image"}
+              {loading ? <CircularProgress size={24} /> : "Analyze Images"}
             </Button>
           </Box>
 
-          {/* Display Selected Image */}
-          {selectedImage && (
-            <Box display="flex" justifyContent="center" p={2}>
-              <img
-                src={URL.createObjectURL(selectedImage)}
-                alt="Selected"
-                style={{
-                  maxWidth: "100%",
-                  maxHeight: "300px",
-                  borderRadius: "10px",
-                }}
-              />
-            </Box>
-          )}
-
-          {/* Display AI Analysis Result */}
-          <Box p={2}>
-            <Typography
-              variant="h6"
-              sx={{
-                backgroundColor: colors.greenAccent[700],
-                color: "white",
-                borderRadius: "10px",
-                p: 2,
-                whiteSpace: "pre-wrap", // Keep formatted JSON
-              }}
-            >
-              {result || "AI analysis result will appear here..."}
-            </Typography>
+          {/* Display Selected Images */}
+          <Box display="flex" flexWrap="wrap" gap={2} p={2}>
+            {selectedImages.map((image, index) => (
+              <Box key={index} display="flex" flexDirection="column" alignItems="center">
+                <img
+                  src={URL.createObjectURL(image)}
+                  alt={`Selected ${index}`}
+                  style={{ maxWidth: "200px", borderRadius: "10px" }}
+                />
+                {results[index] && (
+                  <Typography
+                    sx={{
+                      mt: 1,
+                      p: 1,
+                      bgcolor: colors.greenAccent[700],
+                      color: "white",
+                      borderRadius: "8px",
+                      whiteSpace: "pre-wrap",
+                      textAlign: "center",
+                    }}
+                  >
+                    {results[index].result}
+                  </Typography>
+                )}
+              </Box>
+            ))}
           </Box>
         </Box>
       </Box>
