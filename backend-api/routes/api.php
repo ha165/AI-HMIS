@@ -31,7 +31,7 @@ Route::post('/payments/mpesa-callback', [PaymentsController::class, 'mpesaCallba
 // **Protected Routes
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::resources([
-        'ai_diagnostics' => AiDiagnosticsController::class,
+        
         'appointments' => AppointmentsController::class,
         'billing' => BillingController::class,
         'departments' => DepartmentsController::class,
@@ -45,7 +45,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
     ]);
 
     Route::get('/user', fn(Request $request) => $request->user());
-
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/user/role', [UserController::class, 'getRole']);
     Route::post("/complete-registration", [PatientsController::class, "completeRegistration"]);
@@ -64,24 +63,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::delete('/users/{user}', [PatientsController::class, 'destroy']);
     });
 
-    Route::post('/diagnosis-chat', function (Request $request): JsonResponse {
-        $userMessage = $request->input('message');
-        $apiKey = env('OPENAI_API_KEY');
-
-        $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . $apiKey,
-            'Content-Type' => 'application/json',
-        ])->post('https://api.openai.com/v1/chat/completions', [
-                    'model' => 'gpt-3.5-turbo',
-                    'messages' => [['role' => 'user', 'content' => $userMessage]],
-                    'max_tokens' => 100,
-                ]);
-
-        return $response->successful()
-            ? response()->json(['response' => $response['choices'][0]['message']['content']])
-            : response()->json(['error' => $response->json()['error']['message'] ?? 'Failed to retrieve response'], $response->status());
-    });
-
+    Route::post('/diagnosis-chat', [AiDiagnosticsController::class, 'chat']);
     Route::post('/image-analyzer', function (Request $request) {
         $image = $request->file('image');
 

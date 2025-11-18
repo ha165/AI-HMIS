@@ -13,6 +13,7 @@ import Topbar from "../../Scenes/global/TopBar";
 import { tokens } from "../../../themes";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import fetchWrapper from "../../Context/fetchwrapper";
 
 const DiagnosisChat = () => {
   const theme = useTheme();
@@ -20,35 +21,42 @@ const DiagnosisChat = () => {
 
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const sendMessage = async () => {
-    if (!input.trim()) return;
+    if (!input.trim() || loading) return;
+    setLoading(true);
 
     const newMessage = { sender: "user", text: input };
-    setMessages([...messages, newMessage]);
+    setMessages((prev) => [...prev, newMessage]);
     setInput("");
 
     try {
-      const response = await fetch("/api/diagnosis-chat", {
+      const data = await fetchWrapper("/diagnosis-chat", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: input }),
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Something went wrong!");
+      // If data contains an error (e.g., 429), show toast
+      if (data?.error) {
+        if (data.error.toLowerCase().includes("quota") || data.error.toLowerCase().includes("too many requests")) {
+          toast.warn("OpenAI quota exceeded. Please wait a few seconds before sending more messages.");
+        } else {
+          toast.error(data.error);
+        }
+        setLoading(false);
+        return;
       }
 
       const botReply = { sender: "bot", text: data.response };
-      setMessages([...messages, newMessage, botReply]);
+      setMessages((prev) => [...prev, botReply]);
     } catch (error) {
       console.error("Error fetching AI response:", error);
-      toast.error(error.message); // Show error in Toastify
+      toast.error(error.message || "Something went wrong!");
+    } finally {
+      setLoading(false);
     }
   };
-
   return (
     <Box display="flex" height="100vh" bgcolor={colors.primary[900]}>
       {/* Sidebar */}
