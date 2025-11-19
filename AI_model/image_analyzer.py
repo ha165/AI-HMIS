@@ -9,8 +9,8 @@ from torch.utils.data import DataLoader, random_split
 # -----------------------------
 # 1️⃣ Paths and parameters
 # -----------------------------
-train_dir = "dataset/train"
-test_dir = "dataset/test"    
+train_dir = os.path.join(os.getcwd(), "datasets", "train")
+test_dir = os.path.join(os.getcwd(), "datasets", "test") 
 img_size = 128
 batch_size = 8
 epochs = 5
