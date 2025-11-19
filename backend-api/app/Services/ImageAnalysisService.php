@@ -15,49 +15,39 @@ class ImageAnalysisService
     }
 
     /**
-     * Analyze medical image using specialized models
+     * Analyze medical image using real radiology models
      */
     public function analyzeMedicalImage($imageFile): array
     {
         try {
             $imageContent = file_get_contents($imageFile->path());
-            $contentType = $this->getContentType($imageFile);
+            $contentType  = $this->getContentType($imageFile);
 
-            // Use a medical-specific model
-            $modelEndpoint = $this->getMedicalModelEndpoint($imageFile);
+            // Primary model (CheXNet)
+            $models = [
+                'https://router.huggingface.co/hf-inference/chrisjay/chest-xray-chexnet',
+                'https://router.huggingface.co/hf-inference/nzuwera/chest-x-ray-disease-classification',
+                'https://router.huggingface.co/hf-inference/aryahz/pneumonia-detection',
+            ];
 
-            Log::info("Using medical model endpoint: " . $modelEndpoint);
-            Log::info("Content-Type: " . $contentType);
 
-            // Send image as raw binary data with proper Content-Type
-            $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $this->apiKey,
-                'Content-Type' => $contentType,
-            ])
-                ->timeout(120)
-                ->withBody($imageContent, $contentType)
-                ->post($modelEndpoint);
 
-            Log::info('Medical Image Analysis Status: ' . $response->status());
+            $results = null;
 
-            if ($response->failed()) {
-                $errorBody = $response->body();
-                Log::error('Medical Image Analysis Error: ' . $errorBody);
-                return [
-                    'error' => 'Medical image analysis failed. Status: ' . $response->status(),
-                    'status' => $response->status()
-                ];
-            }
+            foreach ($models as $endpoint) {
+                $results = $this->queryModel($endpoint, $imageContent, $contentType);
 
-            $data = $response->json();
-
-            if (isset($data['error'])) {
-                return ['error' => $data['error'], 'status' => 500];
+                if ($results !== null) {
+                    return [
+                        'analysis' => $this->formatMedicalResults($results),
+                        'status' => 200
+                    ];
+                }
             }
 
             return [
-                'analysis' => $this->formatMedicalResults($data),
-                'status' => 200
+                'error' => 'All medical models failed to analyze the image.',
+                'status' => 500
             ];
         } catch (\Exception $e) {
             Log::error('Medical Image Analysis Exception: ' . $e->getMessage());
@@ -69,101 +59,135 @@ class ImageAnalysisService
     }
 
     /**
-     * Get proper content type for the image
+     * Send request to a HF model
+     */
+    private function queryModel(string $endpoint, string $imageContent, string $contentType)
+    {
+        try {
+            Log::info("Sending medical image to model: $endpoint");
+
+            $response = Http::withHeaders([
+                'Authorization' => 'Bearer ' . $this->apiKey,
+                'Content-Type' => $contentType
+            ])
+                ->timeout(120)
+                ->withBody($imageContent, $contentType)
+                ->post($endpoint);
+
+            if ($response->failed()) {
+                Log::warning("Model failed: $endpoint | Status: " . $response->status());
+                return null;
+            }
+
+            $data = $response->json();
+
+            Log::info("Model response received from: $endpoint");
+
+            return $data;
+        } catch (\Exception $e) {
+            Log::error("Model exception ($endpoint): " . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Determine correct content type
      */
     private function getContentType($imageFile): string
     {
-        $mimeType = $imageFile->getMimeType();
+        $mime = $imageFile->getMimeType();
 
-        $mimeMap = [
+        $map = [
             'image/png' => 'image/png',
             'image/jpeg' => 'image/jpeg',
             'image/jpg' => 'image/jpeg',
-            'image/gif' => 'image/gif',
             'image/webp' => 'image/webp',
             'image/tiff' => 'image/tiff',
             'image/bmp' => 'image/bmp',
         ];
 
-        return $mimeMap[$mimeType] ?? 'image/jpeg';
+        return $map[$mime] ?? 'image/jpeg';
     }
 
     /**
-     * Select appropriate medical model
-     */
-    private function getMedicalModelEndpoint($imageFile): string
-    {
-        // Using a general vision model that supports image classification
-        return 'https://router.huggingface.co/hf-inference/models/facebook/detr-resnet-50';
-
-        // Alternative medical models you can try:
-        // return 'https://router.huggingface.co/hf-inference/models/microsoft/resnet-50';
-        // return 'https://router.huggingface.co/hf-inference/models/facebook/detr-resnet-50';
-    }
-
-    /**
-     * Format medical results in a user-friendly way
+     * Format any model output into a unified medical structure
      */
     private function formatMedicalResults(array $data): array
     {
-        $formatted = [];
+        $results = [];
 
-        if (is_array($data)) {
+        // Format A: [{ label: "...", score: 0.85 }, ...]
+        if (isset($data[0]) && is_array($data[0]) && isset($data[0]['label'])) {
             foreach ($data as $item) {
-                if (isset($item['label']) && isset($item['score'])) {
-                    $formatted[] = [
-                        'condition' => $this->mapToMedicalTerm($item['label']),
-                        'confidence' => round($item['score'] * 100, 1),
-                        'interpretation' => $this->getMedicalInterpretation($item['label'], $item['score'])
-                    ];
-                }
+                $results[] = [
+                    'condition' => $this->mapToMedicalTerm($item['label']),
+                    'confidence' => round($item['score'] * 100, 1),
+                    'interpretation' => $this->getMedicalInterpretation($item['score']),
+                ];
             }
         }
 
-        // If no formatted results, create a generic response
-        if (empty($formatted)) {
-            $formatted[] = [
-                'condition' => 'Image Analysis Complete',
-                'confidence' => 0,
-                'interpretation' => 'AI model processed the image. Review results with healthcare professional.'
-            ];
+        // Format B: { "Pneumonia": 0.82, "Effusion": 0.20, ... }
+        elseif ($this->isAssocArray($data)) {
+            foreach ($data as $label => $score) {
+                if (!is_numeric($score)) continue;
+
+                $results[] = [
+                    'condition' => $this->mapToMedicalTerm($label),
+                    'confidence' => round($score * 100, 1),
+                    'interpretation' => $this->getMedicalInterpretation($score),
+                ];
+            }
         }
 
-        // Sort by confidence descending
-        usort($formatted, function ($a, $b) {
-            return $b['confidence'] <=> $a['confidence'];
-        });
+        // If still empty
+        if (empty($results)) {
+            return [[
+                'condition' => 'Unable to interpret image',
+                'confidence' => 0,
+                'interpretation' => 'AI could not extract meaningful medical features.'
+            ]];
+        }
 
-        return array_slice($formatted, 0, 5); // Return top 5 results
+        // Sort highest → lowest confidence
+        usort($results, fn($a, $b) => $b['confidence'] <=> $a['confidence']);
+
+        // Return only top 5
+        return array_slice($results, 0, 5);
     }
 
     /**
-     * Map model labels to medical terms
+     * Detect associative array
+     */
+    private function isAssocArray(array $arr): bool
+    {
+        return array_keys($arr) !== range(0, count($arr) - 1);
+    }
+
+    /**
+     * Map model label names to medical terms
      */
     private function mapToMedicalTerm(string $label): string
     {
         $mapping = [
-            'normal' => 'Normal Findings',
             'pneumonia' => 'Pneumonia',
-            'covid' => 'COVID-19',
-            'tuberculosis' => 'Tuberculosis',
-            'pneumothorax' => 'Pneumothorax',
-            'edema' => 'Pulmonary Edema',
             'cardiomegaly' => 'Cardiomegaly',
             'effusion' => 'Pleural Effusion',
-            'nodule' => 'Pulmonary Nodule',
-            'fracture' => 'Bone Fracture',
-            'opacity' => 'Lung Opacity',
-            'consolidation' => 'Consolidation',
+            'edema' => 'Pulmonary Edema',
             'atelectasis' => 'Atelectasis',
-            'chest' => 'Chest X-ray',
-            'xray' => 'X-ray Image',
+            'nodule' => 'Pulmonary Nodule',
+            'opacity' => 'Lung Opacity',
+            'mass' => 'Pulmonary Mass',
+            'consolidation' => 'Consolidation',
+            'infiltration' => 'Infiltration',
+            'fibrosis' => 'Pulmonary Fibrosis'
         ];
 
-        $lowerLabel = strtolower($label);
-        foreach ($mapping as $key => $medicalTerm) {
-            if (str_contains($lowerLabel, $key)) {
-                return $medicalTerm;
+        $labelLower = strtolower($label);
+
+        foreach ($mapping as $key => $value) {
+            if (str_contains($labelLower, $key)) {
+                return $value;
             }
         }
 
@@ -171,20 +195,17 @@ class ImageAnalysisService
     }
 
     /**
-     * Provide medical interpretation based on confidence
+     * Medical interpretation logic
      */
-    private function getMedicalInterpretation(string $label, float $score): string
+    private function getMedicalInterpretation(float $score): string
     {
         $confidence = $score * 100;
 
-        if ($confidence > 80) {
-            return 'High probability - Clinical correlation recommended';
-        } elseif ($confidence > 60) {
-            return 'Moderate probability - Further evaluation suggested';
-        } elseif ($confidence > 40) {
-            return 'Low probability - Routine follow-up';
-        } else {
-            return 'Unlikely - Normal variant or artifact possible';
-        }
+        return match (true) {
+            $confidence >= 80 => 'High probability — clinical correlation recommended.',
+            $confidence >= 60 => 'Moderate probability — further evaluation needed.',
+            $confidence >= 40 => 'Low probability — monitoring suggested.',
+            default => 'Very low probability — likely normal or artifact.'
+        };
     }
 }

@@ -11,6 +11,8 @@ import {
   CardMedia,
   Alert,
   Chip,
+  Grid,
+  Container,
 } from "@mui/material";
 import Sidebar from "../../Scenes/global/SideBar";
 import Topbar from "../../Scenes/global/TopBar";
@@ -35,12 +37,12 @@ const ImageAnalyzer = () => {
 
     // Validate file types
     const validFiles = files.filter(file => {
-      const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/dicom'];
+      const validTypes = ['image/jpeg', 'image/png', 'image/jpg'];
       return validTypes.includes(file.type);
     });
 
     if (validFiles.length !== files.length) {
-      toast.warning("Some files were skipped. Please upload only JPEG, PNG, or DICOM images.");
+      toast.warning("Some files were skipped. Please upload only JPEG or PNG images.");
     }
 
     setSelectedImages(validFiles);
@@ -105,24 +107,30 @@ const ImageAnalyzer = () => {
   };
 
   return (
-    <Box display="flex" height="100vh" bgcolor={colors.primary[900]}>
+    <Box display="flex" minHeight="100vh" bgcolor={colors.primary[900]}>
       <Sidebar />
-      <Box flex={1} display="flex" flexDirection="column">
+      <Box flex={1} display="flex" flexDirection="column" minHeight="100vh">
         <Topbar />
 
+        {/* Main Content Area */}
         <Box
+          flex={1}
           display="flex"
           flexDirection="column"
-          justifyContent="flex-start"
-          height="calc(100vh - 64px)"
-          width="100%"
-          p={2}
-          component={Paper}
-          elevation={3}
-          sx={{ backgroundColor: colors.primary[800] }}
+          p={3}
+          sx={{
+            overflow: 'auto',
+            maxHeight: 'calc(100vh - 64px)'
+          }}
         >
-          {/* Header */}
-          <Box display="flex" alignItems="center" justifyContent="center" mb={3}>
+          {/* Header Section */}
+          <Box
+            display="flex"
+            alignItems="center"
+            justifyContent="center"
+            mb={3}
+            sx={{ textAlign: 'center' }}
+          >
             <MedicalServicesIcon sx={{ fontSize: 40, color: colors.blueAccent[500], mr: 2 }} />
             <Typography
               variant="h4"
@@ -135,139 +143,300 @@ const ImageAnalyzer = () => {
             </Typography>
           </Box>
 
-          <Alert severity="info" sx={{ mb: 2 }}>
+          {/* Info Alert */}
+          <Alert
+            severity="info"
+            sx={{ mb: 3, maxWidth: '800px', mx: 'auto', width: '100%' }}
+            icon={<WarningIcon />}
+          >
             Upload X-rays, CT scans, or other medical images for AI-powered analysis.
-            Supported formats: JPEG, PNG, DICOM
+            Supported formats: JPEG, PNG
           </Alert>
 
-          {/* File Upload Section */}
-          <Box display="flex" flexDirection="column" alignItems="center" p={2}>
-            <input
-              type="file"
-              accept=".jpeg,.jpg,.png,.dicom,.dcm"
-              multiple
-              onChange={handleImageUpload}
-              style={{
-                marginBottom: "20px",
-                color: colors.grey[100],
-                padding: "10px"
-              }}
-              disabled={loading}
-            />
-            <Button
-              variant="contained"
-              onClick={analyzeImages}
-              disabled={loading || selectedImages.length === 0}
-              startIcon={<MedicalServicesIcon />}
-              sx={{
-                bgcolor: colors.blueAccent[500],
-                color: "white",
-                '&:hover': {
-                  bgcolor: colors.blueAccent[600]
-                },
-                '&:disabled': {
-                  bgcolor: colors.grey[600]
-                }
-              }}
-            >
-              {loading ? (
-                <Box display="flex" alignItems="center" gap={1}>
-                  <CircularProgress size={20} />
-                  <Typography>
-                    {currentAnalyzing ? `Analyzing ${currentAnalyzing}...` : "Analyzing..."}
-                  </Typography>
-                </Box>
-              ) : (
-                `Analyze ${selectedImages.length} Medical Image${selectedImages.length !== 1 ? 's' : ''}`
-              )}
-            </Button>
-          </Box>
+          {/* Warning Alert */}
+          <Alert
+            severity="warning"
+            sx={{ mb: 3, maxWidth: '800px', mx: 'auto', width: '100%' }}
+          >
+            <WarningIcon sx={{ mr: 1 }} />
+            This AI analysis is for assistance only. Always consult with qualified healthcare professionals for medical diagnosis.
+          </Alert>
 
-          {/* Display Medical Images and Results */}
-          <Box display="flex" flexWrap="wrap" gap={3} p={2} justifyContent="center">
-            {selectedImages.map((image, index) => {
-              const resultItem = results[index];
-              const isAnalyzing = currentAnalyzing === image.name;
+          {/* Upload and Analyze Section */}
+          <Paper
+            elevation={3}
+            sx={{
+              p: 3,
+              mb: 3,
+              maxWidth: '800px',
+              mx: 'auto',
+              width: '100%',
+              backgroundColor: colors.primary[700]
+            }}
+          >
+            <Box display="flex" flexDirection="column" alignItems="center">
+              <input
+                type="file"
+                accept=".jpeg,.jpg,.png"
+                multiple
+                onChange={handleImageUpload}
+                style={{
+                  marginBottom: "20px",
+                  color: colors.grey[100],
+                  padding: "10px",
+                  width: '100%',
+                  maxWidth: '400px'
+                }}
+                disabled={loading}
+              />
+              <Button
+                variant="contained"
+                onClick={analyzeImages}
+                disabled={loading || selectedImages.length === 0}
+                startIcon={<MedicalServicesIcon />}
+                sx={{
+                  bgcolor: colors.blueAccent[500],
+                  color: "white",
+                  px: 4,
+                  py: 1,
+                  '&:hover': {
+                    bgcolor: colors.blueAccent[600]
+                  },
+                  '&:disabled': {
+                    bgcolor: colors.grey[600]
+                  }
+                }}
+              >
+                {loading ? (
+                  <Box display="flex" alignItems="center" gap={1}>
+                    <CircularProgress size={20} />
+                    <Typography>
+                      {currentAnalyzing ? `Analyzing ${currentAnalyzing}...` : "Analyzing..."}
+                    </Typography>
+                  </Box>
+                ) : (
+                  `Analyze ${selectedImages.length} Medical Image${selectedImages.length !== 1 ? 's' : ''}`
+                )}
+              </Button>
 
-              return (
-                <Card
-                  key={index}
+              {/* Selected Files Count */}
+              {selectedImages.length > 0 && (
+                <Typography
+                  variant="body2"
                   sx={{
-                    maxWidth: 350,
-                    bgcolor: colors.primary[700],
-                    border: resultItem ? `2px solid ${colors.blueAccent[500]}` : 'none'
+                    color: colors.grey[300],
+                    mt: 2,
+                    textAlign: 'center'
                   }}
                 >
-                  <CardContent>
-                    <Typography variant="h6" sx={{ color: colors.grey[100], mb: 1 }}>
-                      {image.name}
-                    </Typography>
+                  {selectedImages.length} image{selectedImages.length !== 1 ? 's' : ''} selected for analysis
+                </Typography>
+              )}
+            </Box>
+          </Paper>
 
-                    <CardMedia
-                      component="img"
-                      image={URL.createObjectURL(image)}
-                      alt={`Medical Image ${index}`}
-                      sx={{
-                        borderRadius: "8px",
-                        maxHeight: 200,
-                        objectFit: "contain",
-                        bgcolor: 'black' // Better contrast for medical images
-                      }}
-                    />
+          {/* Results Section */}
+          {selectedImages.length > 0 && (
+            <Box sx={{ width: '100%', maxWidth: '1200px', mx: 'auto' }}>
+              <Typography
+                variant="h5"
+                sx={{
+                  color: colors.grey[100],
+                  mb: 2,
+                  textAlign: 'center'
+                }}
+              >
+                Analysis Results
+              </Typography>
 
-                    {isAnalyzing && (
-                      <Box display="flex" justifyContent="center" mt={1}>
-                        <CircularProgress size={24} sx={{ color: colors.blueAccent[500] }} />
-                        <Typography sx={{ color: colors.grey[100], ml: 1 }}>
-                          AI Analysis in progress...
-                        </Typography>
-                      </Box>
-                    )}
+              <Grid container spacing={3} justifyContent="center">
+                {selectedImages.map((image, index) => {
+                  const resultItem = results[index];
+                  const isAnalyzing = currentAnalyzing === image.name;
 
-                    {resultItem && resultItem.analysis && (
-                      <Box mt={2}>
-                        <Typography variant="h6" sx={{ color: colors.grey[100], mb: 1 }}>
-                          Analysis Results:
-                        </Typography>
-                        {resultItem.analysis.map((item, idx) => (
-                          <Box key={idx} sx={{ mb: 1, p: 1, bgcolor: colors.primary[600], borderRadius: 1 }}>
-                            <Box display="flex" justifyContent="space-between" alignItems="center">
-                              <Typography variant="body1" sx={{ color: colors.grey[100], fontWeight: 'bold' }}>
-                                {item.condition}
-                              </Typography>
-                              <Chip
-                                label={`${item.confidence}%`}
-                                sx={{
-                                  bgcolor: getConfidenceColor(item.confidence),
-                                  color: 'white',
-                                  fontWeight: 'bold'
-                                }}
-                                size="small"
-                              />
-                            </Box>
-                            <Typography variant="body2" sx={{ color: colors.grey[300], fontStyle: 'italic' }}>
-                              {item.interpretation}
-                            </Typography>
+                  return (
+                    <Grid item xs={12} md={6} lg={4} key={index}>
+                      <Card
+                        sx={{
+                          height: '100%',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          bgcolor: colors.primary[700],
+                          border: resultItem ? `2px solid ${colors.blueAccent[500]}` : '1px solid ' + colors.primary[600],
+                          transition: 'all 0.3s ease',
+                          '&:hover': {
+                            transform: 'translateY(-2px)',
+                            boxShadow: 4
+                          }
+                        }}
+                      >
+                        <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
+                          {/* Image Name */}
+                          <Typography
+                            variant="h6"
+                            sx={{
+                              color: colors.grey[100],
+                              mb: 2,
+                              textAlign: 'center',
+                              wordBreak: 'break-word'
+                            }}
+                          >
+                            {image.name.length > 30 ? image.name.substring(0, 30) + '...' : image.name}
+                          </Typography>
+
+                          {/* Image Preview */}
+                          <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+                            <CardMedia
+                              component="img"
+                              image={URL.createObjectURL(image)}
+                              alt={`Medical Image ${index + 1}`}
+                              sx={{
+                                borderRadius: "8px",
+                                maxHeight: 200,
+                                maxWidth: '100%',
+                                objectFit: "contain",
+                                bgcolor: 'black'
+                              }}
+                            />
                           </Box>
-                        ))}
-                      </Box>
-                    )}
 
-                    <Button
-                      size="small"
-                      onClick={() => removeImage(index)}
-                      sx={{
-                        color: colors.redAccent[500],
-                        mt: 1
-                      }}
-                    >
-                      Remove
-                    </Button>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </Box>
+                          {/* Loading State */}
+                          {isAnalyzing && (
+                            <Box
+                              display="flex"
+                              justifyContent="center"
+                              alignItems="center"
+                              sx={{ flexGrow: 1, minHeight: '100px' }}
+                            >
+                              <CircularProgress size={30} sx={{ color: colors.blueAccent[500] }} />
+                              <Typography sx={{ color: colors.grey[100], ml: 2 }}>
+                                AI Analysis in progress...
+                              </Typography>
+                            </Box>
+                          )}
+
+                          {/* Analysis Results */}
+                          {resultItem && resultItem.analysis && (
+                            <Box sx={{ mt: 'auto' }}>
+                              <Typography
+                                variant="h6"
+                                sx={{
+                                  color: colors.grey[100],
+                                  mb: 2,
+                                  textAlign: 'center',
+                                  borderBottom: `1px solid ${colors.primary[500]}`,
+                                  pb: 1
+                                }}
+                              >
+                                Analysis Results:
+                              </Typography>
+
+                              <Box sx={{ maxHeight: '300px', overflow: 'auto' }}>
+                                {resultItem.analysis.map((item, idx) => (
+                                  <Box
+                                    key={idx}
+                                    sx={{
+                                      mb: 1.5,
+                                      p: 1.5,
+                                      bgcolor: colors.primary[600],
+                                      borderRadius: 2,
+                                      border: `1px solid ${colors.primary[500]}`
+                                    }}
+                                  >
+                                    <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={1}>
+                                      <Typography
+                                        variant="body1"
+                                        sx={{
+                                          color: colors.grey[100],
+                                          fontWeight: 'bold',
+                                          flex: 1,
+                                          mr: 1
+                                        }}
+                                      >
+                                        {item.condition}
+                                      </Typography>
+                                      <Chip
+                                        label={`${item.confidence}%`}
+                                        sx={{
+                                          bgcolor: getConfidenceColor(item.confidence),
+                                          color: 'white',
+                                          fontWeight: 'bold',
+                                          minWidth: '60px'
+                                        }}
+                                        size="small"
+                                      />
+                                    </Box>
+                                    <Typography
+                                      variant="body2"
+                                      sx={{
+                                        color: colors.grey[300],
+                                        fontStyle: 'italic',
+                                        fontSize: '0.8rem'
+                                      }}
+                                    >
+                                      {item.interpretation}
+                                    </Typography>
+                                  </Box>
+                                ))}
+                              </Box>
+                            </Box>
+                          )}
+
+                          {/* No Results State */}
+                          {resultItem && (!resultItem.analysis || resultItem.analysis.length === 0) && (
+                            <Box sx={{ textAlign: 'center', py: 2 }}>
+                              <Typography sx={{ color: colors.grey[400], fontStyle: 'italic' }}>
+                                No analysis results available
+                              </Typography>
+                            </Box>
+                          )}
+
+                          {/* Remove Button */}
+                          <Button
+                            size="small"
+                            onClick={() => removeImage(index)}
+                            sx={{
+                              color: colors.redAccent[500],
+                              mt: 2,
+                              alignSelf: 'center'
+                            }}
+                          >
+                            Remove Image
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                  );
+                })}
+              </Grid>
+            </Box>
+          )}
+
+          {/* Empty State */}
+          {selectedImages.length === 0 && !loading && (
+            <Box
+              display="flex"
+              justifyContent="center"
+              alignItems="center"
+              sx={{
+                height: '200px',
+                maxWidth: '800px',
+                mx: 'auto',
+                width: '100%'
+              }}
+            >
+              <Typography
+                variant="h6"
+                sx={{
+                  color: colors.grey[500],
+                  textAlign: 'center',
+                  fontStyle: 'italic'
+                }}
+              >
+                Upload medical images to begin analysis
+              </Typography>
+            </Box>
+          )}
         </Box>
       </Box>
     </Box>
