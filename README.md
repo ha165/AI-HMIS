@@ -17,3 +17,29 @@
 1. Set up your api for the project
 2. Download and Install NodeJs LTS version from [NodeJs Official Page](https://nodejs.org/en/download/).
 3. cd to your react app `cd react-app` of the product and run `yarn install` or `npm install` to install our local dependencies.
+
+## Python Model Installation (FastAPI + TinyApi)
+The AI model is used to analyze chest X-ray images and is located in the AI_models folder.
+1.Ensure you have Python 3.10+ (64-bit) installed.
+2.Create a virtual environment inside your project root:
+ `cd Ai_models`
+ `python -m venv venv`
+3 Activate virtual enviroment
+ 
+  #Windows
+ `venv\Scripts\activate`
+  
+  #Mac/linux
+  `source venv\bin\activate`
+
+4.Install python dependancies
+  `pip install fastapi uvicorn pillow torch torchvision python-multipart`
+
+5.Start the API server on port 8001
+`uvicorn analyzer_api:app --reload --host 0.0.0.0 --port 8001`
+
+Laravel will forward requests to this server via .env variable:
+ `XRAY_API_URL=http://127.0.0.1:8001/predict`
+
+The TinyCNN model is saved in the same folder as xray_tiny_cnn.pth.
+Make sure it is present before starting FastAPI. If not, the server will train it on first run using the sample dataset.

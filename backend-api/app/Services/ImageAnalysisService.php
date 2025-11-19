@@ -13,7 +13,7 @@ class ImageAnalysisService
     public function __construct()
     {
         // Local FastAPI server URL
-        $this->apiUrl = env('XRAY_API_URL', 'http://127.0.0.1:8000/predict');
+        $this->apiUrl = env('XRAY_API_URL', 'http://127.0.0.1:8001/predict');
     }
 
     /**
