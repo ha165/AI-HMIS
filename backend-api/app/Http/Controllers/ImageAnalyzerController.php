@@ -20,22 +20,23 @@ class ImageAnalyzerController extends Controller
     public function analyze(Request $request): JsonResponse
     {
         $request->validate([
-            'file' => 'required|image|mimes:jpeg,png,jpg,gif|max:10240', // 10MB max
+            'file' => 'required|image|mimes:jpeg,png,jpg,dicom|max:20480', // 20MB max, allow DICOM
         ]);
 
         if (!$request->hasFile('file')) {
-            return response()->json(['error' => 'No image provided'], 400);
+            return response()->json(['error' => 'No medical image provided'], 400);
         }
 
         $image = $request->file('file');
 
-        Log::info("Image analysis request", [
+        Log::info("Medical image analysis request", [
             'user_id' => Auth::id(),
             'file_name' => $image->getClientOriginalName(),
             'file_size' => $image->getSize(),
+            'file_type' => $image->getMimeType(),
         ]);
 
-        $result = $this->imageAnalysisService->analyzeImage($image);
+        $result = $this->imageAnalysisService->analyzeMedicalImage($image);
 
         return response()->json($result, $result['status']);
     }
