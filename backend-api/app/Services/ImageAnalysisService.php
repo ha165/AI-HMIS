@@ -30,7 +30,7 @@ class ImageAnalysisService
                 'file_type' => $imageFile->getMimeType()
             ]);
 
-            $response = Http::attach(
+            $response = Http::timeout(300)->attach(
                 'file',
                 fopen($filePath, 'r'),
                 $imageFile->getClientOriginalName()
