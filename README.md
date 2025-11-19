@@ -38,6 +38,11 @@ The AI model is used to analyze chest X-ray images and is located in the AI_mode
 5.Start the API server on port 8001
 `uvicorn analyzer_api:app --reload --host 0.0.0.0 --port 8001`
 
+6.make sure you have access tokens from Hugging face to access the chat assistance
+
+#.env file
+`HF_TOKENS`
+
 Laravel will forward requests to this server via .env variable:
  `XRAY_API_URL=http://127.0.0.1:8001/predict`
 
