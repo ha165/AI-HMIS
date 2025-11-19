@@ -94,7 +94,7 @@ class ImageAnalysisService
     private function getMedicalModelEndpoint($imageFile): string
     {
         // Using a general vision model that supports image classification
-        return 'https://router.huggingface.co/hf-inference/models/google/vit-base-patch16-224';
+        return 'https://router.huggingface.co/hf-inference/models/facebook/detr-resnet-50';
 
         // Alternative medical models you can try:
         // return 'https://router.huggingface.co/hf-inference/models/microsoft/resnet-50';
