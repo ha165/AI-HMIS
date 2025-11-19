@@ -7,7 +7,7 @@ from torchvision import transforms
 from PIL import Image
 from fastapi import FastAPI, File, UploadFile
 from fastapi.responses import JSONResponse
-from train_xray_cpu_complete import TinyCNN, img_size, num_classes  # Import your model class
+from image_analyzer import TinyCNN, img_size, num_classes  # Import your model class
 
 # -----------------------------
 # 1️⃣ Initialize FastAPI

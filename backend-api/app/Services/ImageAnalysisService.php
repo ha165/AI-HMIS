@@ -4,6 +4,7 @@ namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 
 class ImageAnalysisService
 {
@@ -23,7 +24,7 @@ class ImageAnalysisService
         try {
             $filePath = $imageFile->path();
             Log::info("Sending medical image for analysis", [
-                'user_id' => auth()->id() ?? null,
+                'user_id' => Auth::id() ?? null,
                 'file_name' => $imageFile->getClientOriginalName(),
                 'file_size' => $imageFile->getSize(),
                 'file_type' => $imageFile->getMimeType()
