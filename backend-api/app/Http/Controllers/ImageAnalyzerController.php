@@ -2,59 +2,41 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\ImageAnalysisService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class ImageAnalyzerController extends Controller
 {
+    protected ImageAnalysisService $imageAnalysisService;
+
+    public function __construct(ImageAnalysisService $imageAnalysisService)
+    {
+        $this->imageAnalysisService = $imageAnalysisService;
+    }
+
     public function analyze(Request $request): JsonResponse
     {
+        $request->validate([
+            'file' => 'required|image|mimes:jpeg,png,jpg,gif|max:10240', // 10MB max
+        ]);
+
         if (!$request->hasFile('file')) {
-            Log::error("No file received in request");
             return response()->json(['error' => 'No image provided'], 400);
         }
 
         $image = $request->file('file');
-        $apiKey = env('HF_TOKEN');
 
-        Log::info("Image received", [
-            'name' => $image->getClientOriginalName(),
-            'size' => $image->getSize(),
+        Log::info("Image analysis request", [
+            'user_id' => Auth::id(),
+            'file_name' => $image->getClientOriginalName(),
+            'file_size' => $image->getSize(),
         ]);
 
-        $endpoint = "https://router.huggingface.co/hf-inference/models/google/vit-base-patch16-224";
+        $result = $this->imageAnalysisService->analyzeImage($image);
 
-        try {
-            $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $apiKey,
-            ])
-                ->attach('image', file_get_contents($image->path()), $image->getClientOriginalName())
-                ->post($endpoint);
-
-            Log::info("HF response status", ['status' => $response->status()]);
-            Log::info("HF response body", ['body' => $response->body()]);
-
-            if ($response->failed()) {
-                return response()->json([
-                    'error' => 'HuggingFace API error',
-                    'details' => $response->body()
-                ], 500);
-            }
-
-            return response()->json(['analysis' => $response->json()]);
-        } catch (\Exception $e) {
-            Log::error("Image analyzer crashed", [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-
-            return response()->json([
-                'error' => 'Server error',
-                'message' => $e->getMessage()
-            ], 500);
-        }
+        return response()->json($result, $result['status']);
     }
 }
