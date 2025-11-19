@@ -1,4 +1,4 @@
-# xray_api.py
+# analyzer_api.py
 
 import io
 import torch
