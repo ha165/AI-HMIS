@@ -313,8 +313,6 @@ class PaymentsController extends Controller
             'result_desc' => $callback['ResultDesc']
         ]);
 
-        //todo list
-
         return response()->json(['success' => true]);
     }
     public function checkPaymentStatus($paymentId)
