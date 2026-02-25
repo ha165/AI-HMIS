@@ -58,7 +58,7 @@ const Dashboard = () => {
         setLoading(false);
       }
     };
-  
+
     fetchDashboardData();
   }, []);
 
@@ -340,12 +340,22 @@ const Dashboard = () => {
             >
               Payment Status
             </Typography>
-            <Box height="250px" mt="-20px">
-              <BarChart
-                isDashboard={true}
+            <Box height="250px" display="flex"
+              flexDirection="column"
+              alignItems="center"
+              mt="25px">
+              <ProgressCircle
+                size="125"
                 data={Object.values(dashboardData.payment_statuses)}
                 labels={Object.keys(dashboardData.payment_statuses)}
               />
+              <Typography
+                variant="h5"
+                color={colors.greenAccent[500]}
+                sx={{ mt: "15px" }}
+              >
+                {dashboardData.stats.completed_payments} Total Payments
+              </Typography>
             </Box>
           </Box>
           <Box
@@ -359,7 +369,7 @@ const Dashboard = () => {
               fontWeight="600"
               sx={{ marginBottom: "15px" }}
             >
-              Revenue Sources
+              Map
             </Typography>
             <Box height="200px">
               <GeographyChart isDashboard={true} />
