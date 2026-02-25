@@ -1,11 +1,10 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   Container,
   Card,
   CardContent,
   Typography,
-  Divider,
   Chip,
   Grid,
   Paper,
@@ -20,9 +19,11 @@ import {
   Box,
 } from "@mui/material";
 import { format } from "date-fns";
-import fetchWrapper from "../../Context/fetchWrapper";
+import fetchWrapper from "../../Context/fetchwrapper";
 import Sidebar from "../../Scenes/global/SideBar";
 import Topbar from "../../Scenes/global/TopBar";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const ViewMedicalRecord = () => {
   const navigate = useNavigate();
@@ -40,6 +41,7 @@ const ViewMedicalRecord = () => {
         console.log("API Response:", data);
         if (!data) {
           throw new Error("Medical record not found");
+          toast.error("Medical Records not found");
         }
         setRecord(data);
       } catch (err) {
@@ -334,8 +336,8 @@ const ViewMedicalRecord = () => {
                                 record.appointment?.status === "Completed"
                                   ? "success"
                                   : record.appointment?.status === "Cancelled"
-                                  ? "error"
-                                  : "warning"
+                                    ? "error"
+                                    : "warning"
                               }
                               size="small"
                             />

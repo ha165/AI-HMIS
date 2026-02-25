@@ -1,3 +1,5 @@
+import { toast } from "react-toastify";
+
 const logoutUser = async () => {
   try {
     await fetch("http://localhost:8000/api/logout", {
@@ -35,23 +37,39 @@ const fetchWrapper = async (url, options = {}) => {
     };
   }
 
-  const response = await fetch(
-    `http://localhost:8000/api${url}`,
-    options
-  );
+  try {
+    const response = await fetch(
+      `http://localhost:8000/api${url}`,
+      options
+    );
 
-  if (response.status === 401) {
-    await logoutUser();
-    return;
+    const data = await response.json().catch(() => null);
+
+    // 🔥 Auto logout on 401
+    if (response.status === 401) {
+      toast.error("Session expired. Logging out...");
+      await logoutUser();
+      return;
+    }
+
+    // 🔥 Auto show backend errors
+    if (!response.ok) {
+      const message =
+        data?.message ||
+        "Something went wrong. Please try again.";
+
+      toast.error(message);
+      throw new Error(message);
+    }
+
+    return data;
+
+  } catch (error) {
+    if (!error.message.includes("Session expired")) {
+      toast.error(error.message || "Network error");
+    }
+    throw error;
   }
-
-  const data = await response.json();
-
-  if (!response.ok) {
-    throw data; 
-  }
-
-  return data;
 };
 
 export default fetchWrapper;

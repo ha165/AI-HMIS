@@ -14,6 +14,8 @@ import { DataGrid } from "@mui/x-data-grid";
 import fetchWrapper from "../../Context/fetchwrapper";
 import { tokens } from "../../../themes";
 import Sidebar from "../../Scenes/global/SideBar";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import Topbar from "../../Scenes/global/TopBar";
 import Header from "../../Components/Header";
 
@@ -39,7 +41,7 @@ const MedicalRecords = () => {
           setRecords(data);
         }
       } catch (error) {
-        console.error("Error fetching medical records:", error);
+        toast.error(error?.message);
       } finally {
         if (isMounted) {
           setLoading(false);
@@ -82,6 +84,7 @@ const MedicalRecords = () => {
         method: "DELETE",
       });
       setRecords(records.filter((record) => record.id !== deletingRecordId));
+      toast.success("Medical record deleted successfully");
     } catch (error) {
       console.error("Error deleting medical record", error);
     } finally {
@@ -90,28 +93,27 @@ const MedicalRecords = () => {
     }
   };
 
+
   const handleUpdate = async () => {
     if (!selectedRecord) return;
 
-    try {
-      const updatedData = await fetchWrapper(
-        `/medical-records/${selectedRecord.id}`,
-        {
-          method: "PUT",
-          body: JSON.stringify(updatedRecord),
-        }
-      );
-      setRecords(
-        records.map((record) =>
-          record.id === updatedData.id ? updatedData : record
-        )
-      );
-      setOpenEditModal(false);
-    } catch (error) {
-      console.error("Error updating medical record", error);
-    }
-  };
+    const updatedData = await fetchWrapper(
+      `/medical-records/${selectedRecord.id}`,
+      {
+        method: "PUT",
+        body: JSON.stringify(updatedRecord),
+      }
+    );
 
+    setRecords(
+      records.map((record) =>
+        record.id === updatedData.id ? updatedData : record
+      )
+    );
+
+    setOpenEditModal(false);
+    toast.success("Medical record updated successfully");
+  };
   const columns = [
     { field: "id", headerName: "ID", width: 90 },
     { field: "patient_name", headerName: "Patient Name", flex: 1 },

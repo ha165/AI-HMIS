@@ -55,6 +55,7 @@ const MedicalRecords = () => {
         await dispatch(fetchMedicalRecords());
       } catch (error) {
         console.error("Failed to fetch medical records:", error);
+        toast.error("Failed to fetch Medical records")
       }
     };
 
