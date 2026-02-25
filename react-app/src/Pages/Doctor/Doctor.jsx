@@ -101,34 +101,32 @@ const Doctors = () => {
     }
   };
 
-  const handleUpdate = async () => {
-    if (!selecteddoctor) return;
+const handleUpdate = async () => {
+  if (!selecteddoctor) return;
 
-    const payload = { ...selecteddoctor, ...updateddoctor };
-    try {
-      const response = await fetch(`api/doctors/${selecteddoctor.id}`, {
+  try {
+    const data = await fetchWrapper(
+      `/doctors/${selecteddoctor.id}`,
+      {
         method: "PUT",
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
-      if (response.ok) {
-        const updatedData = await response.json();
-        setdoctors(
-          doctors.map((doctor) =>
-            doctor.id === updatedData.id ? updatedData : doctor
-          )
-        );
-        setOpenEditModal(false);
+        body: JSON.stringify(updateddoctor),
       }
-      toast.success("Doctor updated successfully");
-    } catch (error) {
-      console.error("Error updating doctor", error);
-      toast.error("Error updating doctor");
-    }
-  };
+    );
+
+    setdoctors(
+      doctors.map((doctor) =>
+        doctor.id === data.id ? data : doctor
+      )
+    );
+
+    setOpenEditModal(false);
+    toast.success("Doctor updated successfully");
+
+  } catch (error) {
+    console.error("Error updating doctor", error);
+    toast.error("Error updating doctor");
+  }
+};
 
   const columns = [
     { field: "id", headerName: "ID", width: 90 },
