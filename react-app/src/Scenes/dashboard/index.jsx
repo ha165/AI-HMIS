@@ -136,7 +136,6 @@ const Dashboard = () => {
               title={dashboardData.stats.total_patients}
               subtitle="Total Patients"
               progress={0.75}
-              increase="+14%"
               icon={
                 <PersonAddIcon
                   sx={{ color: colors.greenAccent[600], fontSize: "26px" }}
@@ -155,7 +154,6 @@ const Dashboard = () => {
               title={dashboardData.stats.total_appointments}
               subtitle="Total Appointments"
               progress={0.5}
-              increase="+21%"
               icon={
                 <PointOfSaleIcon
                   sx={{ color: colors.greenAccent[600], fontSize: "26px" }}
@@ -174,7 +172,6 @@ const Dashboard = () => {
               title={dashboardData.stats.today_appointments}
               subtitle="Today's Appointments"
               progress={0.3}
-              increase="+5%"
               icon={
                 <EmailIcon
                   sx={{ color: colors.greenAccent[600], fontSize: "26px" }}
@@ -190,10 +187,9 @@ const Dashboard = () => {
             justifyContent="center"
           >
             <StatBox
-              title={`$${dashboardData.stats.monthly_revenue}`}
+              title={`ksh ${dashboardData.stats.monthly_revenue}`}
               subtitle="Monthly Revenue"
               progress={0.8}
-              increase="+43%"
               icon={
                 <TrafficIcon
                   sx={{ color: colors.greenAccent[600], fontSize: "26px" }}
@@ -228,7 +224,7 @@ const Dashboard = () => {
                   fontWeight="bold"
                   color={colors.greenAccent[500]}
                 >
-                  ${dashboardData.stats.monthly_revenue}
+                  Ksh {dashboardData.stats.monthly_revenue}
                 </Typography>
               </Box>
               <Box>
