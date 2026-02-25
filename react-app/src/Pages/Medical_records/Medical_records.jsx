@@ -41,7 +41,6 @@ const MedicalRecords = () => {
           setRecords(data);
         }
       } catch (error) {
-        toast.error(error?.message);
       } finally {
         if (isMounted) {
           setLoading(false);
