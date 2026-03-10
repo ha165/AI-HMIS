@@ -26,7 +26,7 @@ export default function Welcome() {
           color={colors.grey[100]}
           mb={2}
         >
-          Smart Healthcare System
+          AI Hospital Management System
         </Typography>
 
         <Typography
@@ -147,7 +147,7 @@ export default function Welcome() {
       {/* FOOTER */}
       <Box mt={10} textAlign="center">
         <Typography color={colors.grey[400]}>
-          © {new Date().getFullYear()} Smart Healthcare System
+          © {new Date().getFullYear()} AI Hospital Management System
         </Typography>
       </Box>
     </Box>
