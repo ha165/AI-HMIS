@@ -183,7 +183,7 @@ const DoctorDashboard = () => {
           >
             <Header
               title="DOCTOR DASHBOARD"
-              subtitle={`Welcome, Dr. ${
+              subtitle={`Welcome Back, Dr. ${
                 dashboardData.doctor?.user?.first_name || ""
               }`}
               subtitleColor={colors.greenAccent[400]}
