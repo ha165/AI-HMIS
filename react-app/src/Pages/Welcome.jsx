@@ -5,6 +5,7 @@ import PsychologyIcon from "@mui/icons-material/Psychology";
 import LocalHospitalIcon from "@mui/icons-material/LocalHospital";
 import EventIcon from "@mui/icons-material/Event";
 
+import heroImage from "../assets/Doctors-rafiki.svg";
 export default function Welcome() {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
@@ -19,61 +20,77 @@ export default function Welcome() {
       }}
     >
       {/* HERO SECTION */}
-      <Box textAlign="center" mb={8}>
-        <Typography
-          variant="h2"
-          fontWeight="bold"
-          color={colors.grey[100]}
-          mb={2}
-        >
-          AI Hospital Management System
-        </Typography>
-
-        <Typography
-          variant="h5"
-          color={colors.grey[300]}
-          maxWidth="700px"
-          mx="auto"
-          mb={4}
-        >
-          Manage appointments, medical records, AI diagnosis and patient care
-          efficiently in one secure platform.
-        </Typography>
-
-        <Box display="flex" justifyContent="center" gap={3}>
-          <Button
-            variant="contained"
-            size="large"
-            onClick={() => navigate("/login")}
-            sx={{
-              backgroundColor: colors.blueAccent[600],
-              "&:hover": { backgroundColor: colors.blueAccent[700] },
-              px: 4,
-              py: 1.5,
-            }}
+      <Grid
+        container
+        spacing={6}
+        alignItems="center"
+        justifyContent="center"
+        mb={8}
+      >
+        {/* LEFT SIDE */}
+        <Grid item xs={12} md={6}>
+          <Typography
+            variant="h2"
+            fontWeight="bold"
+            color={colors.grey[100]}
+            mb={2}
           >
-            Login
-          </Button>
+            AI Hospital Management System
+          </Typography>
 
-          <Button
-            variant="outlined"
-            size="large"
-            onClick={() => navigate("/register")}
+          <Typography variant="h5" color={colors.grey[300]} mb={4}>
+            Manage appointments, medical records, AI diagnosis and patient care
+            efficiently in one secure platform.
+          </Typography>
+
+          <Box display="flex" gap={3}>
+            <Button
+              variant="contained"
+              size="large"
+              onClick={() => navigate("/login")}
+              sx={{
+                backgroundColor: colors.blueAccent[600],
+                "&:hover": { backgroundColor: colors.blueAccent[700] },
+                px: 4,
+                py: 1.5,
+              }}
+            >
+              Login
+            </Button>
+
+            <Button
+              variant="outlined"
+              size="large"
+              onClick={() => navigate("/register")}
+              sx={{
+                borderColor: colors.blueAccent[500],
+                color: colors.blueAccent[300],
+                "&:hover": {
+                  borderColor: colors.blueAccent[300],
+                  backgroundColor: colors.primary[500],
+                },
+                px: 4,
+                py: 1.5,
+              }}
+            >
+              Register
+            </Button>
+          </Box>
+        </Grid>
+
+        {/* RIGHT SIDE IMAGE */}
+        <Grid item xs={12} md={6} textAlign="center">
+          <Box
+            component="img"
+            src={heroImage}
+            alt="AI Hospital Illustration"
             sx={{
-              borderColor: colors.blueAccent[500],
-              color: colors.blueAccent[300],
-              "&:hover": {
-                borderColor: colors.blueAccent[300],
-                backgroundColor: colors.primary[500],
-              },
-              px: 4,
-              py: 1.5,
+              width: "100%",
+              maxWidth: 500,
             }}
-          >
-            Register
-          </Button>
-        </Box>
-      </Box>
+          />
+        </Grid>
+      </Grid>
 
       {/* FEATURES SECTION */}
       <Grid container spacing={4}>
@@ -153,4 +170,3 @@ export default function Welcome() {
     </Box>
   );
 }
-
