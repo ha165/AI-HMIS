@@ -35,6 +35,7 @@ const Service = lazy(() => import("./Pages/Service/Service"));
 const AddService = lazy(() => import("./Pages/Service/addservice"));
 const AddPatient = lazy(() => import("./Pages/Patients/addPatient"));
 const AddDoctor = lazy(() => import("./Pages/Doctor/addDoctor"));
+const Welcome = lazy(() => import("./Pages/Welcome"))
 const AddMedicalRecords = lazy(() =>
   import("./Pages/Medical_records/add_medicalRecord")
 );
@@ -54,6 +55,10 @@ const AppRoutes = ({ user }) => {
       <Route
         path="/login"
         element={!user ? <Login /> : <Navigate to="/" replace />}
+      />
+      <Route
+        path="/"
+        element={user ? <Navigate to="/dashboard" replace /> : <Welcome />}
       />
       <Route path="/home" element={<Home />} />
       <Route path="/patients" element={<Patients />} />
@@ -87,10 +92,6 @@ const AppRoutes = ({ user }) => {
       <Route path="/payments/:appointmentID" element={<Payment />} />
 
       {/* Protected Routes */}
-      <Route
-        path="/"
-        element={<ProtectedRoute user={user} element={<Dashboard />} />}
-      />
       <Route
         path="/dashboard"
         element={<ProtectedRoute user={user} element={<UserDashboard />} />}
