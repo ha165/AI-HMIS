@@ -54,8 +54,8 @@ const ProtectedRoute = ({ element, user }) => {
   }
 
   // Redirect based on role
-  if (role === "admin" && window.location.pathname !== "/") {
-    return <Navigate to="/" replace />;
+  if (role === "admin" && window.location.pathname !== "/admin-dashboard") {
+    return <Navigate to="/admin-dashboard" replace />;
   }
   if (role === "patient" && window.location.pathname !== "/dashboard") {
     return <Navigate to="/dashboard" replace />;
