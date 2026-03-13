@@ -3,6 +3,7 @@ import { lazy } from "react";
 import ProtectedRoute from "./ProtectedRoute";
 // Lazy-loaded components
 const UserDashboard = lazy(() => import("./Scenes/dashboard/UserDashboard"));
+const AdminDashboard = lazy(() => import("./Scenes/dashboard/index"))
 const DiagnosisChat = lazy(() => import("./Pages/AI/DiagnosisChat"));
 const ImageAnalyzer = lazy(() => import("./Pages/AI/ImageAnalyzer"));
 const Billing = lazy(() => import("./Pages/Billing/Payment"));
@@ -92,6 +93,10 @@ const AppRoutes = ({ user }) => {
       <Route path="/payments/:appointmentID" element={<Payment />} />
 
       {/* Protected Routes */}
+      <Route
+        path="/admin-dashboard"
+        element={<ProtectedRoute user={user} element={<AdminDashboard />} />}
+      />
       <Route
         path="/dashboard"
         element={<ProtectedRoute user={user} element={<UserDashboard />} />}
